@@ -431,22 +431,56 @@
                     message += `• Cancel = Go back`;
                     
                     if (confirm(message)) {
-                      // Merge mode
-                      const maxId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) : 0;
-                      const newRecipes = importedRecipes.map((recipe, index) => ({
-                        ...recipe,
-                        id: maxId + index + 1
-                      }));
-                      setRecipes(prev => [...prev, ...newRecipes]);
+                      // Merge mode - update existing recipes by name, add new ones
+                      let updatedCount = 0;
+                      let addedCount = 0;
+                      
+                      setRecipes(prev => {
+                        const updated = [...prev];
+                        const maxId = updated.length > 0 ? Math.max(...updated.map(r => r.id)) : 0;
+                        let nextId = maxId + 1;
+                        
+                        importedRecipes.forEach(importedRecipe => {
+                          // Check if recipe with same name already exists
+                          const existingIndex = updated.findIndex(r => 
+                            r.name.toLowerCase() === importedRecipe.name.toLowerCase()
+                          );
+                          
+                          if (existingIndex !== -1) {
+                            // Update existing recipe, keep its ID
+                            updated[existingIndex] = {
+                              ...importedRecipe,
+                              id: updated[existingIndex].id
+                            };
+                            updatedCount++;
+                          } else {
+                            // Add new recipe with new ID
+                            updated.push({
+                              ...importedRecipe,
+                              id: nextId++
+                            });
+                            addedCount++;
+                          }
+                        });
+                        
+                        return updated;
+                      });
                       
                       // Merge price history
                       if (priceCount > 0) {
                         setLastKnownPrices(prev => ({...prev, ...importedPrices}));
                       }
                       
-                      let successMsg = `✓ Successfully merged ${importCount} new recipe${importCount !== 1 ? 's' : ''}`;
+                      let successMsg = '✓ Successfully merged: ';
+                      if (updatedCount > 0) {
+                        successMsg += `${updatedCount} updated`;
+                      }
+                      if (addedCount > 0) {
+                        if (updatedCount > 0) successMsg += ', ';
+                        successMsg += `${addedCount} added`;
+                      }
                       if (priceCount > 0) {
-                        successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                        successMsg += `, ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
                       }
                       alert(successMsg + '!');
                     }
