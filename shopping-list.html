@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Shopping List Aggregator</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // Initial recipe data - this will be loaded from memory storage
+        const INITIAL_RECIPES = [
+          {
+            id: 1,
+            name: "Ayam Goreng Paste",
+            yieldUnit: "batch",
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "shallot paste", quantity: 800.0, unit: "g", substitution: "", price: null },
+              { name: "garlic paste", quantity: 150.0, unit: "g", substitution: "", price: null },
+              { name: "galangal paste", quantity: 500.0, unit: "g", substitution: "", price: null },
+              { name: "candlenuts", quantity: 140.0, unit: "g", substitution: "", price: null },
+              { name: "coriander powder", quantity: 50.0, unit: "g" },
+              { name: "white pepper powder", quantity: 50.0, unit: "g" },
+              { name: "lemongrass", quantity: 30.0, unit: "pcs" },
+              { name: "ginger paste", quantity: 400.0, unit: "g" },
+              { name: "salt", quantity: 75.0, unit: "g" },
+              { name: "turmeric powder", quantity: 200.0, unit: "g" }
+            ]
+          },
+          {
+            id: 2,
+            name: "Bumbu Coto Paste",
+            yieldUnit: "g",
+            yieldQuantity: 5600,
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "shallot paste", quantity: 2400.0, unit: "g" },
+              { name: "garlic paste", quantity: 1200.0, unit: "g" },
+              { name: "lemongrass paste", quantity: 1200.0, unit: "g" },
+              { name: "coto spice pack", quantity: 1.0, unit: "bag" },
+              { name: "cinnamon sticks", quantity: 2.0, unit: "pcs" },
+              { name: "coconut palm sugar(6 pucks)", quantity: 360.0, unit: "g" },
+              { name: "galangal paste", quantity: 500.0, unit: "g" },
+              { name: "ginger paste", quantity: 250.0, unit: "g" },
+              { name: "kaffir lime leaves 15 (small to med)", quantity: null, unit: "g" },
+              { name: "bay leaves 10 (big)", quantity: null, unit: "g" },
+              { name: "pandan leaves", quantity: 1.0, unit: "pcs" },
+              { name: "oil", quantity: 500.0, unit: "ml" }
+            ]
+          },
+          {
+            id: 3,
+            name: "Ayam Bakar Marinade",
+            yieldUnit: "batch",
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "ayam bakar paste", quantity: 1.0, unit: "batch" },
+              { name: "ayam bakar spice pack", quantity: 1.0, unit: "bag" },
+              { name: "oil", quantity: 300.0, unit: "ml" },
+              { name: "honey", quantity: 40.0, unit: "g" },
+              { name: "ketchup manis", quantity: 220.0, unit: "g" },
+              { name: "coconut water", quantity: 500.0, unit: "ml" },
+              { name: "coconut milk", quantity: 500.0, unit: "ml" },
+              { name: "lemon leaves 3-4", quantity: null, unit: "" },
+              { name: "bay leaves 3-4", quantity: null, unit: "" },
+              { name: "pandan leaf", quantity: 1.0, unit: "pcs" },
+              { name: "tamarind paste", quantity: 1.0, unit: "Tbsp" },
+              { name: "chilies, chopped", quantity: 180.0, unit: "g" }
+            ]
+          }
+        ];
+
+        // Simple icon components
+        const ShoppingCart = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        );
+
+        const Plus = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+
+        const Minus = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+          </svg>
+        );
+
+        const Edit = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+
+        const Trash = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        );
+
+        const X = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+
+        const Settings = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        );
+
+        const RefreshCw = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
+
+        const Star = ({ className, filled }) => (
+          <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        );
+
+        const Copy = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        );
+
+        const Moon = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        );
+
+        const Sun = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        );
+
+        function ShoppingAggregator() {
+          const [recipes, setRecipes] = useState([]);
+          const [selectedRecipes, setSelectedRecipes] = useState({});
+          const [purchasedItems, setPurchasedItems] = useState(new Set());
+          const [showManageRecipes, setShowManageRecipes] = useState(false);
+          const [editingRecipe, setEditingRecipe] = useState(null);
+          const [showRecipeForm, setShowRecipeForm] = useState(false);
+          const [searchQuery, setSearchQuery] = useState('');
+          const [ingredientPrices, setIngredientPrices] = useState({});
+          const [darkMode, setDarkMode] = useState(false);
+
+          // Load dark mode preference on mount
+          useEffect(() => {
+            const stored = localStorage.getItem('darkMode');
+            if (stored) {
+              setDarkMode(stored === 'true');
+            }
+          }, []);
+
+          // Save dark mode preference
+          useEffect(() => {
+            localStorage.setItem('darkMode', darkMode.toString());
+          }, [darkMode]);
+
+          // Load recipes from memory on mount
+          useEffect(() => {
+            const stored = localStorage.getItem('restaurantRecipes');
+            if (stored) {
+              try {
+                setRecipes(JSON.parse(stored));
+              } catch (e) {
+                setRecipes(INITIAL_RECIPES);
+              }
+            } else {
+              setRecipes(INITIAL_RECIPES);
+            }
+          }, []);
+
+          // Save recipes to memory whenever they change
+          useEffect(() => {
+            if (recipes.length > 0) {
+              localStorage.setItem('restaurantRecipes', JSON.stringify(recipes));
+            }
+          }, [recipes]);
+
+          const toggleRecipe = (recipeId) => {
+            setSelectedRecipes(prev => {
+              const newState = { ...prev };
+              if (newState[recipeId]) {
+                delete newState[recipeId];
+              } else {
+                newState[recipeId] = 1;
+              }
+              return newState;
+            });
+          };
+
+          const updateBatches = (recipeId, batches) => {
+            const numBatches = Math.max(0, parseInt(batches) || 0);
+            setSelectedRecipes(prev => ({
+              ...prev,
+              [recipeId]: numBatches
+            }));
+          };
+
+          const toggleFavorite = (recipeId) => {
+            setRecipes(prev => prev.map(r => 
+              r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r
+            ));
+          };
+
+          const deleteRecipe = (recipeId) => {
+            if (confirm('Are you sure you want to delete this recipe?')) {
+              setRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setSelectedRecipes(prev => {
+                const newState = { ...prev };
+                delete newState[recipeId];
+                return newState;
+              });
+            }
+          };
+
+          const startEditRecipe = (recipe) => {
+            setEditingRecipe(recipe);
+            setShowRecipeForm(true);
+          };
+
+          const startNewRecipe = () => {
+            setEditingRecipe(null);
+            setShowRecipeForm(true);
+          };
+
+          const duplicateRecipe = (recipe) => {
+            const duplicate = {
+              ...recipe,
+              id: undefined, // Will be assigned when saved
+              name: `${recipe.name} (Copy)`,
+              isFavorite: false // Don't copy favorite status
+            };
+            setEditingRecipe(duplicate);
+            setShowRecipeForm(true);
+          };
+
+          const togglePurchased = (ingredientName) => {
+            setPurchasedItems(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(ingredientName)) {
+                newSet.delete(ingredientName);
+              } else {
+                newSet.add(ingredientName);
+              }
+              return newSet;
+            });
+          };
+
+          const clearPurchasedItems = () => {
+            setPurchasedItems(new Set());
+          };
+
+          const aggregatedIngredients = useMemo(() => {
+            const ingredientMap = new Map();
+
+            Object.entries(selectedRecipes).forEach(([recipeId, batches]) => {
+              if (batches <= 0) return;
+              
+              const recipe = recipes.find(r => r.id === parseInt(recipeId));
+              if (!recipe) return;
+
+              recipe.ingredients.forEach(ingredient => {
+                const key = ingredient.name;
+                
+                if (!ingredientMap.has(key)) {
+                  ingredientMap.set(key, {
+                    name: ingredient.name,
+                    total: 0,
+                    unit: ingredient.unit,
+                    hasQuantity: ingredient.quantity !== null,
+                    price: ingredient.price,
+                    totalCost: 0
+                  });
+                }
+
+                const item = ingredientMap.get(key);
+                if (ingredient.quantity !== null) {
+                  item.total += ingredient.quantity * batches;
+                  if (ingredient.price !== null) {
+                    item.totalCost += ingredient.price * ingredient.quantity * batches;
+                  }
+                }
+              });
+            });
+
+            return Array.from(ingredientMap.values()).sort((a, b) => 
+              a.name.localeCompare(b.name)
+            );
+          }, [selectedRecipes, recipes]);
+
+          const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
+          const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+
+          const hasSelections = Object.keys(selectedRecipes).length > 0;
+
+          // Calculate total estimated cost from session prices
+          const totalCost = useMemo(() => {
+            return aggregatedIngredients.reduce((sum, ing) => {
+              const price = ingredientPrices[ing.name];
+              return sum + (price || 0);
+            }, 0);
+          }, [aggregatedIngredients, ingredientPrices]);
+
+          const hasPrices = Object.keys(ingredientPrices).length > 0;
+
+          // Filter recipes based on search query and sort favorites first
+          const filteredRecipes = useMemo(() => {
+            let filtered = recipes;
+            if (searchQuery.trim()) {
+              const query = searchQuery.toLowerCase();
+              filtered = recipes.filter(recipe => 
+                recipe.name.toLowerCase().includes(query)
+              );
+            }
+            // Sort: favorites first, then alphabetically
+            return filtered.sort((a, b) => {
+              if (a.isFavorite && !b.isFavorite) return -1;
+              if (!a.isFavorite && b.isFavorite) return 1;
+              return a.name.localeCompare(b.name);
+            });
+          }, [recipes, searchQuery]);
+
+          if (showRecipeForm) {
+            return <RecipeForm 
+              recipe={editingRecipe}
+              recipes={recipes}
+              darkMode={darkMode}
+              onSave={(recipe) => {
+                if (editingRecipe) {
+                  setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
+                } else {
+                  const newId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) + 1 : 1;
+                  setRecipes(prev => [...prev, { ...recipe, id: newId }]);
+                }
+                setShowRecipeForm(false);
+                setEditingRecipe(null);
+              }}
+              onCancel={() => {
+                setShowRecipeForm(false);
+                setEditingRecipe(null);
+              }}
+            />;
+          }
+
+          if (showManageRecipes) {
+            return (
+              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div className="max-w-4xl mx-auto">
+                  <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Settings className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Manage Recipes</h1>
+                      </div>
+                      <button
+                        onClick={() => setShowManageRecipes(false)}
+                        className={`px-4 py-2 ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        Back to Shopping List
+                      </button>
+                    </div>
+                    <button
+                      onClick={startNewRecipe}
+                      className={`w-full px-4 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
+                      + Add New Recipe
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recipes.map(recipe => (
+                      <div key={recipe.id} className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{recipe.name}</h3>
+                            <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {recipe.ingredients.length} ingredient{recipe.ingredients.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => duplicateRecipe(recipe)}
+                              className={`p-2 rounded ${darkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'}`}
+                              title="Duplicate recipe"
+                            >
+                              <Copy className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => startEditRecipe(recipe)}
+                              className={`p-2 rounded ${darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'}`}
+                              title="Edit recipe"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => deleteRecipe(recipe.id)}
+                              className={`p-2 rounded ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-red-50'}`}
+                              title="Delete recipe"
+                            >
+                              <Trash className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className={`mt-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <div className="grid grid-cols-2 gap-2">
+                            {recipe.ingredients.slice(0, 6).map((ing, i) => (
+                              <div key={i} className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                • {ing.name}
+                              </div>
+                            ))}
+                          </div>
+                          {recipe.ingredients.length > 6 && (
+                            <div className="text-gray-500 mt-2">
+                              ... and {recipe.ingredients.length - 6} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className="max-w-6xl mx-auto">
+                <div className={`rounded-lg shadow-sm border mb-6 p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-2">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <ShoppingCart className={`w-6 h-6 md:w-8 md:h-8 flex-shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <h1 className={`text-xl md:text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h1>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                      >
+                        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => setShowManageRecipes(true)}
+                        className={`flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                      >
+                        <Settings className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Manage Recipes</span>
+                        <span className="sm:hidden">Recipes</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p className={`text-sm md:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Select recipes and specify batch quantities to generate your shopping list</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Recipe Selection Panel */}
+                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Select Recipes</h2>
+                    {recipes.length === 0 ? (
+                      <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p>No recipes yet. Click "Manage Recipes" to add some!</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Search input */}
+                        {recipes.length > 3 && (
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search recipes..."
+                            className={`w-full px-4 py-2 mb-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                          />
+                        )}
+                        
+                        <div className="space-y-3">
+                          {filteredRecipes.length === 0 ? (
+                            <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <p>No recipes match "{searchQuery}"</p>
+                            </div>
+                          ) : (
+                            filteredRecipes.map(recipe => {
+                              const isSelected = selectedRecipes[recipe.id] !== undefined;
+                              const batches = selectedRecipes[recipe.id] || 1;
+
+                              return (
+                                <div key={recipe.id} className={`border rounded-lg p-4 transition-colors ${darkMode ? 'border-gray-700 hover:border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}>
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => toggleRecipe(recipe.id)}
+                                      className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <label className={`font-medium cursor-pointer ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                          {recipe.name}
+                                        </label>
+                                        <button
+                                          onClick={() => toggleFavorite(recipe.id)}
+                                          className={`p-1 rounded ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                          title={recipe.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                        >
+                                          <Star 
+                                            className={`w-5 h-5 ${recipe.isFavorite ? 'text-yellow-500' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                                            filled={recipe.isFavorite}
+                                          />
+                                        </button>
+                                      </div>
+                                      <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {recipe.ingredients.length} ingredients
+                                      </div>
+                                      {recipe.notes && (
+                                        <div className={`text-sm mt-1 italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                          {recipe.notes}
+                                        </div>
+                                      )}
+                                      
+                                      {isSelected && (
+                                        <div className="mt-3 flex items-center gap-2">
+                                          <button
+                                            onClick={() => updateBatches(recipe.id, batches - 1)}
+                                            className={`p-1 rounded border disabled:opacity-50 ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+                                            disabled={batches <= 1}
+                                          >
+                                            <Minus className="w-4 h-4" />
+                                          </button>
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            value={batches}
+                                            onChange={(e) => updateBatches(recipe.id, e.target.value)}
+                                            className={`w-20 px-3 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                          />
+                                          <button
+                                            onClick={() => updateBatches(recipe.id, batches + 1)}
+                                            className={`p-1 rounded border ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+                                          >
+                                            <Plus className="w-4 h-4" />
+                                          </button>
+                                          <span className={`text-sm ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            {batches === 1 ? 'batch' : 'batches'}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Shopping List Panel */}
+                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h2>
+                      {purchasedItems.size > 0 && (
+                        <button
+                          onClick={clearPurchasedItems}
+                          className={`flex items-center gap-1 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                          title="Reset all items"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                    
+                    {!hasSelections ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                        <p>Select recipes to generate your shopping list</p>
+                      </div>
+                    ) : aggregatedIngredients.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <p>No ingredients to display</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Remaining Items */}
+                        {remainingItems.length > 0 && (
+                          <div className="space-y-2 mb-4">
+                            {remainingItems.map((ingredient, index) => (
+                              <div key={index} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={false}
+                                  onChange={() => togglePurchased(ingredient.name)}
+                                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                                />
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-1 gap-2 w-full">
+                                  <div className="flex flex-col">
+                                    <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                      {ingredient.name}
+                                    </span>
+                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      {ingredient.hasQuantity 
+                                        ? `${ingredient.total.toFixed(1)} ${ingredient.unit}`
+                                        : 'As needed'
+                                      }
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
+                                    <input
+                                      type="number"
+                                      value={ingredientPrices[ingredient.name] || ''}
+                                      onChange={(e) => {
+                                        const newPrices = {...ingredientPrices};
+                                        const value = parseFloat(e.target.value);
+                                        if (e.target.value === '' || isNaN(value)) {
+                                          delete newPrices[ingredient.name];
+                                        } else {
+                                          newPrices[ingredient.name] = value;
+                                        }
+                                        setIngredientPrices(newPrices);
+                                      }}
+                                      placeholder="0"
+                                      className={`w-24 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      step="0.01"
+                                      min="0"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Purchased Items */}
+                        {purchasedItemsList.length > 0 && (
+                          <>
+                            <div className={`border-t pt-4 mt-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                              <h3 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Purchased ({purchasedItemsList.length})</h3>
+                              <div className="space-y-2">
+                                {purchasedItemsList.map((ingredient, index) => (
+                                  <div key={index} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-green-50 border-green-200'}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={true}
+                                      onChange={() => togglePurchased(ingredient.name)}
+                                      className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
+                                    />
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-1 gap-2 w-full">
+                                      <div className="flex flex-col">
+                                        <span className={`font-medium line-through ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                          {ingredient.name}
+                                        </span>
+                                        <span className={`text-sm line-through ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                          {ingredient.hasQuantity 
+                                            ? `${ingredient.total.toFixed(1)} ${ingredient.unit}`
+                                            : 'As needed'
+                                          }
+                                        </span>
+                                      </div>
+                                      {ingredientPrices[ingredient.name] && (
+                                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                          NT$ {ingredientPrices[ingredient.name].toLocaleString('zh-TW')}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <strong>{remainingItems.length}</strong> remaining · <strong>{purchasedItemsList.length}</strong> purchased
+                          </div>
+                          {hasPrices && totalCost > 0 && (
+                            <div className={`mt-3 text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              Estimated Total: <span className="text-blue-600">NT$ {totalCost.toLocaleString('zh-TW')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function RecipeForm({ recipe, recipes, darkMode, onSave, onCancel }) {
+          const [name, setName] = useState(recipe?.name || '');
+          const [yieldUnit, setYieldUnit] = useState(recipe?.yieldUnit || 'batch');
+          const [notes, setNotes] = useState(recipe?.notes || '');
+          const [ingredients, setIngredients] = useState(
+            recipe?.ingredients || [{ name: '', quantity: '', unit: 'g', substitution: '', price: '' }]
+          );
+
+          const addIngredient = () => {
+            setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '' }]);
+          };
+
+          const removeIngredient = (index) => {
+            setIngredients(ingredients.filter((_, i) => i !== index));
+          };
+
+          const updateIngredient = (index, field, value) => {
+            const updated = [...ingredients];
+            updated[index] = { ...updated[index], [field]: value };
+            setIngredients(updated);
+          };
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            
+            if (!name.trim()) {
+              alert('Please enter a recipe name');
+              return;
+            }
+
+            const filteredIngredients = ingredients.filter(ing => ing.name.trim());
+            
+            if (filteredIngredients.length === 0) {
+              alert('Please add at least one ingredient');
+              return;
+            }
+
+            const processedIngredients = filteredIngredients.map(ing => ({
+              name: ing.name.trim(),
+              quantity: ing.quantity === '' ? null : parseFloat(ing.quantity),
+              unit: ing.unit,
+              substitution: ing.substitution?.trim() || '',
+              price: ing.price === '' ? null : parseFloat(ing.price)
+            }));
+
+            onSave({
+              ...(recipe || {}),
+              name: name.trim(),
+              yieldUnit,
+              notes: notes.trim(),
+              ingredients: processedIngredients
+            });
+          };
+
+          return (
+            <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className="max-w-3xl mx-auto">
+                <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {recipe ? 'Edit Recipe' : 'Add New Recipe'}
+                    </h1>
+                    <button
+                      onClick={onCancel}
+                      className={darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-6">
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Recipe Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., Ayam Goreng Paste"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Yield Unit
+                        </label>
+                        <input
+                          type="text"
+                          value={yieldUnit}
+                          onChange={(e) => setYieldUnit(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., batch, kg, liters"
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Notes (optional)
+                        </label>
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., 500g equals 30 pieces, Needs 8 hour marination"
+                          rows="3"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Ingredients *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addIngredient}
+                            className={`text-sm font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                          >
+                            + Add Ingredient
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {ingredients.map((ingredient, index) => (
+                            <div key={index} className={`border rounded-lg p-3 ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200'}`}>
+                              <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                                <input
+                                  type="text"
+                                  value={ingredient.name}
+                                  onChange={(e) => updateIngredient(index, 'name', e.target.value)}
+                                  className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                  placeholder="Ingredient name"
+                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={ingredient.quantity}
+                                    onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
+                                    className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                    placeholder="Qty"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={ingredient.unit}
+                                    onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                                    className={`w-20 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                    placeholder="Unit"
+                                  />
+                                  {ingredients.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeIngredient(index)}
+                                      className={`p-2 rounded ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-red-50'}`}
+                                    >
+                                      <Trash className="w-5 h-5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              <input
+                                type="text"
+                                value={ingredient.substitution || ''}
+                                onChange={(e) => updateIngredient(index, 'substitution', e.target.value)}
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
+                                placeholder="Substitution (e.g., or use fresh galangal)"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Leave quantity blank for ingredients you haven't measured yet
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-8">
+                      <button
+                        type="submit"
+                        className={`flex-1 px-6 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        {recipe ? 'Update Recipe' : 'Add Recipe'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onCancel}
+                        className={`px-6 py-3 border rounded-lg font-medium ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ShoppingAggregator />);
+    </script>
+</body>
+</html>
