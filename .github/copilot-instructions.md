@@ -209,11 +209,13 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
 
 8. **Export/Import Recipes** ✅
    - Export: Downloads `recipes-backup-YYYY-MM-DD.json`
-   - Import (Merge): Adds recipes to existing collection
-   - Replace All: Overwrites all recipes with imported file
-   - JSON format includes version and export date
+   - **Includes price history**: Exports both recipes and lastKnownPrices
+   - Import (Merge): Adds recipes and merges price history to existing
+   - Replace All: Overwrites all recipes and price history with imported file
+   - JSON format v1.1: `{version, exportDate, recipes, lastKnownPrices}`
    - File validation and error handling
-   - Success/error messages with recipe counts
+   - Success/error messages with recipe and price counts
+   - Use case: Sync data between iPad, iPhone, Mac
 
 9. **iOS Home Screen Optimization** ✅
    - Custom app icon (shopping cart emoji on blue)
@@ -221,6 +223,17 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
    - App title: "Shopping List"
    - Black translucent status bar
    - Theme color for mobile browsers
+
+10. **Price History & Tracking** ✅
+   - **Last Known Prices**: Auto-saves prices with date as you enter them
+   - **Price Memory**: `lastKnownPrices` state persists in localStorage
+   - **Load Prices Button**: Fills all price fields from last shopping trip
+   - **Price Change Indicators**: Shows ↑/↓ with percentage when price changes
+   - **Estimated Total**: Displays at top of shopping list before entering prices
+   - **Auto-save**: 2-second debounce when entering prices
+   - **Display**: Shows last price/date below each ingredient
+   - **Export/Import**: Price history included in JSON backups
+   - Use case: Know how much cash to bring before shopping
 
 ### Data Structure
 ```javascript
@@ -249,6 +262,24 @@ ingredientPrices: {
     unitType: string          // Unit type (e.g., "g", "bunch", "pcs")
   }
 }
+
+// Price history (persists in localStorage)
+lastKnownPrices: {
+  [ingredientName]: {
+    price: number,            // Last known unit price in NT$
+    unitQty: number | '',     // Last known quantity (e.g., 600)
+    unitType: string,         // Last known unit (e.g., "g", "bunch")
+    date: string              // ISO date string (YYYY-MM-DD)
+  }
+}
+
+// Export format (v1.1)
+{
+  version: "1.1",
+  exportDate: "2025-01-15T10:30:00.000Z",
+  recipes: Recipe[],
+  lastKnownPrices: lastKnownPrices
+}
 ```
 
 ### Price Calculation Logic
@@ -256,6 +287,16 @@ ingredientPrices: {
 - If recipe needs 1200g: cost = (1200 / 600) × 50 = NT$ 100
 - Empty unitQty defaults to 1 in calculations (not in state)
 - Handles empty/deleted values without forcing "1" to appear
+
+### Price History Flow
+1. **Entry**: User enters price in shopping list
+2. **Auto-save**: Debounced 2 seconds, then saves to `lastKnownPrices`
+3. **Persistence**: `lastKnownPrices` → localStorage
+4. **Display**: Shows "Last: NT$50/600g (2025-01-15)" below ingredient
+5. **Load**: "Load Prices" button copies `lastKnownPrices` → `ingredientPrices`
+6. **Compare**: Shows ↑15% (red) or ↓10% (green) when current ≠ last
+7. **Estimate**: Calculates total from `lastKnownPrices` at top of list
+8. **Export/Import**: Price history included in JSON v1.1 format
 
 ## AI Model Configuration
 

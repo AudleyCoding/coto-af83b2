@@ -93,11 +93,14 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 1. Go to **"Manage Recipes"**
 2. Click **"Export"** button (download icon)
 3. A JSON file downloads: `recipes-backup-YYYY-MM-DD.json`
-4. File location:
+4. **What's included**:
+   - All your recipes (ingredients, notes, favorites, substitutions)
+   - Price history (last known prices from shopping trips)
+5. File location:
    - **iPhone/iPad**: Files app > Downloads (or iCloud Drive if configured)
    - **Mac**: Downloads folder
    - **Android**: Downloads folder
-5. **Tip**: Move to a dedicated backup folder for organization
+6. **Tip**: Move to a dedicated backup folder for organization
 
 #### Import Recipes (Restore/Merge)
 1. Go to **"Manage Recipes"**
@@ -105,15 +108,17 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 3. Select your backup JSON file
 4. If you have existing recipes:
    - Imported recipes are **merged** (added to existing)
+   - Price history is **merged** (new prices added, existing updated)
    - Your current recipes stay intact
    - New IDs assigned to avoid conflicts
-5. Success message shows how many recipes were added
+5. Success message shows how many recipes and prices were added
+6. **Use case**: Sync data between devices (iPad, iPhone, Mac)
 
 #### Replace All Recipes
 1. Go to **"Manage Recipes"**
 2. Click **"⚠️ Replace All Recipes"** (red warning button)
 3. Select your backup JSON file
-4. **WARNING**: This completely replaces all current recipes
+4. **WARNING**: This completely replaces all current recipes and price history
 5. Confirm the action (cannot be undone)
 6. Use this to:
    - Switch between different menu sets (e.g., summer/winter)
@@ -164,13 +169,42 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
    - Example: `NT$ 30 / 1 bunch` (30 NT$ per bunch)
    - Example: `NT$ 15 / 1 pcs` (15 NT$ per piece)
 3. The app **automatically calculates** total cost based on quantity needed
-4. Prices are session-based (not saved to recipes) so you can update them each shopping trip
+4. Prices are **automatically saved** as you enter them (with 2-second delay)
 5. If you need 1200g and price is NT$50/600g, it shows: `= NT$ 100`
+
+#### Price History & Tracking
+1. **Automatic Price Memory**:
+   - Every price you enter is automatically saved as "last known price"
+   - Date is recorded so you know when you last bought it
+   - No manual save needed - happens in the background
+
+2. **Load Last Prices**:
+   - Click **"Load Prices"** button at the top of shopping list
+   - Fills in all price fields with your last known prices
+   - Saves time - no need to re-enter everything
+
+3. **Price Change Indicators**:
+   - When you enter a new price, app shows if it changed
+   - **Red arrow up (↑)**: Price increased (e.g., ↑15%)
+   - **Green arrow down (↓)**: Price decreased (e.g., ↓10%)
+   - Helps spot market trends and inflation
+
+4. **Estimated Total**:
+   - Appears at top of shopping list: **"Estimated: NT$ XXX"**
+   - Calculated from last known prices
+   - Shows **before** you go shopping - know how much cash to bring
+   - Updates as you select/deselect recipes
+
+5. **Price History Backup**:
+   - Export includes your price history
+   - Import merges price data across devices
+   - Sync prices between iPad, iPhone, Mac
 
 #### View Costs
 - Enter prices as you shop to track spending in real-time
 - Each item shows its calculated total cost
-- **"Estimated Total"** appears at the bottom
+- **"Total Cost"** at bottom shows current session total
+- **"Estimated Total"** at top shows budget based on last prices
 - Helps budget your shopping trip and compare with actual spending
 
 ### Dark Mode
@@ -193,6 +227,12 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 
 ### Cost Tracking
 - **Enter prices while shopping** using the unit price format (e.g., NT$50/600g)
+- **Load last prices** before shopping to see estimates
+- **Watch price changes** with up/down indicators
+- **Plan your budget** using the estimated total at top
+- **Track actual spending** using the total cost at bottom
+- App automatically saves all prices for next time
+- Export your price history to backup or sync devices
 - Match the pricing format used at the market:
   - If vegetables are priced per 600g, enter: `50 / 600 g`
   - If sold by bunch, enter: `30 / 1 bunch`
@@ -210,11 +250,13 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 
 ### Data Safety
 - All data stored locally on your device (localStorage)
+- **Includes**: recipes, favorites, notes, substitutions, and price history
 - **IMPORTANT**: Use Export feature to backup recipes regularly
 - Export creates JSON files you can restore anytime
-- Clearing browser data will erase recipes (but you'll have backups!)
+- Clearing browser data will erase everything (but you'll have backups!)
 - Data persists across app restarts and phone reboots
 - Each browser/device has separate data (use Export/Import to sync)
+- Price history syncs when you import/export between devices
 
 ## Advanced: Local Server Setup
 

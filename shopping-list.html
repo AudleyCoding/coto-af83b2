@@ -188,6 +188,7 @@
           const [showRecipeForm, setShowRecipeForm] = useState(false);
           const [searchQuery, setSearchQuery] = useState('');
           const [ingredientPrices, setIngredientPrices] = useState({});
+          const [lastKnownPrices, setLastKnownPrices] = useState({});
           const [darkMode, setDarkMode] = useState(false);
 
           // Load dark mode preference on mount
@@ -223,6 +224,46 @@
               localStorage.setItem('restaurantRecipes', JSON.stringify(recipes));
             }
           }, [recipes]);
+
+          // Load last known prices from localStorage
+          useEffect(() => {
+            const stored = localStorage.getItem('lastKnownPrices');
+            if (stored) {
+              try {
+                setLastKnownPrices(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load last known prices:', e);
+              }
+            }
+          }, []);
+
+          // Save last known prices whenever ingredientPrices changes
+          useEffect(() => {
+            const timer = setTimeout(() => {
+              Object.entries(ingredientPrices).forEach(([name, data]) => {
+                if (data?.price && data.price > 0) {
+                  setLastKnownPrices(prev => ({
+                    ...prev,
+                    [name]: {
+                      price: data.price,
+                      unitQty: data.unitQty || 1,
+                      unitType: data.unitType || '',
+                      date: new Date().toISOString().split('T')[0]
+                    }
+                  }));
+                }
+              });
+            }, 2000); // Debounce 2 seconds after user stops typing
+
+            return () => clearTimeout(timer);
+          }, [ingredientPrices]);
+
+          // Save lastKnownPrices to localStorage
+          useEffect(() => {
+            if (Object.keys(lastKnownPrices).length > 0) {
+              localStorage.setItem('lastKnownPrices', JSON.stringify(lastKnownPrices));
+            }
+          }, [lastKnownPrices]);
 
           const toggleRecipe = (recipeId) => {
             setSelectedRecipes(prev => {
@@ -298,11 +339,34 @@
             setPurchasedItems(new Set());
           };
 
+          const loadLastKnownPrices = () => {
+            const aggregatedNames = aggregatedIngredients.map(ing => ing.name);
+            const newPrices = {};
+            
+            aggregatedNames.forEach(name => {
+              if (lastKnownPrices[name]) {
+                newPrices[name] = {
+                  price: lastKnownPrices[name].price,
+                  unitQty: lastKnownPrices[name].unitQty,
+                  unitType: lastKnownPrices[name].unitType
+                };
+              }
+            });
+            
+            if (Object.keys(newPrices).length > 0) {
+              setIngredientPrices(newPrices);
+              alert(`✓ Loaded prices for ${Object.keys(newPrices).length} ingredient${Object.keys(newPrices).length !== 1 ? 's' : ''} from last shopping trip`);
+            } else {
+              alert('No price history found for these ingredients');
+            }
+          };
+
           const exportRecipes = () => {
             const exportData = {
-              version: "1.0",
+              version: "1.1",
               exportDate: new Date().toISOString(),
-              recipes: recipes
+              recipes: recipes,
+              lastKnownPrices: lastKnownPrices
             };
 
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -342,6 +406,7 @@
                   }
                   
                   const importedRecipes = importData.recipes;
+                  const importedPrices = importData.lastKnownPrices || {};
                   
                   if (importedRecipes.length === 0) {
                     alert('❌ The file contains no recipes.');
@@ -351,8 +416,14 @@
                   // Show import options
                   const existingCount = recipes.length;
                   const importCount = importedRecipes.length;
+                  const priceCount = Object.keys(importedPrices).length;
                   
-                  let message = `Found ${importCount} recipe${importCount !== 1 ? 's' : ''} in the file.\n`;
+                  let message = `Found ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
+                  if (priceCount > 0) {
+                    message += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                  }
+                  message += ` in the file.\n`;
+                  
                   if (existingCount > 0) {
                     message += `You currently have ${existingCount} recipe${existingCount !== 1 ? 's' : ''}.\n\n`;
                     message += `Choose import mode:\n`;
@@ -367,7 +438,17 @@
                         id: maxId + index + 1
                       }));
                       setRecipes(prev => [...prev, ...newRecipes]);
-                      alert(`✓ Successfully merged ${importCount} new recipe${importCount !== 1 ? 's' : ''}!`);
+                      
+                      // Merge price history
+                      if (priceCount > 0) {
+                        setLastKnownPrices(prev => ({...prev, ...importedPrices}));
+                      }
+                      
+                      let successMsg = `✓ Successfully merged ${importCount} new recipe${importCount !== 1 ? 's' : ''}`;
+                      if (priceCount > 0) {
+                        successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                      }
+                      alert(successMsg + '!');
                     }
                   } else {
                     // No existing recipes, just import
@@ -376,7 +457,17 @@
                       id: index + 1
                     }));
                     setRecipes(recipesWithIds);
-                    alert(`✓ Successfully imported ${importCount} recipe${importCount !== 1 ? 's' : ''}!`);
+                    
+                    // Import price history
+                    if (priceCount > 0) {
+                      setLastKnownPrices(importedPrices);
+                    }
+                    
+                    let successMsg = `✓ Successfully imported ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
+                    if (priceCount > 0) {
+                      successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                    }
+                    alert(successMsg + '!');
                   }
                   
                 } catch (error) {
@@ -411,13 +502,19 @@
                   }
                   
                   const importedRecipes = importData.recipes;
+                  const importedPrices = importData.lastKnownPrices || {};
                   
                   if (importedRecipes.length === 0) {
                     alert('❌ The file contains no recipes.');
                     return;
                   }
                   
-                  const message = `⚠️ WARNING: This will replace all ${recipes.length} existing recipe${recipes.length !== 1 ? 's' : ''} with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''} from the file.\n\nThis cannot be undone!\n\nContinue?`;
+                  const priceCount = Object.keys(importedPrices).length;
+                  let message = `⚠️ WARNING: This will replace all ${recipes.length} existing recipe${recipes.length !== 1 ? 's' : ''} with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''} from the file`;
+                  if (priceCount > 0) {
+                    message += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                  }
+                  message += '.\n\nThis cannot be undone!\n\nContinue?';
                   
                   if (confirm(message)) {
                     const recipesWithIds = importedRecipes.map((recipe, index) => ({
@@ -426,7 +523,17 @@
                     }));
                     setRecipes(recipesWithIds);
                     setSelectedRecipes({});
-                    alert(`✓ Successfully replaced with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''}!`);
+                    
+                    // Replace price history
+                    if (priceCount > 0) {
+                      setLastKnownPrices(importedPrices);
+                    }
+                    
+                    let successMsg = `✓ Successfully replaced with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''}`;
+                    if (priceCount > 0) {
+                      successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                    }
+                    alert(successMsg + '!');
                   }
                   
                 } catch (error) {
@@ -499,6 +606,25 @@
           }, [aggregatedIngredients, ingredientPrices]);
 
           const hasPrices = Object.keys(ingredientPrices).some(key => ingredientPrices[key]?.price);
+
+          // Calculate estimated total based on last known prices
+          const estimatedTotal = useMemo(() => {
+            let total = 0;
+            let hasEstimates = false;
+            
+            aggregatedIngredients.forEach(ing => {
+              const lastPrice = lastKnownPrices[ing.name];
+              if (lastPrice?.price && ing.hasQuantity) {
+                const unitPrice = lastPrice.price;
+                const unitQty = lastPrice.unitQty || 1;
+                const itemCost = (ing.total / unitQty) * unitPrice;
+                total += itemCost;
+                hasEstimates = true;
+              }
+            });
+            
+            return hasEstimates ? total : null;
+          }, [aggregatedIngredients, lastKnownPrices]);
 
           // Filter recipes based on search query and sort favorites first
           const filteredRecipes = useMemo(() => {
@@ -796,18 +922,38 @@
 
                   {/* Shopping List Panel */}
                   <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h2>
-                      {purchasedItems.size > 0 && (
-                        <button
-                          onClick={clearPurchasedItems}
-                          className={`flex items-center gap-1 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
-                          title="Reset all items"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Reset
-                        </button>
-                      )}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+                      <div className="flex flex-col">
+                        <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h2>
+                        {hasSelections && estimatedTotal !== null && (
+                          <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Estimated: <span className="font-semibold">{estimatedTotal.toLocaleString('zh-TW', { style: 'currency', currency: 'TWD' })}</span>
+                            <span className="text-xs ml-1">(based on last prices)</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0 && (
+                          <button
+                            onClick={loadLastKnownPrices}
+                            className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'}`}
+                            title="Load prices from last shopping trip"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Load Prices</span>
+                          </button>
+                        )}
+                        {purchasedItems.size > 0 && (
+                          <button
+                            onClick={clearPurchasedItems}
+                            className={`flex items-center gap-1 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            title="Reset all items"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reset</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                     
                     {!hasSelections ? (
@@ -843,6 +989,11 @@
                                         : 'As needed'
                                       }
                                     </span>
+                                    {lastKnownPrices[ingredient.name] && (
+                                      <span className={`text-xs italic ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                        Last: NT${lastKnownPrices[ingredient.name].price}/{lastKnownPrices[ingredient.name].unitQty}{lastKnownPrices[ingredient.name].unitType} ({lastKnownPrices[ingredient.name].date})
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                     <div className="flex items-center gap-1">
@@ -912,14 +1063,31 @@
                                       />
                                     </div>
                                     {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
-                                      <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                        = NT$ {(() => {
-                                          const unitPrice = ingredientPrices[ingredient.name].price;
-                                          const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
-                                          const totalCost = (ingredient.total / unitQty) * unitPrice;
-                                          return totalCost.toFixed(0);
+                                      <div className="flex flex-col items-end gap-1">
+                                        <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                          = NT$ {(() => {
+                                            const unitPrice = ingredientPrices[ingredient.name].price;
+                                            const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
+                                            const totalCost = (ingredient.total / unitQty) * unitPrice;
+                                            return totalCost.toFixed(0);
+                                          })()}
+                                        </span>
+                                        {lastKnownPrices[ingredient.name] && (() => {
+                                          const currentPrice = ingredientPrices[ingredient.name].price;
+                                          const lastPrice = lastKnownPrices[ingredient.name].price;
+                                          const priceDiff = currentPrice - lastPrice;
+                                          const percentDiff = ((priceDiff / lastPrice) * 100).toFixed(0);
+                                          
+                                          if (Math.abs(priceDiff) > 0.01) {
+                                            return (
+                                              <span className={`text-xs ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                {priceDiff > 0 ? '↑' : '↓'} {Math.abs(percentDiff)}%
+                                              </span>
+                                            );
+                                          }
+                                          return null;
                                         })()}
-                                      </span>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
