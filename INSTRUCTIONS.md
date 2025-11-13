@@ -87,6 +87,59 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 - Favorites appear at the top of the list
 - Great for your most-used recipes
 
+### Backup & Restore Recipes
+
+#### Export Recipes (Backup)
+1. Go to **"Manage Recipes"**
+2. Click **"Export"** button (download icon)
+3. A JSON file downloads: `recipes-backup-YYYY-MM-DD.json`
+4. File location:
+   - **iPhone/iPad**: Files app > Downloads (or iCloud Drive if configured)
+   - **Mac**: Downloads folder
+   - **Android**: Downloads folder
+5. **Tip**: Move to a dedicated backup folder for organization
+
+#### Import Recipes (Restore/Merge)
+1. Go to **"Manage Recipes"**
+2. Click **"Import"** button (upload icon)
+3. Select your backup JSON file
+4. If you have existing recipes:
+   - Imported recipes are **merged** (added to existing)
+   - Your current recipes stay intact
+   - New IDs assigned to avoid conflicts
+5. Success message shows how many recipes were added
+
+#### Replace All Recipes
+1. Go to **"Manage Recipes"**
+2. Click **"⚠️ Replace All Recipes"** (red warning button)
+3. Select your backup JSON file
+4. **WARNING**: This completely replaces all current recipes
+5. Confirm the action (cannot be undone)
+6. Use this to:
+   - Switch between different menu sets (e.g., summer/winter)
+   - Restore from backup after data loss
+   - Start fresh with a different recipe collection
+
+#### Backup Best Practices
+- **Export regularly**: Weekly or after adding important recipes
+- **Keep multiple backups**: Different dates in case you need older versions
+- **Organize backups**: Create a folder like "Recipe Backups" in Files app
+- **Test restores**: Occasionally try importing to make sure backups work
+- **Cross-device**: Export on one device, import on another to sync recipes
+- **Before major changes**: Export before deleting or editing many recipes
+
+#### File Management Tips
+- **iOS/iPadOS**: 
+  - Save exports to iCloud Drive to sync across devices
+  - Use Files app to organize into folders
+  - Share via AirDrop to other devices
+- **Mac**:
+  - Move from Downloads to Documents or iCloud
+  - Keep dated backups for version history
+- **Android**:
+  - Use Files by Google or similar to organize
+  - Consider backing up to Google Drive
+
 ### Creating Shopping Lists
 
 #### Select Recipes
@@ -104,10 +157,21 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 2. Checked items move to "Purchased" section with green background
 3. Click **"Reset"** button to uncheck all items (e.g., for next shopping trip)
 
+#### Add Market Prices
+1. In the shopping list, each ingredient has price input fields
+2. Enter **unit price** format: `NT$ [price] / [quantity] [unit]`
+   - Example: `NT$ 50 / 600 g` (50 NT$ per 600 grams)
+   - Example: `NT$ 30 / 1 bunch` (30 NT$ per bunch)
+   - Example: `NT$ 15 / 1 pcs` (15 NT$ per piece)
+3. The app **automatically calculates** total cost based on quantity needed
+4. Prices are session-based (not saved to recipes) so you can update them each shopping trip
+5. If you need 1200g and price is NT$50/600g, it shows: `= NT$ 100`
+
 #### View Costs
-- If you added prices, each ingredient shows its cost in NT$
+- Enter prices as you shop to track spending in real-time
+- Each item shows its calculated total cost
 - **"Estimated Total"** appears at the bottom
-- Helps budget your shopping trip
+- Helps budget your shopping trip and compare with actual spending
 
 ### Dark Mode
 - Click the **moon/sun icon** in the header to toggle dark mode
@@ -128,10 +192,15 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 - **Use substitutions** to remember backup options
 
 ### Cost Tracking
-- Add prices to frequently bought items
-- Leave prices blank for items that vary
-- Update prices when they change significantly
-- Use the total to compare with actual spending
+- **Enter prices while shopping** using the unit price format (e.g., NT$50/600g)
+- Match the pricing format used at the market:
+  - If vegetables are priced per 600g, enter: `50 / 600 g`
+  - If sold by bunch, enter: `30 / 1 bunch`
+  - If sold per piece, enter: `15 / 1 pcs`
+- App automatically calculates total cost based on recipe quantities
+- **Prices are session-based** - they don't save to recipes, so update each trip
+- Leave prices blank for items you haven't priced yet
+- Use the estimated total to budget and compare with actual spending
 
 ### Batch Adjustments
 - Quickly adjust quantities with +/- buttons
@@ -141,9 +210,11 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 
 ### Data Safety
 - All data stored locally on your device (localStorage)
-- **Back up important recipes**: Copy the text from recipes periodically
-- Clearing browser data will erase recipes
+- **IMPORTANT**: Use Export feature to backup recipes regularly
+- Export creates JSON files you can restore anytime
+- Clearing browser data will erase recipes (but you'll have backups!)
 - Data persists across app restarts and phone reboots
+- Each browser/device has separate data (use Export/Import to sync)
 
 ## Advanced: Local Server Setup
 

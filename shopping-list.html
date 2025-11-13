@@ -167,6 +167,18 @@
           </svg>
         );
 
+        const Download = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        );
+
+        const Upload = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
+          </svg>
+        );
+
         function ShoppingAggregator() {
           const [recipes, setRecipes] = useState([]);
           const [selectedRecipes, setSelectedRecipes] = useState({});
@@ -286,6 +298,149 @@
             setPurchasedItems(new Set());
           };
 
+          const exportRecipes = () => {
+            const exportData = {
+              version: "1.0",
+              exportDate: new Date().toISOString(),
+              recipes: recipes
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            link.download = `recipes-backup-${dateStr}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert(`✓ Exported ${recipes.length} recipe${recipes.length !== 1 ? 's' : ''} successfully!`);
+          };
+
+          const importRecipes = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                try {
+                  const importData = JSON.parse(event.target.result);
+                  
+                  // Validate data structure
+                  if (!importData.recipes || !Array.isArray(importData.recipes)) {
+                    alert('❌ Invalid file format. Please select a valid recipe backup file.');
+                    return;
+                  }
+                  
+                  const importedRecipes = importData.recipes;
+                  
+                  if (importedRecipes.length === 0) {
+                    alert('❌ The file contains no recipes.');
+                    return;
+                  }
+                  
+                  // Show import options
+                  const existingCount = recipes.length;
+                  const importCount = importedRecipes.length;
+                  
+                  let message = `Found ${importCount} recipe${importCount !== 1 ? 's' : ''} in the file.\n`;
+                  if (existingCount > 0) {
+                    message += `You currently have ${existingCount} recipe${existingCount !== 1 ? 's' : ''}.\n\n`;
+                    message += `Choose import mode:\n`;
+                    message += `• OK = Merge (keep existing + add new)\n`;
+                    message += `• Cancel = Go back`;
+                    
+                    if (confirm(message)) {
+                      // Merge mode
+                      const maxId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) : 0;
+                      const newRecipes = importedRecipes.map((recipe, index) => ({
+                        ...recipe,
+                        id: maxId + index + 1
+                      }));
+                      setRecipes(prev => [...prev, ...newRecipes]);
+                      alert(`✓ Successfully merged ${importCount} new recipe${importCount !== 1 ? 's' : ''}!`);
+                    }
+                  } else {
+                    // No existing recipes, just import
+                    const recipesWithIds = importedRecipes.map((recipe, index) => ({
+                      ...recipe,
+                      id: index + 1
+                    }));
+                    setRecipes(recipesWithIds);
+                    alert(`✓ Successfully imported ${importCount} recipe${importCount !== 1 ? 's' : ''}!`);
+                  }
+                  
+                } catch (error) {
+                  alert('❌ Error reading file. Please make sure it\'s a valid JSON file.');
+                  console.error('Import error:', error);
+                }
+              };
+              
+              reader.readAsText(file);
+            };
+            
+            input.click();
+          };
+
+          const replaceAllRecipes = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                try {
+                  const importData = JSON.parse(event.target.result);
+                  
+                  if (!importData.recipes || !Array.isArray(importData.recipes)) {
+                    alert('❌ Invalid file format. Please select a valid recipe backup file.');
+                    return;
+                  }
+                  
+                  const importedRecipes = importData.recipes;
+                  
+                  if (importedRecipes.length === 0) {
+                    alert('❌ The file contains no recipes.');
+                    return;
+                  }
+                  
+                  const message = `⚠️ WARNING: This will replace all ${recipes.length} existing recipe${recipes.length !== 1 ? 's' : ''} with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''} from the file.\n\nThis cannot be undone!\n\nContinue?`;
+                  
+                  if (confirm(message)) {
+                    const recipesWithIds = importedRecipes.map((recipe, index) => ({
+                      ...recipe,
+                      id: index + 1
+                    }));
+                    setRecipes(recipesWithIds);
+                    setSelectedRecipes({});
+                    alert(`✓ Successfully replaced with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''}!`);
+                  }
+                  
+                } catch (error) {
+                  alert('❌ Error reading file. Please make sure it\'s a valid JSON file.');
+                  console.error('Import error:', error);
+                }
+              };
+              
+              reader.readAsText(file);
+            };
+            
+            input.click();
+          };
+
           const aggregatedIngredients = useMemo(() => {
             const ingredientMap = new Map();
 
@@ -332,12 +487,18 @@
           // Calculate total estimated cost from session prices
           const totalCost = useMemo(() => {
             return aggregatedIngredients.reduce((sum, ing) => {
-              const price = ingredientPrices[ing.name];
-              return sum + (price || 0);
+              const priceData = ingredientPrices[ing.name];
+              if (priceData?.price && ing.hasQuantity) {
+                const unitPrice = priceData.price;
+                const unitQty = priceData.unitQty || 1;
+                const itemCost = (ing.total / unitQty) * unitPrice;
+                return sum + itemCost;
+              }
+              return sum;
             }, 0);
           }, [aggregatedIngredients, ingredientPrices]);
 
-          const hasPrices = Object.keys(ingredientPrices).length > 0;
+          const hasPrices = Object.keys(ingredientPrices).some(key => ingredientPrices[key]?.price);
 
           // Filter recipes based on search query and sort favorites first
           const filteredRecipes = useMemo(() => {
@@ -395,16 +556,57 @@
                         Back to Shopping List
                       </button>
                     </div>
-                    <button
-                      onClick={startNewRecipe}
-                      className={`w-full px-4 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                    >
-                      + Add New Recipe
-                    </button>
+                    
+                    {/* Main action buttons */}
+                    <div className="space-y-3">
+                      <button
+                        onClick={startNewRecipe}
+                        className={`w-full px-4 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        + Add New Recipe
+                      </button>
+                      
+                      {/* Import/Export buttons */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={exportRecipes}
+                          disabled={recipes.length === 0}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white disabled:bg-gray-800 disabled:text-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:bg-gray-50 disabled:text-gray-400'}`}
+                          title="Export all recipes to JSON file"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline">Export</span>
+                        </button>
+                        <button
+                          onClick={importRecipes}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                          title="Import recipes from JSON file (merge with existing)"
+                        >
+                          <Upload className="w-4 h-4" />
+                          <span className="hidden sm:inline">Import</span>
+                        </button>
+                      </div>
+                      
+                      {recipes.length > 0 && (
+                        <button
+                          onClick={replaceAllRecipes}
+                          className={`w-full px-3 py-2 text-sm rounded-lg font-medium transition-colors ${darkMode ? 'bg-red-900/20 hover:bg-red-900/30 text-red-400 border border-red-800' : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200'}`}
+                          title="Replace all recipes with imported file"
+                        >
+                          ⚠️ Replace All Recipes
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-4">
-                    {recipes.map(recipe => (
+                    {recipes.length === 0 ? (
+                      <div className={`text-center py-12 rounded-lg border mt-6 ${darkMode ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
+                        <p className="mb-2">No recipes yet</p>
+                        <p className="text-sm">Add a new recipe or import from a backup file</p>
+                      </div>
+                    ) : (
+                      recipes.map(recipe => (
                       <div key={recipe.id} className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -452,7 +654,7 @@
                           )}
                         </div>
                       </div>
-                    ))}
+                    )))}
                   </div>
                 </div>
               </div>
@@ -642,26 +844,83 @@
                                       }
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
-                                    <input
-                                      type="number"
-                                      value={ingredientPrices[ingredient.name] || ''}
-                                      onChange={(e) => {
-                                        const newPrices = {...ingredientPrices};
-                                        const value = parseFloat(e.target.value);
-                                        if (e.target.value === '' || isNaN(value)) {
-                                          delete newPrices[ingredient.name];
-                                        } else {
-                                          newPrices[ingredient.name] = value;
-                                        }
-                                        setIngredientPrices(newPrices);
-                                      }}
-                                      placeholder="0"
-                                      className={`w-24 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                      step="0.01"
-                                      min="0"
-                                    />
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                    <div className="flex items-center gap-1">
+                                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
+                                      <input
+                                        type="number"
+                                        value={ingredientPrices[ingredient.name]?.price || ''}
+                                        onChange={(e) => {
+                                          const newPrices = {...ingredientPrices};
+                                          const value = parseFloat(e.target.value);
+                                          if (e.target.value === '' || isNaN(value)) {
+                                            delete newPrices[ingredient.name];
+                                          } else {
+                                            newPrices[ingredient.name] = {
+                                              ...newPrices[ingredient.name],
+                                              price: value,
+                                              unitQty: newPrices[ingredient.name]?.unitQty || 1,
+                                              unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
+                                            };
+                                          }
+                                          setIngredientPrices(newPrices);
+                                        }}
+                                        placeholder="0"
+                                        className={`w-20 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                        step="0.01"
+                                        min="0"
+                                      />
+                                    </div>
+                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
+                                    <div className="flex items-center gap-1">
+                                      <input
+                                        type="number"
+                                        value={ingredientPrices[ingredient.name]?.unitQty ?? ''}
+                                        onChange={(e) => {
+                                          const newPrices = {...ingredientPrices};
+                                          if (ingredientPrices[ingredient.name]?.price) {
+                                            const value = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                            newPrices[ingredient.name] = {
+                                              ...newPrices[ingredient.name],
+                                              unitQty: value === '' ? '' : (value > 0 ? value : ''),
+                                              unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
+                                            };
+                                            setIngredientPrices(newPrices);
+                                          }
+                                        }}
+                                        placeholder="1"
+                                        className={`w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                        step="1"
+                                        min="1"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={ingredientPrices[ingredient.name]?.unitType || ''}
+                                        onChange={(e) => {
+                                          const newPrices = {...ingredientPrices};
+                                          if (ingredientPrices[ingredient.name]?.price) {
+                                            newPrices[ingredient.name] = {
+                                              ...newPrices[ingredient.name],
+                                              unitType: e.target.value || ingredient.unit,
+                                              unitQty: newPrices[ingredient.name]?.unitQty || 1
+                                            };
+                                            setIngredientPrices(newPrices);
+                                          }
+                                        }}
+                                        placeholder={ingredient.unit}
+                                        className={`w-12 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      />
+                                    </div>
+                                    {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
+                                      <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                        = NT$ {(() => {
+                                          const unitPrice = ingredientPrices[ingredient.name].price;
+                                          const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
+                                          const totalCost = (ingredient.total / unitQty) * unitPrice;
+                                          return totalCost.toFixed(0);
+                                        })()}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -695,9 +954,14 @@
                                           }
                                         </span>
                                       </div>
-                                      {ingredientPrices[ingredient.name] && (
+                                      {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
                                         <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                          NT$ {ingredientPrices[ingredient.name].toLocaleString('zh-TW')}
+                                          NT$ {(() => {
+                                            const unitPrice = ingredientPrices[ingredient.name].price;
+                                            const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
+                                            const totalCost = (ingredient.total / unitQty) * unitPrice;
+                                            return totalCost.toFixed(0);
+                                          })()}
                                         </div>
                                       )}
                                     </div>

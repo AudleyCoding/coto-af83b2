@@ -191,17 +191,36 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
    - Two-row layout in form: main info + substitution
    - Placeholder: "or use fresh galangal instead"
    
-6. **Cost Tracking** ✅
-   - Optional `price` field per ingredient (NT$)
-   - Calculates: price × quantity × batches
-   - Shows individual costs under each item
-   - Displays "Estimated Total" at bottom (NT$ with zh-TW formatting)
+6. **Unit Price Cost Tracking** ✅
+   - Session-based pricing (not saved to recipes)
+   - Unit price format: `NT$ [price] / [qty] [unit]`
+   - Example: `NT$ 50 / 600 g` = 50 NT$ per 600 grams
+   - Auto-calculates total: (ingredient_qty / unit_qty) × unit_price
+   - Three inputs per ingredient: price, unit quantity, unit type
+   - Shows calculated total: `= NT$ [amount]`
+   - Displays "Estimated Total" at bottom (zh-TW formatting)
+   - Prices stored in `ingredientPrices` state object
    
 7. **Dark Mode** ✅
    - Moon/Sun toggle button in header
    - Persists preference in localStorage
    - Dark gray backgrounds (bg-gray-900/800)
    - Yellow sun icon in dark mode
+
+8. **Export/Import Recipes** ✅
+   - Export: Downloads `recipes-backup-YYYY-MM-DD.json`
+   - Import (Merge): Adds recipes to existing collection
+   - Replace All: Overwrites all recipes with imported file
+   - JSON format includes version and export date
+   - File validation and error handling
+   - Success/error messages with recipe counts
+
+9. **iOS Home Screen Optimization** ✅
+   - Custom app icon (shopping cart emoji on blue)
+   - Full-screen web app mode (no Safari UI)
+   - App title: "Shopping List"
+   - Black translucent status bar
+   - Theme color for mobile browsers
 
 ### Data Structure
 ```javascript
@@ -217,11 +236,26 @@ Recipe: {
       quantity: number | null,
       unit: string,
       substitution: string,    // "or use fresh galangal"
-      price: number | null     // Cost in NT$
+      price: number | null     // NOT USED - prices now session-based
     }
   ]
 }
+
+// Session-based pricing (separate from recipe data)
+ingredientPrices: {
+  [ingredientName]: {
+    price: number,            // Unit price in NT$
+    unitQty: number | '',     // Quantity at that price (e.g., 600)
+    unitType: string          // Unit type (e.g., "g", "bunch", "pcs")
+  }
+}
 ```
+
+### Price Calculation Logic
+- User enters: `NT$ 50 / 600 g`
+- If recipe needs 1200g: cost = (1200 / 600) × 50 = NT$ 100
+- Empty unitQty defaults to 1 in calculations (not in state)
+- Handles empty/deleted values without forcing "1" to appear
 
 ## AI Model Configuration
 
