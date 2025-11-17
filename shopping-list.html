@@ -1201,6 +1201,36 @@
             recipe?.ingredients || [{ name: '', quantity: '', unit: 'g', substitution: '', price: '' }]
           );
 
+          // Get all unique ingredient names and units from existing recipes
+          const existingIngredients = useMemo(() => {
+            const ingredientMap = new Map();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                const key = ing.name.toLowerCase();
+                if (!ingredientMap.has(key)) {
+                  ingredientMap.set(key, {
+                    name: ing.name,
+                    unit: ing.unit,
+                    quantity: ing.quantity
+                  });
+                }
+              });
+            });
+            return Array.from(ingredientMap.values()).sort((a, b) => 
+              a.name.localeCompare(b.name)
+            );
+          }, [recipes]);
+
+          const existingUnits = useMemo(() => {
+            const units = new Set();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                if (ing.unit) units.add(ing.unit);
+              });
+            });
+            return Array.from(units).sort();
+          }, [recipes]);
+
           const addIngredient = () => {
             setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '' }]);
           };
@@ -1212,6 +1242,17 @@
           const updateIngredient = (index, field, value) => {
             const updated = [...ingredients];
             updated[index] = { ...updated[index], [field]: value };
+            
+            // Auto-fill unit when ingredient name matches existing ingredient
+            if (field === 'name' && value) {
+              const existing = existingIngredients.find(
+                ing => ing.name.toLowerCase() === value.toLowerCase()
+              );
+              if (existing && !updated[index].unit) {
+                updated[index].unit = existing.unit;
+              }
+            }
+            
             setIngredients(updated);
           };
 
@@ -1323,13 +1364,21 @@
                           {ingredients.map((ingredient, index) => (
                             <div key={index} className={`border rounded-lg p-3 ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200'}`}>
                               <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                                <input
-                                  type="text"
-                                  value={ingredient.name}
-                                  onChange={(e) => updateIngredient(index, 'name', e.target.value)}
-                                  className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                  placeholder="Ingredient name"
-                                />
+                                <div className="flex-1">
+                                  <input
+                                    type="text"
+                                    list={`ingredient-suggestions-${index}`}
+                                    value={ingredient.name}
+                                    onChange={(e) => updateIngredient(index, 'name', e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                    placeholder="Ingredient name"
+                                  />
+                                  <datalist id={`ingredient-suggestions-${index}`}>
+                                    {existingIngredients.map((ing, i) => (
+                                      <option key={i} value={ing.name} />
+                                    ))}
+                                  </datalist>
+                                </div>
                                 <div className="flex gap-2">
                                   <input
                                     type="number"
@@ -1339,13 +1388,21 @@
                                     className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
                                     placeholder="Qty"
                                   />
-                                  <input
-                                    type="text"
-                                    value={ingredient.unit}
-                                    onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                                    className={`w-20 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                    placeholder="Unit"
-                                  />
+                                  <div className="relative">
+                                    <input
+                                      type="text"
+                                      list={`unit-suggestions-${index}`}
+                                      value={ingredient.unit}
+                                      onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                                      className={`w-20 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      placeholder="Unit"
+                                    />
+                                    <datalist id={`unit-suggestions-${index}`}>
+                                      {existingUnits.map((unit, i) => (
+                                        <option key={i} value={unit} />
+                                      ))}
+                                    </datalist>
+                                  </div>
                                   {ingredients.length > 1 && (
                                     <button
                                       type="button"

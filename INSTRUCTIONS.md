@@ -4,23 +4,27 @@
 
 A standalone web app for aggregating shopping lists from multiple batch recipes. Perfect for restaurant prep or meal planning. Works offline once loaded, stores everything locally on your device.
 
+**IMPORTANT**: For offline use without needing your laptop running, you must use the "Add to Home Screen" method (see below). This saves the app to your phone so it works independently.
+
 ## Quick Start
 
 ### On Desktop/Laptop
 1. Open `shopping-list.html` in any modern browser (Chrome, Safari, Firefox, Edge)
 2. That's it! The app works immediately - no installation, no server needed
 
-### On iPhone/iPad (Recommended)
+### On iPhone/iPad (Recommended for Offline Use)
 
-#### Method 1: Home Screen Web App (Best Experience)
-1. **Host the file** - Choose one option:
-   - Upload to Dropbox/iCloud and get a sharing link
-   - Email the file to yourself and save to Files app
-   - Use a local server (see Advanced section)
+#### Method 1: Home Screen Web App (REQUIRED for Offline)
+This method makes the app work without your laptop running!
+
+1. **One-Time Setup - Host the file**:
+   - **Option A (Best)**: Upload `shopping-list.html` to iCloud Drive or Dropbox
+   - **Option B**: Use Safari's "Open File" feature (Files app integration)
+   - **Option C**: Email the file to yourself and open from Mail
 
 2. **Open in Safari** (must be Safari, not Chrome)
    - Navigate to the file location or URL
-   - Wait for the page to fully load
+   - Wait for the page to fully load (you'll see the Shopping List interface)
 
 3. **Add to Home Screen**:
    - Tap the Share button (square with arrow up) at the bottom
@@ -31,13 +35,15 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
 4. **Use like a native app**:
    - Tap the icon on your home screen
    - Runs in full screen without Safari UI
+   - **Works offline** - no laptop or server needed!
    - All data persists between sessions
-   - Works offline after first load
+   - Updates automatically when online
 
-#### Method 2: Quick Access (No Installation)
-- Open the file directly in Safari whenever needed
-- Bookmark it for quick access
-- Less convenient but still works perfectly
+#### Method 2: Local Server (Development/Testing Only)
+**WARNING**: This requires your MacBook to be running and on the same WiFi network!
+- Only use this for testing changes to the file
+- Not suitable for daily restaurant use
+- See "Advanced: Local Server Setup" section below
 
 ### On Android
 1. Open `shopping-list.html` in Chrome
@@ -57,12 +63,18 @@ A standalone web app for aggregating shopping lists from multiple batch recipes.
    - **Yield Unit** (optional) - e.g., "batch", "kg", "liters"
    - **Notes** (optional) - e.g., "500g equals 30 pieces" or "Needs 8 hour marination"
    - **Ingredients** (at least one required):
-     - Name - e.g., "shallot paste"
-     - Quantity - leave blank if not measured yet
-     - Unit - e.g., "g", "ml", "pcs"
-     - Price - optional, in NT$ (e.g., 150)
-     - Substitution - optional, e.g., "or use fresh galangal"
+     - **Name** - Type and see suggestions from existing ingredients
+       - Autocomplete dropdown shows ingredients you've used before
+       - Helps maintain consistent naming (e.g., always "Beef broth" not "Beef powder")
+       - Selecting a suggestion auto-fills the unit field
+     - **Quantity** - leave blank if not measured yet
+     - **Unit** - Type and see suggestions from existing units (g, ml, pcs, bunch, etc.)
+       - Auto-filled when you select an ingredient suggestion
+       - Autocomplete shows units you've used before
+     - **Substitution** - optional, e.g., "or use fresh galangal"
 4. Click **"Add Recipe"**
+
+**TIP**: The autocomplete feature learns from your existing recipes, making it easier to maintain consistent ingredient names and units across all recipes. This ensures proper aggregation in your shopping list!
 
 #### Edit a Recipe
 1. Go to **"Manage Recipes"**
