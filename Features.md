@@ -98,13 +98,14 @@ When you "Add to Home Screen":
 18. Standardized Unit Dropdown
 19. Auto-Fill Unit from Previous Usage
 20. Automatic Lowercase for Ingredient Names
-21. Offline Progressive Web App (PWA)
-22. iOS Home Screen Optimization
-23. Touch-Friendly Mobile Interface
-24. Responsive Design (Mobile-First)
-25. localStorage Data Persistence
-26. Shopping List Reset Function
-27. Keyboard Navigation for Autocomplete
+21. Shopping Location Categorization
+22. Offline Progressive Web App (PWA)
+23. iOS Home Screen Optimization
+24. Touch-Friendly Mobile Interface
+25. Responsive Design (Mobile-First)
+26. localStorage Data Persistence
+27. Shopping List Reset Function
+28. Keyboard Navigation for Autocomplete
 
 ---
 
@@ -352,7 +353,31 @@ When you "Add to Home Screen":
 
 ---
 
-### 21. Offline Progressive Web App (PWA)
+### 21. Shopping Location Categorization
+**What it does**: Organizes shopping list by purchase location (Street Market, Supermarket, Big King, etc.) with collapsible sections. Helps optimize multi-stop shopping trips.
+
+**How to use**:
+- **Add location to ingredients**: When creating/editing a recipe, fill in the "Purchase location" field for each ingredient
+- **Autocomplete suggestions**: Dropdown shows existing locations from your recipes
+- **Shopping list grouping**: Ingredients automatically group by location
+- **Section headers**: Each location has a header showing count (e.g., "🛒 Street Market (5 items)")
+- **Expand/collapse**: Tap section header to show/hide items (all expanded by default for easy scanning)
+- **Unspecified category**: Ingredients without location appear in "📍 Unspecified" section at bottom
+- **Statistics summary**: Top of shopping list shows item counts per location
+- **Purchased items**: Location appears next to checked-off items
+- **Smart merging**: When same ingredient in multiple recipes, uses first non-empty location
+- **Backward compatible**: Existing recipes work fine without location data
+
+**Example workflow**:
+1. Tuesday morning: Select recipes for the week
+2. Shopping list shows: Street Market (8 items), Supermarket (12 items), Big King (3 items)
+3. First stop: Street Market - expand that section, shop, check items off
+4. Second stop: Supermarket - expand that section, etc.
+5. Optimizes route and ensures you don't miss items at each location
+
+---
+
+### 22. Offline Progressive Web App (PWA)
 **What it does**: Works completely offline after installation, no internet or server required.
 
 **How to use**:
@@ -362,7 +387,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 22. iOS Home Screen Optimization
+### 23. iOS Home Screen Optimization
 **What it does**: Custom app icon, full-screen mode, no Safari UI when launched from home screen.
 
 **How to use**:
@@ -374,7 +399,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 23. Touch-Friendly Mobile Interface
+### 24. Touch-Friendly Mobile Interface
 **What it does**: All buttons, checkboxes, and inputs are sized for finger taps (minimum 44x44px per iOS guidelines).
 
 **How to use**:
@@ -384,7 +409,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 24. Responsive Design (Mobile-First)
+### 25. Responsive Design (Mobile-First)
 **What it does**: Layout adapts to screen size. Mobile (vertical stacking) → Desktop (side-by-side panels).
 
 **How to use**:
@@ -395,7 +420,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 25. localStorage Data Persistence
+### 26. localStorage Data Persistence
 **What it does**: All data (recipes, prices, preferences) is stored in browser's localStorage. Survives app closes, phone restarts.
 
 **How to use**:
@@ -407,7 +432,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 26. Shopping List Reset Function
+### 27. Shopping List Reset Function
 **What it does**: Unchecks all purchased items with one tap, preparing for the next shopping trip.
 
 **How to use**:
@@ -419,7 +444,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 27. Keyboard Navigation for Autocomplete
+### 28. Keyboard Navigation for Autocomplete
 **What it does**: Full keyboard support for ingredient autocomplete dropdown navigation.
 
 **How to use**:
@@ -436,13 +461,14 @@ When you "Add to Home Screen":
 
 ## Summary
 
-This app combines 27 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 28 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
-2. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
-3. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
-4. **Price tracking**: Remembers prices across trips, shows estimates before shopping
-5. **Mobile-optimized**: Built for iPhone use at the market
-6. **Data portability**: Export/import for backup and cross-device sync
+2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
+3. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
+4. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
+5. **Price tracking**: Remembers prices across trips, shows estimates before shopping
+6. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
+7. **Data portability**: Export/import for backup and cross-device sync
 
 Perfect for Coto Makassar's daily market shopping needs!
