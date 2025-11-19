@@ -185,6 +185,12 @@
           </svg>
         );
 
+        const ShoppingBag = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        );
+
         // Helper function to format amounts without unnecessary decimals
         const formatAmount = (amount) => {
           return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
@@ -194,6 +200,7 @@
           const [recipes, setRecipes] = useState([]);
           const [selectedRecipes, setSelectedRecipes] = useState({});
           const [purchasedItems, setPurchasedItems] = useState(new Set());
+          const [planToBuyItems, setPlanToBuyItems] = useState(new Set());
           const [showManageRecipes, setShowManageRecipes] = useState(false);
           const [editingRecipe, setEditingRecipe] = useState(null);
           const [showRecipeForm, setShowRecipeForm] = useState(false);
@@ -659,11 +666,33 @@
           const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
           const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
 
+          // Initialize planToBuyItems when aggregatedIngredients change
+          useEffect(() => {
+            setPlanToBuyItems(prev => {
+              const newSet = new Set(prev);
+              aggregatedIngredients.forEach(ing => {
+                // Default all items to "plan to buy" if not already set
+                if (!newSet.has(ing.name) && !purchasedItems.has(ing.name)) {
+                  newSet.add(ing.name);
+                }
+              });
+              // Remove items that no longer exist in aggregated list
+              Array.from(newSet).forEach(name => {
+                if (!aggregatedIngredients.find(ing => ing.name === name)) {
+                  newSet.delete(name);
+                }
+              });
+              return newSet;
+            });
+          }, [aggregatedIngredients]);
+
           // Group remaining items by location
           const groupedByLocation = useMemo(() => {
             const groups = {};
             
-            remainingItems.forEach(ingredient => {
+            remainingItems
+              .filter(ingredient => planToBuyItems.has(ingredient.name))
+              .forEach(ingredient => {
               const location = ingredient.location && ingredient.location.trim() ? ingredient.location.trim() : 'Unspecified';
               if (!groups[location]) {
                 groups[location] = [];
@@ -688,13 +717,34 @@
               location,
               items: groups[location]
             }));
-          }, [remainingItems]);
+          }, [remainingItems, planToBuyItems]);
 
           const toggleSection = (location) => {
             setCollapsedSections(prev => ({
               ...prev,
               [location]: !prev[location]
             }));
+          };
+
+          const togglePlanToBuy = (ingredientName) => {
+            setPlanToBuyItems(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(ingredientName)) {
+                newSet.delete(ingredientName);
+              } else {
+                newSet.add(ingredientName);
+              }
+              return newSet;
+            });
+          };
+
+          const selectAllForPurchase = () => {
+            const allNames = new Set(remainingItems.map(ing => ing.name));
+            setPlanToBuyItems(allNames);
+          };
+
+          const deselectAll = () => {
+            setPlanToBuyItems(new Set());
           };
 
           const hasSelections = Object.keys(selectedRecipes).length > 0;
@@ -733,6 +783,48 @@
             
             return hasEstimates ? total : null;
           }, [aggregatedIngredients, lastKnownPrices]);
+
+          // Calculate planned purchase total cost with detailed breakdown
+          const plannedPurchaseCost = useMemo(() => {
+            // Include both remaining items AND purchased items that were planned
+            const allPlannedItems = aggregatedIngredients.filter(ing => planToBuyItems.has(ing.name));
+            
+            let totalCost = 0;
+            let itemsWithPrices = 0;
+            let itemsWithoutPrices = [];
+            const locationTotals = {};
+            
+            allPlannedItems.forEach(ing => {
+              const priceData = ingredientPrices[ing.name];
+              
+              if (priceData?.price && ing.hasQuantity) {
+                const unitPrice = priceData.price;
+                const unitQty = priceData.unitQty || 1;
+                const itemCost = (ing.total / unitQty) * unitPrice;
+                totalCost += itemCost;
+                itemsWithPrices++;
+                
+                // Track by location
+                const location = ing.location && ing.location.trim() ? ing.location.trim() : 'Unspecified';
+                if (!locationTotals[location]) {
+                  locationTotals[location] = { cost: 0, count: 0 };
+                }
+                locationTotals[location].cost += itemCost;
+                locationTotals[location].count++;
+              } else if (ing.hasQuantity && !purchasedItems.has(ing.name)) {
+                // Only list unpurchased items without prices
+                itemsWithoutPrices.push(ing.name);
+              }
+            });
+            
+            return {
+              total: totalCost,
+              itemCount: allPlannedItems.length,
+              itemsWithPrices,
+              itemsWithoutPrices,
+              locationTotals
+            };
+          }, [aggregatedIngredients, planToBuyItems, ingredientPrices, purchasedItems]);
 
           // Filter recipes based on search query and sort favorites first
           const filteredRecipes = useMemo(() => {
@@ -1084,6 +1176,74 @@
                       </div>
                     ) : (
                       <>
+                        {/* Planned Purchase Cost Summary */}
+                        {hasSelections && plannedPurchaseCost.itemCount > 0 && (
+                          <div className={`rounded-lg border-2 p-4 mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-300'}`}>
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className={`text-lg font-bold ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                                  PLANNED PURCHASE TOTAL
+                                </h3>
+                                <div className={`text-sm mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                                  {plannedPurchaseCost.itemCount} item{plannedPurchaseCost.itemCount !== 1 ? 's' : ''} selected
+                                  {plannedPurchaseCost.itemsWithPrices > 0 && (
+                                    <span> ({plannedPurchaseCost.itemsWithPrices} with price{plannedPurchaseCost.itemsWithPrices !== 1 ? 's' : ''}
+                                    {plannedPurchaseCost.itemsWithoutPrices.length > 0 && `, ${plannedPurchaseCost.itemsWithoutPrices.length} without`})</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <button
+                                  onClick={selectAllForPurchase}
+                                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-200 hover:bg-blue-300 text-blue-900'}`}
+                                  title="Show all items"
+                                >
+                                  Select All
+                                </button>
+                                <button
+                                  onClick={deselectAll}
+                                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                  title="Hide all items"
+                                >
+                                  Deselect All
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {plannedPurchaseCost.itemsWithPrices > 0 && (
+                              <>
+                                <div className={`text-3xl font-bold mb-3 ${darkMode ? 'text-blue-200' : 'text-blue-900'}`}>
+                                  NT$ {plannedPurchaseCost.total.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </div>
+                                
+                                {Object.keys(plannedPurchaseCost.locationTotals).length > 1 && (
+                                  <div className={`text-sm space-y-1 pt-3 border-t ${darkMode ? 'border-blue-800' : 'border-blue-300'}`}>
+                                    <div className={`font-medium mb-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Breakdown by location:</div>
+                                    {Object.entries(plannedPurchaseCost.locationTotals)
+                                      .sort((a, b) => {
+                                        if (a[0] === 'Unspecified') return 1;
+                                        if (b[0] === 'Unspecified') return -1;
+                                        return a[0].localeCompare(b[0]);
+                                      })
+                                      .map(([location, data]) => (
+                                        <div key={location} className={`flex justify-between ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                                          <span>{location === 'Unspecified' ? '📍' : '🛒'} {location}:</span>
+                                          <span className="font-semibold">NT$ {data.cost.toFixed(0)} ({data.count} item{data.count !== 1 ? 's' : ''})</span>
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            
+                            {plannedPurchaseCost.itemsWithoutPrices.length > 0 && (
+                              <div className={`text-xs mt-3 pt-3 border-t ${darkMode ? 'border-blue-800 text-yellow-400' : 'border-blue-300 text-orange-700'}`}>
+                                ⚠️ {plannedPurchaseCost.itemsWithoutPrices.length} item{plannedPurchaseCost.itemsWithoutPrices.length !== 1 ? 's' : ''} missing price{plannedPurchaseCost.itemsWithoutPrices.length !== 1 ? 's' : ''}: {plannedPurchaseCost.itemsWithoutPrices.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Remaining Items Grouped by Location */}
                         {remainingItems.length > 0 && (
                           <div className="space-y-4 mb-4">
@@ -1124,9 +1284,27 @@
                                 {!collapsedSections[location] && (
                                   <div className="p-3 space-y-3">
                                     {items.map((ingredient, index) => (
-                                      <div key={index} className={`py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                                      <div key={index} className={`relative py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                                        {/* Plan to Buy Toggle - Top Right Corner */}
+                                        <button
+                                          onClick={() => togglePlanToBuy(ingredient.name)}
+                                          className={`absolute top-2 right-2 p-2 rounded-lg transition-colors ${
+                                            planToBuyItems.has(ingredient.name)
+                                              ? darkMode 
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                                              : darkMode
+                                                ? 'bg-gray-600 text-gray-400 hover:bg-gray-500'
+                                                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                                          }`}
+                                          style={{ minWidth: '44px', minHeight: '44px' }}
+                                          title={planToBuyItems.has(ingredient.name) ? "Remove from planned purchase" : "Add to planned purchase"}
+                                        >
+                                          <ShoppingBag className="w-5 h-5" />
+                                        </button>
+                                        
                                         {/* Row 1: Checkbox + Ingredient Name + Amount */}
-                                        <div className="flex items-start gap-3 mb-3">
+                                        <div className="flex items-start gap-3 mb-3 pr-12">{/* Added pr-12 for space for the button */}
                                           <input
                                             type="checkbox"
                                             checked={false}
