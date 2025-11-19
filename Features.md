@@ -99,13 +99,14 @@ When you "Add to Home Screen":
 19. Auto-Fill Unit from Previous Usage
 20. Automatic Lowercase for Ingredient Names
 21. Shopping Location Categorization
-22. Offline Progressive Web App (PWA)
-23. iOS Home Screen Optimization
-24. Touch-Friendly Mobile Interface
-25. Responsive Design (Mobile-First)
-26. localStorage Data Persistence
-27. Shopping List Reset Function
-28. Keyboard Navigation for Autocomplete
+22. Planned Purchase Cost Calculator
+23. Offline Progressive Web App (PWA)
+24. iOS Home Screen Optimization
+25. Touch-Friendly Mobile Interface
+26. Responsive Design (Mobile-First)
+27. localStorage Data Persistence
+28. Shopping List Reset Function
+29. Keyboard Navigation for Autocomplete
 
 ---
 
@@ -377,7 +378,47 @@ When you "Add to Home Screen":
 
 ---
 
-### 22. Offline Progressive Web App (PWA)
+### 22. Planned Purchase Cost Calculator
+**What it does**: Allows users to mark which ingredients they actually plan to buy and calculates total cost only for those items. Hides items not planned for purchase to reduce clutter.
+
+**How to use**:
+- **Toggle items**: Tap the shopping bag icon in the top-right corner of each ingredient card
+  - Blue bag = Plan to Buy (included in cost, visible)
+  - Gray bag = Not planning to buy (excluded from cost, HIDDEN from view)
+- **Default state**: All items start as "Plan to Buy" when recipes are selected
+- **Cost summary**: Blue box at top shows total cost for planned items only
+- **Item counts**: Shows how many items selected, how many have prices, how many don't
+- **Location breakdown**: See subtotals per shopping location (Street Market: NT$850, etc.)
+- **Quick actions**:
+  - "Select All" button: Shows all items (marks all for purchase)
+  - "Deselect All" button: Hides all items (removes all from planned purchase)
+- **Price warnings**: Lists items marked for purchase but missing price data
+
+**Three states per ingredient**:
+1. **Plan to Buy + Not Purchased**: Blue bag icon, normal appearance, included in cost, visible
+2. **Plan to Buy + Purchased**: Blue bag icon, green background with strikethrough, included in total, visible
+3. **NOT Plan to Buy**: Gray bag icon, HIDDEN from view, excluded from cost
+
+**Real-world example**:
+- Tuesday prep: Select 5 recipes → 30 ingredients appear
+- You already have: oil, salt, garlic → Tap their bag icons (turns gray, items disappear)
+- 27 items remain visible, total shows: "NT$ 2,450 (18 with prices, 9 without)"
+- Breakdown: Street Market NT$850 (8 items), Supermarket NT$1,200 (7 items), Big King NT$400 (3 items)
+- Missing prices: Shows which 9 items need prices entered
+- Go shopping: Check items off as you buy them
+- Return: Total still shows NT$2,450 for what you actually purchased
+
+**Benefits**:
+- Only calculate cost for items you actually need to buy
+- Hide items you already have at the restaurant
+- See accurate shopping budget before leaving
+- Cleaner list with fewer distractions
+- Location subtotals help plan multi-stop route
+- Track what you spent vs what you planned
+
+---
+
+### 23. Offline Progressive Web App (PWA)
 **What it does**: Works completely offline after installation, no internet or server required.
 
 **How to use**:
@@ -387,7 +428,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 23. iOS Home Screen Optimization
+### 24. iOS Home Screen Optimization
 **What it does**: Custom app icon, full-screen mode, no Safari UI when launched from home screen.
 
 **How to use**:
@@ -399,7 +440,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 24. Touch-Friendly Mobile Interface
+### 25. Touch-Friendly Mobile Interface
 **What it does**: All buttons, checkboxes, and inputs are sized for finger taps (minimum 44x44px per iOS guidelines).
 
 **How to use**:
@@ -409,7 +450,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 25. Responsive Design (Mobile-First)
+### 26. Responsive Design (Mobile-First)
 **What it does**: Layout adapts to screen size. Mobile (vertical stacking) → Desktop (side-by-side panels).
 
 **How to use**:
@@ -420,7 +461,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 26. localStorage Data Persistence
+### 27. localStorage Data Persistence
 **What it does**: All data (recipes, prices, preferences) is stored in browser's localStorage. Survives app closes, phone restarts.
 
 **How to use**:
@@ -432,7 +473,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 27. Shopping List Reset Function
+### 28. Shopping List Reset Function
 **What it does**: Unchecks all purchased items with one tap, preparing for the next shopping trip.
 
 **How to use**:
@@ -444,7 +485,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 28. Keyboard Navigation for Autocomplete
+### 29. Keyboard Navigation for Autocomplete
 **What it does**: Full keyboard support for ingredient autocomplete dropdown navigation.
 
 **How to use**:
@@ -461,14 +502,15 @@ When you "Add to Home Screen":
 
 ## Summary
 
-This app combines 28 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 29 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
-3. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
-4. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
-5. **Price tracking**: Remembers prices across trips, shows estimates before shopping
-6. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
-7. **Data portability**: Export/import for backup and cross-device sync
+3. **Smart cost calculator**: Calculate total only for items you plan to buy, hide items you already have
+4. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
+5. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
+6. **Price tracking**: Remembers prices across trips, shows estimates before shopping
+7. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
+8. **Data portability**: Export/import for backup and cross-device sync
 
 Perfect for Coto Makassar's daily market shopping needs!
