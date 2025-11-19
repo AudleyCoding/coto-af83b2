@@ -94,15 +94,17 @@ When you "Add to Home Screen":
 14. Export Recipes with Price History
 15. Import Recipes (Merge Mode)
 16. Replace All Recipes (Clean Import)
-17. Ingredient Name Autocomplete
-18. Unit Autocomplete
+17. Ingredient Name Autocomplete (Custom Searchable)
+18. Standardized Unit Dropdown
 19. Auto-Fill Unit from Previous Usage
-20. Offline Progressive Web App (PWA)
-21. iOS Home Screen Optimization
-22. Touch-Friendly Mobile Interface
-23. Responsive Design (Mobile-First)
-24. localStorage Data Persistence
-25. Shopping List Reset Function
+20. Automatic Lowercase for Ingredient Names
+21. Offline Progressive Web App (PWA)
+22. iOS Home Screen Optimization
+23. Touch-Friendly Mobile Interface
+24. Responsive Design (Mobile-First)
+25. localStorage Data Persistence
+26. Shopping List Reset Function
+27. Keyboard Navigation for Autocomplete
 
 ---
 
@@ -288,25 +290,37 @@ When you "Add to Home Screen":
 ---
 
 ### 17. Ingredient Name Autocomplete
-**What it does**: Shows dropdown of existing ingredient names as you type, preventing typos and naming inconsistencies.
+**What it does**: Shows a searchable dropdown of existing ingredient names as you type, preventing typos and naming inconsistencies.
 
 **How to use**:
-- Start typing an ingredient name in recipe form
-- Dropdown appears with matching ingredients from your existing recipes
-- Click/tap a suggestion to auto-fill the exact name
-- Ensures "Beef broth" is always "Beef broth" (not "beef broth" or "Beef powder")
-- Critical for proper aggregation in shopping list
+- Start typing an ingredient name in recipe form (automatically converted to lowercase)
+- Custom dropdown appears with up to 10 matching ingredients from your existing recipes
+- Results filtered in real-time: exact matches first, then starts-with, then contains
+- Each suggestion shows: ingredient name, unit, and typical quantity
+- **Select with mouse**: Click any suggestion
+- **Select with keyboard**: 
+  - Arrow Down/Up to navigate suggestions
+  - Enter to select highlighted suggestion
+  - Escape to close dropdown
+- Keep typing to add a new ingredient if it doesn't exist in suggestions
+- Selecting a suggestion auto-fills both name and unit
+- Critical for proper aggregation - ensures "beef broth" is always "beef broth"
 
 ---
 
 ### 18. Unit Autocomplete
-**What it does**: Shows dropdown of units you've used before (g, ml, pcs, bunch, Tbsp, etc.).
+**What it does**: Standardized dropdown with 18 common units organized by category (weight, volume, count).
 
 **How to use**:
-- Click into the Unit field when adding an ingredient
-- Dropdown shows all units from existing recipes, sorted alphabetically
-- Select one to auto-fill
-- Maintains consistency (always "g" not sometimes "grams")
+- Click the Unit dropdown when adding an ingredient
+- Select from standardized options:
+  - **Weight**: g, kg, lb, oz
+  - **Volume**: ml, L, cup, Tbsp, tsp
+  - **Count**: pcs, bag, bunch, can, jar, bottle, box
+  - **Other**: batch, as needed
+- Uses `<select>` dropdown (not text input) for consistency
+- Auto-selected when you choose an ingredient from autocomplete
+- Ensures all recipes use same unit names (always "g" not "grams" or "G")
 
 ---
 
@@ -321,7 +335,24 @@ When you "Add to Home Screen":
 
 ---
 
-### 20. Offline Progressive Web App (PWA)
+### 20. Automatic Lowercase for Ingredient Names
+**What it does**: Automatically converts all ingredient names to lowercase to ensure consistent aggregation across recipes.
+
+**How to use**:
+- No action needed - happens automatically!
+- Type "Beef Broth" → automatically becomes "beef broth"
+- Applies when:
+  - Typing in ingredient field (real-time conversion)
+  - Saving/updating recipes
+  - Importing recipes from JSON
+  - Replacing all recipes
+- Only applies to ingredient names, NOT recipe names
+- Ensures "beef broth" and "Beef Broth" aggregate together properly
+- Critical for accurate shopping list totals
+
+---
+
+### 21. Offline Progressive Web App (PWA)
 **What it does**: Works completely offline after installation, no internet or server required.
 
 **How to use**:
@@ -331,7 +362,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 21. iOS Home Screen Optimization
+### 22. iOS Home Screen Optimization
 **What it does**: Custom app icon, full-screen mode, no Safari UI when launched from home screen.
 
 **How to use**:
@@ -343,7 +374,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 22. Touch-Friendly Mobile Interface
+### 23. Touch-Friendly Mobile Interface
 **What it does**: All buttons, checkboxes, and inputs are sized for finger taps (minimum 44x44px per iOS guidelines).
 
 **How to use**:
@@ -353,7 +384,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 23. Responsive Design (Mobile-First)
+### 24. Responsive Design (Mobile-First)
 **What it does**: Layout adapts to screen size. Mobile (vertical stacking) → Desktop (side-by-side panels).
 
 **How to use**:
@@ -364,7 +395,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 24. localStorage Data Persistence
+### 25. localStorage Data Persistence
 **What it does**: All data (recipes, prices, preferences) is stored in browser's localStorage. Survives app closes, phone restarts.
 
 **How to use**:
@@ -376,7 +407,7 @@ When you "Add to Home Screen":
 
 ---
 
-### 25. Shopping List Reset Function
+### 26. Shopping List Reset Function
 **What it does**: Unchecks all purchased items with one tap, preparing for the next shopping trip.
 
 **How to use**:
@@ -388,14 +419,30 @@ When you "Add to Home Screen":
 
 ---
 
+### 27. Keyboard Navigation for Autocomplete
+**What it does**: Full keyboard support for ingredient autocomplete dropdown navigation.
+
+**How to use**:
+- Type in ingredient field to open autocomplete suggestions
+- **Arrow Down**: Move to next suggestion
+- **Arrow Up**: Move to previous suggestion
+- **Enter**: Select currently highlighted suggestion
+- **Escape**: Close autocomplete dropdown
+- Highlighted suggestion shows in blue
+- Great for desktop users and power users
+- Also works on iPad with external keyboard
+
+---
+
 ## Summary
 
-This app combines 25 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 27 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
-2. **Consistent naming**: Autocomplete prevents aggregation errors
-3. **Price tracking**: Remembers prices across trips, shows estimates before shopping
-4. **Mobile-optimized**: Built for iPhone use at the market
-5. **Data portability**: Export/import for backup and cross-device sync
+2. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
+3. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
+4. **Price tracking**: Remembers prices across trips, shows estimates before shopping
+5. **Mobile-optimized**: Built for iPhone use at the market
+6. **Data portability**: Export/import for backup and cross-device sync
 
 Perfect for Coto Makassar's daily market shopping needs!
