@@ -179,6 +179,17 @@
           </svg>
         );
 
+        const ChevronDown = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        );
+
+        // Helper function to format amounts without unnecessary decimals
+        const formatAmount = (amount) => {
+          return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
+        };
+
         function ShoppingAggregator() {
           const [recipes, setRecipes] = useState([]);
           const [selectedRecipes, setSelectedRecipes] = useState({});
@@ -190,6 +201,7 @@
           const [ingredientPrices, setIngredientPrices] = useState({});
           const [lastKnownPrices, setLastKnownPrices] = useState({});
           const [darkMode, setDarkMode] = useState(false);
+          const [collapsedSections, setCollapsedSections] = useState({});
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -618,8 +630,15 @@
                     unit: ingredient.unit,
                     hasQuantity: ingredient.quantity !== null,
                     price: ingredient.price,
-                    totalCost: 0
+                    totalCost: 0,
+                    location: ingredient.location || ''
                   });
+                } else {
+                  // If ingredient already exists, update location if current one has a location set
+                  const item = ingredientMap.get(key);
+                  if (ingredient.location && ingredient.location.trim() && !item.location) {
+                    item.location = ingredient.location;
+                  }
                 }
 
                 const item = ingredientMap.get(key);
@@ -639,6 +658,44 @@
 
           const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
           const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+
+          // Group remaining items by location
+          const groupedByLocation = useMemo(() => {
+            const groups = {};
+            
+            remainingItems.forEach(ingredient => {
+              const location = ingredient.location && ingredient.location.trim() ? ingredient.location.trim() : 'Unspecified';
+              if (!groups[location]) {
+                groups[location] = [];
+              }
+              groups[location].push(ingredient);
+            });
+            
+            // Sort each group alphabetically
+            Object.keys(groups).forEach(location => {
+              groups[location].sort((a, b) => a.name.localeCompare(b.name));
+            });
+            
+            // Return sorted location names and their items
+            const sortedLocations = Object.keys(groups).sort((a, b) => {
+              // "Unspecified" always goes last
+              if (a === 'Unspecified') return 1;
+              if (b === 'Unspecified') return -1;
+              return a.localeCompare(b);
+            });
+            
+            return sortedLocations.map(location => ({
+              location,
+              items: groups[location]
+            }));
+          }, [remainingItems]);
+
+          const toggleSection = (location) => {
+            setCollapsedSections(prev => ({
+              ...prev,
+              [location]: !prev[location]
+            }));
+          };
 
           const hasSelections = Object.keys(selectedRecipes).length > 0;
 
@@ -937,7 +994,7 @@
                                         <div className="mt-3 flex items-center gap-2">
                                           <button
                                             onClick={() => updateBatches(recipe.id, batches - 1)}
-                                            className={`p-1 rounded border disabled:opacity-50 ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+                                            className={`p-1 rounded border disabled:opacity-50 text-gray-400 ${darkMode ? 'border-gray-600 hover:bg-gray-700 hover:text-gray-300' : 'border-gray-300 hover:bg-gray-100 hover:text-gray-600'}`}
                                             disabled={batches <= 1}
                                           >
                                             <Minus className="w-4 h-4" />
@@ -951,7 +1008,7 @@
                                           />
                                           <button
                                             onClick={() => updateBatches(recipe.id, batches + 1)}
-                                            className={`p-1 rounded border ${darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-300 hover:bg-gray-100'}`}
+                                            className={`p-1 rounded border text-gray-400 ${darkMode ? 'border-gray-600 hover:bg-gray-700 hover:text-gray-300' : 'border-gray-300 hover:bg-gray-100 hover:text-gray-600'}`}
                                           >
                                             <Plus className="w-4 h-4" />
                                           </button>
@@ -980,6 +1037,15 @@
                           <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             Estimated: <span className="font-semibold">{estimatedTotal.toLocaleString('zh-TW', { style: 'currency', currency: 'TWD' })}</span>
                             <span className="text-xs ml-1">(based on last prices)</span>
+                          </div>
+                        )}
+                        {hasSelections && groupedByLocation.length > 0 && (
+                          <div className={`text-sm mt-1 flex flex-wrap gap-x-2 gap-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {groupedByLocation.map(({ location, items }) => (
+                              <span key={location} className="whitespace-nowrap">
+                                {location === 'Unspecified' ? '📍' : '🛒'} {location} ({items.length})
+                              </span>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1018,130 +1084,176 @@
                       </div>
                     ) : (
                       <>
-                        {/* Remaining Items */}
+                        {/* Remaining Items Grouped by Location */}
                         {remainingItems.length > 0 && (
-                          <div className="space-y-2 mb-4">
-                            {remainingItems.map((ingredient, index) => (
-                              <div key={index} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-                                <input
-                                  type="checkbox"
-                                  checked={false}
-                                  onChange={() => togglePurchased(ingredient.name)}
-                                  className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
-                                />
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-1 gap-2 w-full">
-                                  <div className="flex flex-col">
-                                    <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                      {ingredient.name}
+                          <div className="space-y-4 mb-4">
+                            {groupedByLocation.map(({ location, items }) => (
+                              <div key={location} className={`border rounded-lg ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                                {/* Location Header - Collapsible */}
+                                <button
+                                  onClick={() => toggleSection(location)}
+                                  className={`w-full px-4 py-3 flex items-center justify-between text-left font-semibold text-base border-b ${
+                                    darkMode 
+                                      ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                                      : location === 'Unspecified'
+                                        ? 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                                        : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                                  } ${collapsedSections[location] ? 'rounded-lg' : 'rounded-t-lg'}`}
+                                  style={{ minHeight: '44px' }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className={
+                                      darkMode
+                                        ? 'text-white'
+                                        : location === 'Unspecified'
+                                          ? 'text-gray-700'
+                                          : 'text-blue-900'
+                                    }>
+                                      {location === 'Unspecified' ? '📍 ' + location : '🛒 ' + location}
                                     </span>
-                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                      {ingredient.hasQuantity 
-                                        ? `${ingredient.total.toFixed(1)} ${ingredient.unit}`
-                                        : 'As needed'
-                                      }
+                                    <span className={`text-sm font-normal ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      ({items.length} item{items.length !== 1 ? 's' : ''})
                                     </span>
-                                    {lastKnownPrices[ingredient.name] && (
-                                      <span className={`text-xs italic ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                                        Last: NT${lastKnownPrices[ingredient.name].price}/{lastKnownPrices[ingredient.name].unitQty}{lastKnownPrices[ingredient.name].unitType} ({lastKnownPrices[ingredient.name].date})
-                                      </span>
-                                    )}
                                   </div>
-                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                    <div className="flex items-center gap-1">
-                                      <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
-                                      <input
-                                        type="number"
-                                        value={ingredientPrices[ingredient.name]?.price || ''}
-                                        onChange={(e) => {
-                                          const newPrices = {...ingredientPrices};
-                                          const value = parseFloat(e.target.value);
-                                          if (e.target.value === '' || isNaN(value)) {
-                                            delete newPrices[ingredient.name];
-                                          } else {
-                                            newPrices[ingredient.name] = {
-                                              ...newPrices[ingredient.name],
-                                              price: value,
-                                              unitQty: newPrices[ingredient.name]?.unitQty || 1,
-                                              unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
-                                            };
-                                          }
-                                          setIngredientPrices(newPrices);
-                                        }}
-                                        placeholder="0"
-                                        className={`w-20 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                        step="0.01"
-                                        min="0"
-                                      />
-                                    </div>
-                                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
-                                    <div className="flex items-center gap-1">
-                                      <input
-                                        type="number"
-                                        value={ingredientPrices[ingredient.name]?.unitQty ?? ''}
-                                        onChange={(e) => {
-                                          const newPrices = {...ingredientPrices};
-                                          if (ingredientPrices[ingredient.name]?.price) {
-                                            const value = e.target.value === '' ? '' : parseFloat(e.target.value);
-                                            newPrices[ingredient.name] = {
-                                              ...newPrices[ingredient.name],
-                                              unitQty: value === '' ? '' : (value > 0 ? value : ''),
-                                              unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
-                                            };
-                                            setIngredientPrices(newPrices);
-                                          }
-                                        }}
-                                        placeholder="1"
-                                        className={`w-16 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                        step="1"
-                                        min="1"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={ingredientPrices[ingredient.name]?.unitType || ''}
-                                        onChange={(e) => {
-                                          const newPrices = {...ingredientPrices};
-                                          if (ingredientPrices[ingredient.name]?.price) {
-                                            newPrices[ingredient.name] = {
-                                              ...newPrices[ingredient.name],
-                                              unitType: e.target.value || ingredient.unit,
-                                              unitQty: newPrices[ingredient.name]?.unitQty || 1
-                                            };
-                                            setIngredientPrices(newPrices);
-                                          }
-                                        }}
-                                        placeholder={ingredient.unit}
-                                        className={`w-12 px-2 py-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                      />
-                                    </div>
-                                    {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
-                                      <div className="flex flex-col items-end gap-1">
-                                        <span className={`text-sm font-medium whitespace-nowrap ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                          = NT$ {(() => {
-                                            const unitPrice = ingredientPrices[ingredient.name].price;
-                                            const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
-                                            const totalCost = (ingredient.total / unitQty) * unitPrice;
-                                            return totalCost.toFixed(0);
-                                          })()}
-                                        </span>
-                                        {lastKnownPrices[ingredient.name] && (() => {
-                                          const currentPrice = ingredientPrices[ingredient.name].price;
-                                          const lastPrice = lastKnownPrices[ingredient.name].price;
-                                          const priceDiff = currentPrice - lastPrice;
-                                          const percentDiff = ((priceDiff / lastPrice) * 100).toFixed(0);
-                                          
-                                          if (Math.abs(priceDiff) > 0.01) {
-                                            return (
-                                              <span className={`text-xs ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                                {priceDiff > 0 ? '↑' : '↓'} {Math.abs(percentDiff)}%
+                                  <ChevronDown className={`w-5 h-5 transition-transform ${collapsedSections[location] ? '' : 'transform rotate-180'} ${
+                                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                                  }`} />
+                                </button>
+
+                                {/* Location Items */}
+                                {!collapsedSections[location] && (
+                                  <div className="p-3 space-y-3">
+                                    {items.map((ingredient, index) => (
+                                      <div key={index} className={`py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                                        {/* Row 1: Checkbox + Ingredient Name + Amount */}
+                                        <div className="flex items-start gap-3 mb-3">
+                                          <input
+                                            type="checkbox"
+                                            checked={false}
+                                            onChange={() => togglePurchased(ingredient.name)}
+                                            className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                                          />
+                                          <div className="flex-1">
+                                            <div className="flex items-baseline gap-2 flex-wrap">
+                                              <span className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                                {ingredient.name}
                                               </span>
-                                            );
-                                          }
-                                          return null;
-                                        })()}
+                                              <span className={`font-semibold text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                - {ingredient.hasQuantity 
+                                                  ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                                  : 'As needed'
+                                                }
+                                              </span>
+                                            </div>
+                                            {lastKnownPrices[ingredient.name] && (
+                                              <div className={`text-xs italic mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                Last: NT${lastKnownPrices[ingredient.name].price}/{lastKnownPrices[ingredient.name].unitQty}{lastKnownPrices[ingredient.name].unitType} ({lastKnownPrices[ingredient.name].date})
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Row 2: Price Input Fields (indented to align with ingredient name) */}
+                                        <div className="ml-8 flex items-center gap-2 flex-wrap">
+                                          <span className={`text-base font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>NT$</span>
+                                          <input
+                                            type="number"
+                                            value={ingredientPrices[ingredient.name]?.price || ''}
+                                            onChange={(e) => {
+                                              const newPrices = {...ingredientPrices};
+                                              const value = parseFloat(e.target.value);
+                                              if (e.target.value === '' || isNaN(value)) {
+                                                delete newPrices[ingredient.name];
+                                              } else {
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: value,
+                                                  unitQty: newPrices[ingredient.name]?.unitQty || 1,
+                                                  unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
+                                                };
+                                              }
+                                              setIngredientPrices(newPrices);
+                                            }}
+                                            placeholder="0"
+                                            className={`w-12 px-2 py-2.5 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            style={{ minHeight: '44px', fontSize: '16px' }}
+                                            step="0.01"
+                                            min="0"
+                                          />
+                                          <span className={`text-base font-medium ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
+                                          <input
+                                            type="number"
+                                            value={ingredientPrices[ingredient.name]?.unitQty ?? ''}
+                                            onChange={(e) => {
+                                              const newPrices = {...ingredientPrices};
+                                              if (ingredientPrices[ingredient.name]?.price) {
+                                                const value = e.target.value === '' ? '' : parseFloat(e.target.value);
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  unitQty: value === '' ? '' : (value > 0 ? value : ''),
+                                                  unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
+                                                };
+                                                setIngredientPrices(newPrices);
+                                              }
+                                            }}
+                                            placeholder="1"
+                                            className={`w-10 px-2 py-2.5 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            style={{ minHeight: '44px', fontSize: '16px' }}
+                                            step="1"
+                                            min="1"
+                                          />
+                                          <input
+                                            type="text"
+                                            value={ingredientPrices[ingredient.name]?.unitType || ''}
+                                            onChange={(e) => {
+                                              const newPrices = {...ingredientPrices};
+                                              if (ingredientPrices[ingredient.name]?.price) {
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  unitType: e.target.value || ingredient.unit,
+                                                  unitQty: newPrices[ingredient.name]?.unitQty || 1
+                                                };
+                                                setIngredientPrices(newPrices);
+                                              }
+                                            }}
+                                            placeholder={ingredient.unit}
+                                            className={`w-20 px-3 py-2.5 text-base border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            style={{ minHeight: '44px', fontSize: '16px' }}
+                                          />
+                                          
+                                          {/* Calculated Total and Price Change */}
+                                          {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
+                                            <div className="flex items-center gap-2 ml-2">
+                                              <span className={`text-base font-semibold whitespace-nowrap ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                = NT$ {(() => {
+                                                  const unitPrice = ingredientPrices[ingredient.name].price;
+                                                  const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
+                                                  const totalCost = (ingredient.total / unitQty) * unitPrice;
+                                                  return totalCost.toFixed(0);
+                                                })()}
+                                              </span>
+                                              {lastKnownPrices[ingredient.name] && (() => {
+                                                const currentPrice = ingredientPrices[ingredient.name].price;
+                                                const lastPrice = lastKnownPrices[ingredient.name].price;
+                                                const priceDiff = currentPrice - lastPrice;
+                                                const percentDiff = ((priceDiff / lastPrice) * 100).toFixed(0);
+                                                
+                                                if (Math.abs(priceDiff) > 0.01) {
+                                                  return (
+                                                    <span className={`text-sm font-medium ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                      {priceDiff > 0 ? '↑' : '↓'} {Math.abs(percentDiff)}%
+                                                    </span>
+                                                  );
+                                                }
+                                                return null;
+                                              })()}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                    )}
+                                    ))}
                                   </div>
-                                </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -1151,38 +1263,47 @@
                         {purchasedItemsList.length > 0 && (
                           <>
                             <div className={`border-t pt-4 mt-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                              <h3 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Purchased ({purchasedItemsList.length})</h3>
-                              <div className="space-y-2">
+                              <h3 className={`text-sm font-medium mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Purchased ({purchasedItemsList.length})</h3>
+                              <div className="space-y-3">
                                 {purchasedItemsList.map((ingredient, index) => (
-                                  <div key={index} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-green-50 border-green-200'}`}>
-                                    <input
-                                      type="checkbox"
-                                      checked={true}
-                                      onChange={() => togglePurchased(ingredient.name)}
-                                      className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
-                                    />
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center flex-1 gap-2 w-full">
-                                      <div className="flex flex-col">
-                                        <span className={`font-medium line-through ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                          {ingredient.name}
-                                        </span>
-                                        <span className={`text-sm line-through ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                          {ingredient.hasQuantity 
-                                            ? `${ingredient.total.toFixed(1)} ${ingredient.unit}`
-                                            : 'As needed'
-                                          }
-                                        </span>
-                                      </div>
-                                      {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
-                                        <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                          NT$ {(() => {
-                                            const unitPrice = ingredientPrices[ingredient.name].price;
-                                            const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
-                                            const totalCost = (ingredient.total / unitQty) * unitPrice;
-                                            return totalCost.toFixed(0);
-                                          })()}
+                                  <div key={index} className={`py-3 px-4 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-green-50 border-green-200'}`}>
+                                    {/* Row 1: Checkbox + Ingredient Name + Amount (with strikethrough) */}
+                                    <div className="flex items-start gap-3">
+                                      <input
+                                        type="checkbox"
+                                        checked={true}
+                                        onChange={() => togglePurchased(ingredient.name)}
+                                        className="w-5 h-5 mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="flex items-baseline gap-2 flex-wrap">
+                                          <span className={`font-semibold text-lg line-through ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            {ingredient.name}
+                                          </span>
+                                          <span className={`font-semibold text-lg line-through ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                            - {ingredient.hasQuantity 
+                                              ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                              : 'As needed'
+                                            }
+                                          </span>
+                                          {ingredient.location && ingredient.location.trim() && (
+                                            <span className={`text-sm font-normal line-through ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                                              • {ingredient.location}
+                                            </span>
+                                          )}
                                         </div>
-                                      )}
+                                        {/* Show total cost if price was entered */}
+                                        {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
+                                          <div className={`text-sm mt-1 ml-0 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Paid: NT$ {(() => {
+                                              const unitPrice = ingredientPrices[ingredient.name].price;
+                                              const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
+                                              const totalCost = (ingredient.total / unitQty) * unitPrice;
+                                              return totalCost.toFixed(0);
+                                            })()}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 ))}
@@ -1215,7 +1336,7 @@
           const [yieldUnit, setYieldUnit] = useState(recipe?.yieldUnit || 'batch');
           const [notes, setNotes] = useState(recipe?.notes || '');
           const [ingredients, setIngredients] = useState(
-            recipe?.ingredients || [{ name: '', quantity: '', unit: 'g', substitution: '', price: '' }]
+            recipe?.ingredients || [{ name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }]
           );
           const [activeAutocomplete, setActiveAutocomplete] = useState(null);
           const [autocompleteQuery, setAutocompleteQuery] = useState('');
@@ -1257,7 +1378,8 @@
                   ingredientMap.set(key, {
                     name: key,
                     unit: ing.unit,
-                    quantity: ing.quantity
+                    quantity: ing.quantity,
+                    location: ing.location || ''
                   });
                 }
               });
@@ -1265,6 +1387,19 @@
             return Array.from(ingredientMap.values()).sort((a, b) => 
               a.name.localeCompare(b.name)
             );
+          }, [recipes]);
+
+          // Get all unique locations from existing recipes
+          const existingLocations = useMemo(() => {
+            const locationSet = new Set();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                if (ing.location && ing.location.trim()) {
+                  locationSet.add(ing.location.trim());
+                }
+              });
+            });
+            return Array.from(locationSet).sort();
           }, [recipes]);
 
           // Filter ingredients based on current query
@@ -1291,7 +1426,7 @@
           };
 
           const addIngredient = () => {
-            setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '' }]);
+            setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }]);
           };
 
           const removeIngredient = (index) => {
@@ -1332,7 +1467,8 @@
             updated[index] = { 
               ...updated[index], 
               name: suggestion.name,
-              unit: updated[index].unit || suggestion.unit
+              unit: updated[index].unit || suggestion.unit,
+              location: updated[index].location || suggestion.location || ''
             };
             setIngredients(updated);
             setActiveAutocomplete(null);
@@ -1382,7 +1518,8 @@
               quantity: ing.quantity === '' ? null : parseFloat(ing.quantity),
               unit: ing.unit,
               substitution: ing.substitution?.trim() || '',
-              price: ing.price === '' ? null : parseFloat(ing.price)
+              price: ing.price === '' ? null : parseFloat(ing.price),
+              location: ing.location?.trim() || ''
             }));
 
             onSave({
@@ -1563,9 +1700,22 @@
                                   type="text"
                                   value={ingredient.substitution || ''}
                                   onChange={(e) => updateIngredient(index, 'substitution', e.target.value)}
-                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
+                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2 ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
                                   placeholder="Substitution (e.g., or use fresh galangal)"
                                 />
+                                <input
+                                  type="text"
+                                  value={ingredient.location || ''}
+                                  onChange={(e) => updateIngredient(index, 'location', e.target.value)}
+                                  list={`location-suggestions-${index}`}
+                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
+                                  placeholder="Purchase location (e.g., Street Market, Supermarket)"
+                                />
+                                <datalist id={`location-suggestions-${index}`}>
+                                  {existingLocations.map((loc, i) => (
+                                    <option key={i} value={loc} />
+                                  ))}
+                                </datalist>
                               </div>
                             );
                           })}
