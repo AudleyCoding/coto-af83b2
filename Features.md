@@ -35,8 +35,8 @@ You need to host the file in a location accessible to your iPhone. Pick ONE of t
 
 - **Option D: Local Network (One-time setup only)**
   1. On Mac: `python3 -m http.server 8000` (in the project folder)
-  2. Find Mac's IP: System Settings → Network (e.g., 192.168.1.100)
-  3. On iPhone (same WiFi): Safari → `http://192.168.1.100:8000/shopping-list.html`
+  2. Find Mac's IP: System Settings → Network (e.g., 10.0.4.101)
+  3. On iPhone (same WiFi): Safari → `http://10.0.4.101:8000/shopping-list.html`
   4. Proceed immediately to Step 2 below before closing the server
 
 **2. Add to Home Screen (CRITICAL STEP)**
@@ -500,17 +500,58 @@ When you "Add to Home Screen":
 
 ---
 
+### 30. Price History Tracking and Visualization
+**What it does**: Automatically tracks ingredient prices over time and visualizes trends with interactive charts and statistics.
+
+**How to use**:
+- Tap "Price History" button in main header (trending up icon)
+- View all ingredients with price data, sorted by most recent update
+- See trend indicators: ↑ (>10% above average - red), ↓ (>10% below average - green), → (stable - gray)
+- Tap any ingredient to view detailed price history
+- **Detail view shows**:
+  - Interactive line chart of last 12 months (powered by Chart.js)
+  - Current price, 6-month average, min/max prices
+  - Percentage change vs average
+  - Full price history table (reverse chronological)
+  - Min and max points highlighted on chart (green/red dots)
+- **Automatic logging**: Prices auto-save to history when you update them on shopping list
+- Works offline - all data stored locally in browser localStorage
+
+**Why it's useful**:
+- Identify seasonal price patterns (when is ginger cheapest?)
+- Make informed purchasing decisions (is this a good price?)
+- Track budget changes over time
+- Spot price increases early
+- Historical data helps negotiate with vendors
+- Plan shopping trips around price trends
+
+**Mobile optimized**:
+- Canvas-based Chart.js rendering (smooth on mobile)
+- Responsive charts adapt to portrait/landscape
+- Touch-friendly interactions and tooltips
+- Clean scrolling on price history tables
+- Dark mode support for all charts and graphs
+- 44px+ tap targets throughout
+
+**Export/Import**:
+- Price history is included in recipe exports
+- Transfer data between devices using Export → Import
+- View JSON in browser if download doesn't work, copy/paste into text editor, save, then import
+
+---
+
 ## Summary
 
-This app combines 29 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 30 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
 3. **Smart cost calculator**: Calculate total only for items you plan to buy, hide items you already have
-4. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
-5. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
-6. **Price tracking**: Remembers prices across trips, shows estimates before shopping
-7. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
-8. **Data portability**: Export/import for backup and cross-device sync
+4. **Price analytics**: Track historical prices, visualize trends, identify seasonal patterns
+5. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
+6. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
+7. **Price tracking**: Remembers prices across trips, shows estimates before shopping
+8. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
+9. **Data portability**: Export/import for backup and cross-device sync
 
 Perfect for Coto Makassar's daily market shopping needs!

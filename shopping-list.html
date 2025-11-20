@@ -20,12 +20,13 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
+        const { useState, useMemo, useEffect, useRef } = React;
 
         // Initial recipe data - this will be loaded from memory storage
         const INITIAL_RECIPES = [
@@ -191,10 +192,180 @@
           </svg>
         );
 
+        const TrendingUp = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        );
+
+        const BarChart2 = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+
+        const ArrowLeft = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        );
+
         // Helper function to format amounts without unnecessary decimals
         const formatAmount = (amount) => {
           return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
         };
+
+        // Price Chart Component using Chart.js
+        function PriceChart({ chartData, minPrice, maxPrice, darkMode }) {
+          const canvasRef = useRef(null);
+          const chartInstanceRef = useRef(null);
+
+          useEffect(() => {
+            if (!canvasRef.current || chartData.length === 0) return;
+
+            // Destroy previous chart instance
+            if (chartInstanceRef.current) {
+              chartInstanceRef.current.destroy();
+            }
+
+            const ctx = canvasRef.current.getContext('2d');
+            
+            // Prepare data for Chart.js
+            const labels = chartData.map(d => d.date);
+            const prices = chartData.map(d => d.price);
+            
+            // Find indices of min and max prices for highlighting
+            const minIndex = prices.indexOf(minPrice);
+            const maxIndex = prices.indexOf(maxPrice);
+            
+            // Create point background colors (highlight min/max)
+            const pointBackgroundColors = prices.map((price, index) => {
+              if (price === minPrice) return '#10b981'; // green
+              if (price === maxPrice) return '#ef4444'; // red
+              return '#3b82f6'; // blue
+            });
+            
+            const pointRadius = prices.map((price, index) => {
+              if (price === minPrice || price === maxPrice) return 6;
+              return 4;
+            });
+
+            chartInstanceRef.current = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Price (NT$)',
+                  data: prices,
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderWidth: 2,
+                  pointBackgroundColor: pointBackgroundColors,
+                  pointBorderColor: pointBackgroundColors,
+                  pointRadius: pointRadius,
+                  pointHoverRadius: 8,
+                  tension: 0.2,
+                  fill: true
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                  mode: 'index',
+                  intersect: false,
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                    titleColor: darkMode ? '#9ca3af' : '#6b7280',
+                    bodyColor: darkMode ? '#f3f4f6' : '#111827',
+                    borderColor: darkMode ? '#374151' : '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                      label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                          label += ': ';
+                        }
+                        label += 'NT$' + context.parsed.y.toFixed(2);
+                        
+                        // Add annotation for min/max
+                        if (context.parsed.y === minPrice) {
+                          label += ' (Lowest)';
+                        } else if (context.parsed.y === maxPrice) {
+                          label += ' (Highest)';
+                        }
+                        
+                        return label;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: {
+                      color: darkMode ? '#374151' : '#e5e7eb',
+                      drawBorder: false
+                    },
+                    ticks: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 11
+                      }
+                    }
+                  },
+                  y: {
+                    beginAtZero: false,
+                    grid: {
+                      color: darkMode ? '#374151' : '#e5e7eb',
+                      drawBorder: false
+                    },
+                    ticks: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 11
+                      },
+                      callback: function(value) {
+                        return 'NT$' + value.toFixed(0);
+                      }
+                    }
+                  }
+                }
+              }
+            });
+
+            // Cleanup function
+            return () => {
+              if (chartInstanceRef.current) {
+                chartInstanceRef.current.destroy();
+              }
+            };
+          }, [chartData, minPrice, maxPrice, darkMode]);
+
+          return (
+            <div className={`rounded-lg shadow-sm border p-6 mb-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Price Trend (Last 12 Months)
+              </h2>
+              <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                <canvas ref={canvasRef}></canvas>
+              </div>
+            </div>
+          );
+        }
 
         function ShoppingAggregator() {
           const [recipes, setRecipes] = useState([]);
@@ -209,6 +380,9 @@
           const [lastKnownPrices, setLastKnownPrices] = useState({});
           const [darkMode, setDarkMode] = useState(false);
           const [collapsedSections, setCollapsedSections] = useState({});
+          const [showPriceHistory, setShowPriceHistory] = useState(false);
+          const [selectedIngredient, setSelectedIngredient] = useState(null);
+          const [priceHistoryData, setPriceHistoryData] = useState({});
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -256,20 +430,60 @@
             }
           }, []);
 
+          // Load price history from localStorage
+          useEffect(() => {
+            const stored = localStorage.getItem('priceHistoryData');
+            if (stored) {
+              try {
+                setPriceHistoryData(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load price history:', e);
+              }
+            }
+          }, []);
+
+          // Save price history to localStorage whenever it changes
+          useEffect(() => {
+            if (Object.keys(priceHistoryData).length > 0) {
+              localStorage.setItem('priceHistoryData', JSON.stringify(priceHistoryData));
+            }
+          }, [priceHistoryData]);
+
           // Save last known prices whenever ingredientPrices changes
           useEffect(() => {
             const timer = setTimeout(() => {
               Object.entries(ingredientPrices).forEach(([name, data]) => {
                 if (data?.price && data.price > 0) {
+                  const today = new Date().toISOString().split('T')[0];
+                  
                   setLastKnownPrices(prev => ({
                     ...prev,
                     [name]: {
                       price: data.price,
                       unitQty: data.unitQty || 1,
                       unitType: data.unitType || '',
-                      date: new Date().toISOString().split('T')[0]
+                      date: today
                     }
                   }));
+                  
+                  // Also log to price history
+                  setPriceHistoryData(prev => {
+                    const existing = prev[name] || [];
+                    // Only add if price is different from last entry or it's been more than a day
+                    const lastEntry = existing[existing.length - 1];
+                    if (!lastEntry || lastEntry.price !== data.price || lastEntry.date !== today) {
+                      return {
+                        ...prev,
+                        [name]: [...existing, {
+                          date: today,
+                          price: data.price,
+                          unitQty: data.unitQty || 1,
+                          unitType: data.unitType || ''
+                        }]
+                      };
+                    }
+                    return prev;
+                  });
                 }
               });
             }, 2000); // Debounce 2 seconds after user stops typing
@@ -865,6 +1079,243 @@
             />;
           }
 
+          // Price History View
+          if (showPriceHistory) {
+            // If viewing a specific ingredient's detail
+            if (selectedIngredient) {
+              const ingredientHistory = priceHistoryData[selectedIngredient] || [];
+              const sortedHistory = [...ingredientHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+              
+              // Calculate statistics
+              const prices = ingredientHistory.map(h => h.price);
+              const currentPrice = prices[prices.length - 1] || 0;
+              const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+              const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+              const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+              
+              // Prepare chart data (show last 12 months)
+              const chartData = [...ingredientHistory]
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(-12)
+                .map(entry => ({
+                  date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  price: entry.price,
+                  fullDate: entry.date
+                }));
+              
+              return (
+                <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                  <div className="max-w-4xl mx-auto">
+                    {/* Header */}
+                    <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <BarChart2 className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                          <div>
+                            <h1 className={`text-2xl md:text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedIngredient}</h1>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Last updated: {sortedHistory[0]?.date || 'Never'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedIngredient(null)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                          Back
+                        </button>
+                      </div>
+                      
+                      {/* Current Price */}
+                      <div className={`text-center py-4 ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'} rounded-lg`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Current Price</p>
+                        <p className={`text-4xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                          NT${currentPrice.toFixed(2)}
+                        </p>
+                        {ingredientHistory[ingredientHistory.length - 1] && (
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            per {ingredientHistory[ingredientHistory.length - 1].unitQty} {ingredientHistory[ingredientHistory.length - 1].unitType}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>6-Month Avg</p>
+                        <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>NT${avgPrice.toFixed(2)}</p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>vs Average</p>
+                        <p className={`text-2xl font-bold ${priceChange > 10 ? 'text-red-500' : priceChange < -10 ? 'text-green-500' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {priceChange > 0 ? '↑' : priceChange < 0 ? '↓' : '→'} {Math.abs(priceChange).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Lowest</p>
+                        <p className={`text-2xl font-bold text-green-500`}>NT${minPrice.toFixed(2)}</p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Highest</p>
+                        <p className={`text-2xl font-bold text-red-500`}>NT${maxPrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Price Chart */}
+                    {chartData.length > 0 && (
+                      <PriceChart 
+                        chartData={chartData} 
+                        minPrice={minPrice} 
+                        maxPrice={maxPrice} 
+                        darkMode={darkMode} 
+                      />
+                    )}
+                    
+                    {/* Price History Table */}
+                    <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h2>
+                      {sortedHistory.length === 0 ? (
+                        <p className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No price history yet</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                              <tr>
+                                <th className={`px-4 py-2 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {sortedHistory.slice(0, 15).map((entry, index) => (
+                                <tr key={index} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                                  <td className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                    {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                  </td>
+                                  <td className={`px-4 py-2 text-sm text-right font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    NT${entry.price.toFixed(2)}
+                                  </td>
+                                  <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {entry.unitQty} {entry.unitType}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Price History List View
+            const ingredientsWithHistory = Object.entries(priceHistoryData)
+              .filter(([name, history]) => history.length > 0)
+              .map(([name, history]) => {
+                const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentPrice = sortedHistory[0]?.price || 0;
+                const prices = history.map(h => h.price);
+                const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+                const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+                
+                return {
+                  name,
+                  currentPrice,
+                  lastUpdated: sortedHistory[0]?.date || '',
+                  priceChange,
+                  unitQty: sortedHistory[0]?.unitQty || 1,
+                  unitType: sortedHistory[0]?.unitType || ''
+                };
+              });
+            
+            return (
+              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div className="max-w-4xl mx-auto">
+                  {/* Header */}
+                  <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h1>
+                      </div>
+                      <button
+                        onClick={() => setShowPriceHistory(false)}
+                        className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                      >
+                        Back to Shopping List
+                      </button>
+                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Track ingredient prices over time and identify trends
+                    </p>
+                  </div>
+                  
+                  {/* Ingredients List */}
+                  <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tracked Ingredients</h2>
+                    
+                    {ingredientsWithHistory.length === 0 ? (
+                      <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <BarChart2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg mb-2">No price history yet</p>
+                        <p className="text-sm">Prices will be automatically tracked when you update them on your shopping list</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {ingredientsWithHistory
+                          .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+                          .map((ingredient) => (
+                            <div 
+                              key={ingredient.name}
+                              onClick={() => setSelectedIngredient(ingredient.name)}
+                              className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                                darkMode 
+                                  ? 'bg-gray-700 hover:bg-gray-600' 
+                                  : 'bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                    {ingredient.name}
+                                  </h3>
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Last updated: {new Date(ingredient.lastUpdated).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    NT${ingredient.currentPrice.toFixed(2)}
+                                  </p>
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    per {ingredient.unitQty} {ingredient.unitType}
+                                  </p>
+                                  <div className={`text-sm font-medium mt-1 ${
+                                    ingredient.priceChange > 10 
+                                      ? 'text-red-500' 
+                                      : ingredient.priceChange < -10 
+                                      ? 'text-green-500' 
+                                      : darkMode ? 'text-gray-400' : 'text-gray-600'
+                                  }`}>
+                                    {ingredient.priceChange > 0 ? '↑' : ingredient.priceChange < 0 ? '↓' : '→'} {Math.abs(ingredient.priceChange).toFixed(1)}% vs avg
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           if (showManageRecipes) {
             return (
               <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -1003,6 +1454,15 @@
                         title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
                       >
                         {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => setShowPriceHistory(true)}
+                        className={`flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        title="View price history and trends"
+                      >
+                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Price History</span>
+                        <span className="sm:hidden">History</span>
                       </button>
                       <button
                         onClick={() => setShowManageRecipes(true)}
