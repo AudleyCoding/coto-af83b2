@@ -195,49 +195,113 @@ When you "Add to Home Screen":
 
 ---
 
-### 9. Unit-Based Price Tracking (NT$)
-**What it does**: Enter market prices in realistic format: price per quantity per unit (e.g., NT$50 per 600g).
+### 9. Package-Based Price Tracking (NT$)
+**What it does**: Enter actual package prices based on what you buy at the market, separate from recipe amounts. Supports flexible data entry and automatic unit conversions.
 
 **How to use**:
-- In shopping list, enter three values per ingredient:
-  - Price: e.g., 50 (in NT$)
-  - Unit Qty: e.g., 600
-  - Unit Type: e.g., g
-- App calculates total cost automatically
-- Example: Need 1200g, price is NT$50/600g → Total: NT$100
+- **Recipe amount shown as reference**: "Need: 360 g" displays what your recipe requires
+- **Enter package information**: The actual package size you purchased
+  - Price: e.g., 45 (in NT$)
+  - Package Qty: e.g., 400 (the size of package you bought)
+  - Package Unit: e.g., g (with dropdown suggestions: g, kg, 斤, ml, L, pcs, pack, bag, bottle, etc.)
+- **All fields are optional and independent**: Enter what you know, leave the rest blank
+- **Visual feedback**:
+  - ✓ Complete data: Shows total cost and packages needed
+  - ⚠ Partial data: "Need price" or "Need package size" warnings
+  - Unit price displayed: "NT$0.11/g" when complete
+- **Smart calculations**: 
+  - App calculates packages needed: "(0.90 pkg)" if you need less than 1 package
+  - Automatic unit conversions: Buy in kg, recipe in g? No problem!
+  - Only includes items with complete data in cost totals
+
+**Example scenarios**:
+
+*Complete entry:*
+```
+coconut palm sugar(6 pucks) - as needed
+Need: 360 g
+NT$ [45] / [400] [g] (package)
+= NT$ 41 (0.90 pkg)
+NT$0.11/g
+```
+
+*Partial entry (know package size, not price yet):*
+```
+ginger paste - as needed
+Need: 400 g
+NT$ [___] / [500] [g] (package)
+⚠ Need price
+```
+
+*Different units (buy kg, recipe needs g):*
+```
+shallot paste - as needed
+Need: 800 g
+NT$ [95] / [1] [kg] (package)
+= NT$ 76 (0.80 pkg)
+NT$95.00/kg
+```
+
+**Why package-based pricing?**
+- Reflects reality: You buy packages, not exact recipe amounts
+- Accurate tracking: Compare prices across different package sizes
+- Flexible: Enter what you know, fill in the rest later
+- Future-proof: Price history stays accurate even if package sizes change
+
+**Unit conversions supported**:
+- Weight: g ↔ kg (×1000), 斤 ↔ g (×600), lb ↔ g, oz ↔ g
+- Volume: ml ↔ L (×1000)
 
 ---
 
-### 10. Last Known Price Memory
-**What it does**: Automatically saves every price you enter with a date stamp. Remembers prices across shopping trips.
+### 10. Last Known Price Memory (Package-Based)
+**What it does**: Automatically saves every price you enter with package information and date stamp. Remembers prices across shopping trips.
 
 **How to use**:
 - Just enter prices normally - saving happens automatically (2-second delay)
-- Prices are stored in localStorage
-- Below each ingredient, you'll see: "Last: NT$50/600g (2025-11-17)"
-- Click "Load Prices" button to fill all fields with saved prices
+- Requires complete data: price + package quantity + package unit
+- Prices are stored in localStorage with package details
+- Price history tracks package sizes for accurate comparisons
+
+**What's saved**:
+```javascript
+{
+  price: 45,
+  packageQuantity: 400,
+  packageUnit: "g",
+  date: "2025-11-20"
+}
+```
 
 ---
 
-### 11. Price Change Indicators
-**What it does**: When you enter a new price different from the last saved price, shows % increase/decrease.
+### 11. Price Change Indicators (Unit Price Based)
+**What it does**: Compares current unit price to last known unit price, shows % increase/decrease. Accounts for different package sizes.
 
 **How to use**:
-- Enter a price that differs from your last known price
-- Red arrow up (↑) with percentage = price increased (e.g., ↑15%)
-- Green arrow down (↓) with percentage = price decreased (e.g., ↓10%)
-- Helps you spot market trends and inflation
+- Enter a price with package information
+- If last known price exists, app calculates unit prices and compares
+- Red arrow up (↑) with percentage = unit price increased (e.g., ↑15%)
+- Green arrow down (↓) with percentage = unit price decreased (e.g., ↓10%)
+- Accurate even if package sizes differ (e.g., comparing 400g package to 500g package)
+
+**Example**:
+- Last time: NT$50 / 500g = NT$0.10/g
+- This time: NT$48 / 400g = NT$0.12/g
+- Shows: ↑20% (unit price increased despite lower package price)
 
 ---
 
-### 12. Estimated Total Cost (Pre-Shopping)
-**What it does**: Shows estimated shopping cost based on last known prices BEFORE you go to the market.
+### 12. Estimated Total Cost (Pre-Shopping, Package-Based)
+**What it does**: Shows estimated shopping cost based on last known package prices BEFORE you go to the market.
 
 **How to use**:
 - Select your recipes for the shopping trip
 - At the top of shopping list: "Estimated: NT$ XXX (based on last prices)"
+- Calculation uses saved package information
 - Tells you how much cash to bring
 - Updates automatically as you add/remove recipes
+- Handles unit conversions automatically
 
 ---
 
