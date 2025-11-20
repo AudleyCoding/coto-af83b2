@@ -449,19 +449,22 @@
             }
           }, [priceHistoryData]);
 
-          // Save last known prices whenever ingredientPrices changes
+          // Save last known prices whenever ingredientPrices changes (package-based)
           useEffect(() => {
             const timer = setTimeout(() => {
               Object.entries(ingredientPrices).forEach(([name, data]) => {
-                if (data?.price && data.price > 0) {
+                if (data?.price && data.price > 0 && data?.packageQuantity && data.packageQuantity > 0) {
                   const today = new Date().toISOString().split('T')[0];
                   
                   setLastKnownPrices(prev => ({
                     ...prev,
                     [name]: {
                       price: data.price,
-                      unitQty: data.unitQty || 1,
-                      unitType: data.unitType || '',
+                      packageQuantity: data.packageQuantity,
+                      packageUnit: data.packageUnit || '',
+                      // Keep old format for backward compatibility
+                      unitQty: data.packageQuantity,
+                      unitType: data.packageUnit || '',
                       date: today
                     }
                   }));
@@ -477,8 +480,11 @@
                         [name]: [...existing, {
                           date: today,
                           price: data.price,
-                          unitQty: data.unitQty || 1,
-                          unitType: data.unitType || ''
+                          packageQuantity: data.packageQuantity,
+                          packageUnit: data.packageUnit || '',
+                          // Keep old format for backward compatibility
+                          unitQty: data.packageQuantity,
+                          unitType: data.packageUnit || ''
                         }]
                       };
                     }
@@ -963,23 +969,41 @@
 
           const hasSelections = Object.keys(selectedRecipes).length > 0;
 
-          // Calculate total estimated cost from session prices
+          // Unit conversion helper function
+          const convertToBaseUnit = (qty, unit) => {
+            const lowerUnit = unit?.toLowerCase() || '';
+            // Weight conversions to grams
+            if (lowerUnit === 'kg') return qty * 1000;
+            if (lowerUnit === '斤') return qty * 600; // jin
+            if (lowerUnit === 'lb') return qty * 453.592;
+            if (lowerUnit === 'oz') return qty * 28.3495;
+            // Volume conversions to ml
+            if (lowerUnit === 'l') return qty * 1000;
+            // Default: no conversion
+            return qty;
+          };
+
+          // Calculate total estimated cost from session prices (package-based)
           const totalCost = useMemo(() => {
             return aggregatedIngredients.reduce((sum, ing) => {
               const priceData = ingredientPrices[ing.name];
-              if (priceData?.price && ing.hasQuantity) {
-                const unitPrice = priceData.price;
-                const unitQty = priceData.unitQty || 1;
-                const itemCost = (ing.total / unitQty) * unitPrice;
+              if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ing.hasQuantity) {
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ing.unit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * priceData.price;
                 return sum + itemCost;
               }
               return sum;
             }, 0);
           }, [aggregatedIngredients, ingredientPrices]);
 
-          const hasPrices = Object.keys(ingredientPrices).some(key => ingredientPrices[key]?.price);
+          const hasPrices = Object.keys(ingredientPrices).some(key => {
+            const priceData = ingredientPrices[key];
+            return priceData?.price > 0 && priceData?.packageQuantity > 0;
+          });
 
-          // Calculate estimated total based on last known prices
+          // Calculate estimated total based on last known prices (package-based)
           const estimatedTotal = useMemo(() => {
             let total = 0;
             let hasEstimates = false;
@@ -987,9 +1011,14 @@
             aggregatedIngredients.forEach(ing => {
               const lastPrice = lastKnownPrices[ing.name];
               if (lastPrice?.price && ing.hasQuantity) {
-                const unitPrice = lastPrice.price;
-                const unitQty = lastPrice.unitQty || 1;
-                const itemCost = (ing.total / unitQty) * unitPrice;
+                // Handle both old format (unitQty/unitType) and new format (packageQuantity/packageUnit)
+                const packageQty = lastPrice.packageQuantity || lastPrice.unitQty || 1;
+                const packageUnit = lastPrice.packageUnit || lastPrice.unitType || ing.unit;
+                
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(packageQty, packageUnit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * lastPrice.price;
                 total += itemCost;
                 hasEstimates = true;
               }
@@ -998,7 +1027,7 @@
             return hasEstimates ? total : null;
           }, [aggregatedIngredients, lastKnownPrices]);
 
-          // Calculate planned purchase total cost with detailed breakdown
+          // Calculate planned purchase total cost with detailed breakdown (package-based)
           const plannedPurchaseCost = useMemo(() => {
             // Include both remaining items AND purchased items that were planned
             const allPlannedItems = aggregatedIngredients.filter(ing => planToBuyItems.has(ing.name));
@@ -1011,10 +1040,11 @@
             allPlannedItems.forEach(ing => {
               const priceData = ingredientPrices[ing.name];
               
-              if (priceData?.price && ing.hasQuantity) {
-                const unitPrice = priceData.price;
-                const unitQty = priceData.unitQty || 1;
-                const itemCost = (ing.total / unitQty) * unitPrice;
+              if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ing.hasQuantity) {
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ing.unit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * priceData.price;
                 totalCost += itemCost;
                 itemsWithPrices++;
                 
@@ -1788,102 +1818,185 @@
                                           </button>
                                         </div>
 
-                                        {/* Compact price row - no indent, minimal spacing */}
-                                        <div className="flex items-center gap-1 mt-1" style={{ lineHeight: '1.2' }}>
-                                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
-                                          <input
-                                            type="number"
-                                            value={ingredientPrices[ingredient.name]?.price || ''}
-                                            onChange={(e) => {
-                                              const newPrices = {...ingredientPrices};
-                                              const value = parseFloat(e.target.value);
-                                              if (e.target.value === '' || isNaN(value)) {
-                                                delete newPrices[ingredient.name];
-                                              } else {
+                                        {/* Package-based price entry row */}
+                                        <div className="mt-1.5" style={{ lineHeight: '1.3' }}>
+                                          {/* Recipe amount needed - subtle reference */}
+                                          {ingredient.hasQuantity && (
+                                            <div className={`text-xs mb-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                              Need: {formatAmount(ingredient.total)} {ingredient.unit}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Price entry fields - all independent and always enabled */}
+                                          <div className="flex items-center gap-1 flex-wrap" style={{ lineHeight: '1.2' }}>
+                                            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
+                                            <input
+                                              type="number"
+                                              value={ingredientPrices[ingredient.name]?.price ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
+                                                }
+                                                
                                                 newPrices[ingredient.name] = {
                                                   ...newPrices[ingredient.name],
                                                   price: value,
-                                                  unitQty: newPrices[ingredient.name]?.unitQty || 1,
-                                                  unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
+                                                  packageQuantity: newPrices[ingredient.name]?.packageQuantity ?? null,
+                                                  packageUnit: newPrices[ingredient.name]?.packageUnit ?? ingredient.unit
                                                 };
-                                              }
-                                              setIngredientPrices(newPrices);
-                                            }}
-                                            placeholder="0"
-                                            className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                            style={{ fontSize: '16px' }}
-                                            step="0.01"
-                                            min="0"
-                                          />
-                                          <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
-                                          <input
-                                            type="number"
-                                            value={ingredientPrices[ingredient.name]?.unitQty ?? ''}
-                                            onChange={(e) => {
-                                              const newPrices = {...ingredientPrices};
-                                              if (ingredientPrices[ingredient.name]?.price) {
-                                                const value = e.target.value === '' ? '' : parseFloat(e.target.value);
-                                                newPrices[ingredient.name] = {
-                                                  ...newPrices[ingredient.name],
-                                                  unitQty: value === '' ? '' : (value > 0 ? value : ''),
-                                                  unitType: newPrices[ingredient.name]?.unitType || ingredient.unit
-                                                };
-                                                setIngredientPrices(newPrices);
-                                              }
-                                            }}
-                                            placeholder="1"
-                                            className={`w-12 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                            style={{ fontSize: '16px' }}
-                                            step="1"
-                                            min="1"
-                                          />
-                                          <input
-                                            type="text"
-                                            value={ingredientPrices[ingredient.name]?.unitType || ''}
-                                            onChange={(e) => {
-                                              const newPrices = {...ingredientPrices};
-                                              if (ingredientPrices[ingredient.name]?.price) {
-                                                newPrices[ingredient.name] = {
-                                                  ...newPrices[ingredient.name],
-                                                  unitType: e.target.value || ingredient.unit,
-                                                  unitQty: newPrices[ingredient.name]?.unitQty || 1
-                                                };
-                                                setIngredientPrices(newPrices);
-                                              }
-                                            }}
-                                            placeholder={ingredient.unit}
-                                            className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
-                                            style={{ fontSize: '16px' }}
-                                          />
-                                          
-                                          {/* Calculated Total and Price Change - compact */}
-                                          {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
-                                            <>
-                                              <span className={`text-sm font-semibold whitespace-nowrap ml-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                                = NT${(() => {
-                                                  const unitPrice = ingredientPrices[ingredient.name].price;
-                                                  const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
-                                                  const totalCost = (ingredient.total / unitQty) * unitPrice;
-                                                  return totalCost.toFixed(0);
-                                                })()}
-                                              </span>
-                                              {lastKnownPrices[ingredient.name] && (() => {
-                                                const currentPrice = ingredientPrices[ingredient.name].price;
-                                                const lastPrice = lastKnownPrices[ingredient.name].price;
-                                                const priceDiff = currentPrice - lastPrice;
-                                                const percentDiff = ((priceDiff / lastPrice) * 100).toFixed(0);
                                                 
-                                                if (Math.abs(priceDiff) > 0.01) {
-                                                  return (
-                                                    <span className={`text-xs font-medium ml-1 ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                                      {priceDiff > 0 ? '↑' : '↓'}{Math.abs(percentDiff)}%
-                                                    </span>
-                                                  );
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder="0"
+                                              className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                              step="0.01"
+                                              min="0"
+                                            />
+                                            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
+                                            <input
+                                              type="number"
+                                              value={ingredientPrices[ingredient.name]?.packageQuantity ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
                                                 }
-                                                return null;
-                                              })()}
-                                            </>
-                                          )}
+                                                
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: newPrices[ingredient.name]?.price ?? null,
+                                                  packageQuantity: value,
+                                                  packageUnit: newPrices[ingredient.name]?.packageUnit ?? ingredient.unit
+                                                };
+                                                
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder={ingredient.hasQuantity ? formatAmount(ingredient.total) : "1"}
+                                              className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                              step="1"
+                                              min="0"
+                                            />
+                                            <input
+                                              type="text"
+                                              list="package-units"
+                                              value={ingredientPrices[ingredient.name]?.packageUnit ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
+                                                }
+                                                
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: newPrices[ingredient.name]?.price ?? null,
+                                                  packageQuantity: newPrices[ingredient.name]?.packageQuantity ?? null,
+                                                  packageUnit: e.target.value || ingredient.unit
+                                                };
+                                                
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder={ingredient.unit}
+                                              className={`w-16 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                            />
+                                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>(package)</span>
+                                            
+                                            {/* Calculated Total - only if complete data */}
+                                            {(() => {
+                                              const priceData = ingredientPrices[ingredient.name];
+                                              const hasPrice = priceData?.price != null && priceData.price > 0;
+                                              const hasPackageQty = priceData?.packageQuantity != null && priceData.packageQuantity > 0;
+                                              const hasPackageUnit = priceData?.packageUnit;
+                                              const isComplete = hasPrice && hasPackageQty && hasPackageUnit && ingredient.hasQuantity;
+                                              
+                                              if (isComplete) {
+                                                // Convert units if necessary
+                                                const convertToBaseUnit = (qty, unit) => {
+                                                  const lowerUnit = unit.toLowerCase();
+                                                  // Weight conversions to grams
+                                                  if (lowerUnit === 'kg') return qty * 1000;
+                                                  if (lowerUnit === '斤') return qty * 600; // jin
+                                                  if (lowerUnit === 'lb') return qty * 453.592;
+                                                  if (lowerUnit === 'oz') return qty * 28.3495;
+                                                  // Volume conversions to ml
+                                                  if (lowerUnit === 'l') return qty * 1000;
+                                                  // Default: no conversion
+                                                  return qty;
+                                                };
+                                                
+                                                const recipeQtyBase = convertToBaseUnit(ingredient.total, ingredient.unit);
+                                                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit);
+                                                
+                                                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                                                const totalCost = packagesNeeded * priceData.price;
+                                                
+                                                return (
+                                                  <>
+                                                    <span className={`text-sm font-semibold whitespace-nowrap ml-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                      = NT${totalCost.toFixed(0)}
+                                                    </span>
+                                                    {packagesNeeded !== 1 && (
+                                                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                        ({packagesNeeded.toFixed(2)} pkg)
+                                                      </span>
+                                                    )}
+                                                    
+                                                    {/* Price change indicator */}
+                                                    {lastKnownPrices[ingredient.name] && (() => {
+                                                      const currentPricePerUnit = priceData.price / packageQtyBase;
+                                                      const lastPriceData = lastKnownPrices[ingredient.name];
+                                                      const lastPackageQtyBase = convertToBaseUnit(
+                                                        lastPriceData.packageQuantity || lastPriceData.unitQty || 1,
+                                                        lastPriceData.packageUnit || lastPriceData.unitType || ingredient.unit
+                                                      );
+                                                      const lastPricePerUnit = lastPriceData.price / lastPackageQtyBase;
+                                                      const priceDiff = currentPricePerUnit - lastPricePerUnit;
+                                                      const percentDiff = ((priceDiff / lastPricePerUnit) * 100).toFixed(0);
+                                                      
+                                                      if (Math.abs(priceDiff) > 0.001) {
+                                                        return (
+                                                          <span className={`text-xs font-medium ml-1 ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                            {priceDiff > 0 ? '↑' : '↓'}{Math.abs(percentDiff)}%
+                                                          </span>
+                                                        );
+                                                      }
+                                                      return null;
+                                                    })()}
+                                                  </>
+                                                );
+                                              } else if (hasPrice || hasPackageQty) {
+                                                // Partial data - show warning
+                                                return (
+                                                  <span className={`text-xs ml-1 ${darkMode ? 'text-yellow-500' : 'text-yellow-600'}`}>
+                                                    ⚠ {!hasPrice ? 'Need price' : !hasPackageQty ? 'Need package size' : 'Incomplete'}
+                                                  </span>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
+                                          
+                                          {/* Unit price display when complete */}
+                                          {(() => {
+                                            const priceData = ingredientPrices[ingredient.name];
+                                            if (priceData?.price > 0 && priceData?.packageQuantity > 0) {
+                                              const unitPrice = priceData.price / priceData.packageQuantity;
+                                              return (
+                                                <div className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                  NT${unitPrice.toFixed(2)}/{priceData.packageUnit || ingredient.unit}
+                                                </div>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
                                         </div>
                                       </div>
                                     ))}
@@ -1893,6 +2006,24 @@
                             ))}
                           </div>
                         )}
+                        
+                        {/* Unit dropdown datalist */}
+                        <datalist id="package-units">
+                          <option value="g">g (grams)</option>
+                          <option value="kg">kg (kilograms)</option>
+                          <option value="斤">斤 (jin ~600g)</option>
+                          <option value="lb">lb (pounds)</option>
+                          <option value="oz">oz (ounces)</option>
+                          <option value="ml">ml (milliliters)</option>
+                          <option value="L">L (liters)</option>
+                          <option value="pcs">pcs (pieces)</option>
+                          <option value="pack">pack</option>
+                          <option value="bag">bag</option>
+                          <option value="bottle">bottle</option>
+                          <option value="can">can</option>
+                          <option value="jar">jar</option>
+                          <option value="box">box</option>
+                        </datalist>
 
                         {/* Purchased Items */}
                         {purchasedItemsList.length > 0 && (
@@ -1926,17 +2057,34 @@
                                             • {ingredient.location}
                                           </span>
                                         )}
-                                        {/* Show total cost if price was entered - inline */}
-                                        {ingredientPrices[ingredient.name]?.price && ingredient.hasQuantity && (
-                                          <span className={`text-sm ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                                            (NT${(() => {
-                                              const unitPrice = ingredientPrices[ingredient.name].price;
-                                              const unitQty = ingredientPrices[ingredient.name].unitQty || 1;
-                                              const totalCost = (ingredient.total / unitQty) * unitPrice;
-                                              return totalCost.toFixed(0);
-                                            })()})
-                                          </span>
-                                        )}
+                                        {/* Show total cost if price was entered - inline, with package info */}
+                                        {(() => {
+                                          const priceData = ingredientPrices[ingredient.name];
+                                          if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ingredient.hasQuantity) {
+                                            // Same unit conversion logic
+                                            const convertToBaseUnit = (qty, unit) => {
+                                              const lowerUnit = unit.toLowerCase();
+                                              if (lowerUnit === 'kg') return qty * 1000;
+                                              if (lowerUnit === '斤') return qty * 600;
+                                              if (lowerUnit === 'lb') return qty * 453.592;
+                                              if (lowerUnit === 'oz') return qty * 28.3495;
+                                              if (lowerUnit === 'l') return qty * 1000;
+                                              return qty;
+                                            };
+                                            
+                                            const recipeQtyBase = convertToBaseUnit(ingredient.total, ingredient.unit);
+                                            const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ingredient.unit);
+                                            const packagesNeeded = recipeQtyBase / packageQtyBase;
+                                            const totalCost = packagesNeeded * priceData.price;
+                                            
+                                            return (
+                                              <span className={`text-sm ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                (NT${totalCost.toFixed(0)})
+                                              </span>
+                                            );
+                                          }
+                                          return null;
+                                        })()}
                                       </div>
                                     </div>
                                   </div>
