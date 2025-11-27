@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping List</title>
+    
+    <!-- iOS Home Screen App Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Shopping List">
+    
+    <!-- App Icon for iOS Home Screen (using emoji as data URI) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234F46E5' rx='20'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🛒</text></svg>">
+    
+    <!-- Theme color for mobile browsers -->
+    <meta name="theme-color" content="#4F46E5">
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // Initial recipe data - this will be loaded from memory storage
+        const INITIAL_RECIPES = [
+          {
+            id: 1,
+            name: "Ayam Goreng Paste",
+            yieldUnit: "batch",
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "shallot paste", quantity: 800.0, unit: "g", substitution: "", price: null },
+              { name: "garlic paste", quantity: 150.0, unit: "g", substitution: "", price: null },
+              { name: "galangal paste", quantity: 500.0, unit: "g", substitution: "", price: null },
+              { name: "candlenuts", quantity: 140.0, unit: "g", substitution: "", price: null },
+              { name: "coriander powder", quantity: 50.0, unit: "g" },
+              { name: "white pepper powder", quantity: 50.0, unit: "g" },
+              { name: "lemongrass", quantity: 30.0, unit: "pcs" },
+              { name: "ginger paste", quantity: 400.0, unit: "g" },
+              { name: "salt", quantity: 75.0, unit: "g" },
+              { name: "turmeric powder", quantity: 200.0, unit: "g" }
+            ]
+          },
+          {
+            id: 2,
+            name: "Bumbu Coto Paste",
+            yieldUnit: "g",
+            yieldQuantity: 5600,
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "shallot paste", quantity: 2400.0, unit: "g" },
+              { name: "garlic paste", quantity: 1200.0, unit: "g" },
+              { name: "lemongrass paste", quantity: 1200.0, unit: "g" },
+              { name: "coto spice pack", quantity: 1.0, unit: "bag" },
+              { name: "cinnamon sticks", quantity: 2.0, unit: "pcs" },
+              { name: "coconut palm sugar(6 pucks)", quantity: 360.0, unit: "g" },
+              { name: "galangal paste", quantity: 500.0, unit: "g" },
+              { name: "ginger paste", quantity: 250.0, unit: "g" },
+              { name: "kaffir lime leaves 15 (small to med)", quantity: null, unit: "g" },
+              { name: "bay leaves 10 (big)", quantity: null, unit: "g" },
+              { name: "pandan leaves", quantity: 1.0, unit: "pcs" },
+              { name: "oil", quantity: 500.0, unit: "ml" }
+            ]
+          },
+          {
+            id: 3,
+            name: "Ayam Bakar Marinade",
+            yieldUnit: "batch",
+            notes: "",
+            isFavorite: false,
+            ingredients: [
+              { name: "ayam bakar paste", quantity: 1.0, unit: "batch" },
+              { name: "ayam bakar spice pack", quantity: 1.0, unit: "bag" },
+              { name: "oil", quantity: 300.0, unit: "ml" },
+              { name: "honey", quantity: 40.0, unit: "g" },
+              { name: "ketchup manis", quantity: 220.0, unit: "g" },
+              { name: "coconut water", quantity: 500.0, unit: "ml" },
+              { name: "coconut milk", quantity: 500.0, unit: "ml" },
+              { name: "lemon leaves 3-4", quantity: null, unit: "" },
+              { name: "bay leaves 3-4", quantity: null, unit: "" },
+              { name: "pandan leaf", quantity: 1.0, unit: "pcs" },
+              { name: "tamarind paste", quantity: 1.0, unit: "Tbsp" },
+              { name: "chilies, chopped", quantity: 180.0, unit: "g" }
+            ]
+          }
+        ];
+
+        // Simple icon components
+        const ShoppingCart = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        );
+
+        const Plus = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        );
+
+        const Minus = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+          </svg>
+        );
+
+        const Edit = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        );
+
+        const Trash = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        );
+
+        const X = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+
+        const Settings = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        );
+
+        const RefreshCw = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        );
+
+        const Star = ({ className, filled }) => (
+          <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+          </svg>
+        );
+
+        const Copy = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        );
+
+        const Moon = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        );
+
+        const Sun = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        );
+
+        const Download = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        );
+
+        const Upload = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L9 8m4-4v12" />
+          </svg>
+        );
+
+        const ChevronDown = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        );
+
+        const ShoppingBag = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        );
+
+        const TrendingUp = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        );
+
+        const BarChart2 = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+
+        const ArrowLeft = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        );
+
+        // Helper function to format amounts without unnecessary decimals
+        const formatAmount = (amount) => {
+          return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
+        };
+
+        // Price Chart Component using Chart.js
+        function PriceChart({ chartData, minPrice, maxPrice, darkMode }) {
+          const canvasRef = useRef(null);
+          const chartInstanceRef = useRef(null);
+
+          useEffect(() => {
+            if (!canvasRef.current || chartData.length === 0) return;
+
+            // Destroy previous chart instance
+            if (chartInstanceRef.current) {
+              chartInstanceRef.current.destroy();
+            }
+
+            const ctx = canvasRef.current.getContext('2d');
+            
+            // Prepare data for Chart.js
+            const labels = chartData.map(d => d.date);
+            const prices = chartData.map(d => d.price);
+            
+            // Find indices of min and max prices for highlighting
+            const minIndex = prices.indexOf(minPrice);
+            const maxIndex = prices.indexOf(maxPrice);
+            
+            // Create point background colors (highlight min/max)
+            const pointBackgroundColors = prices.map((price, index) => {
+              if (price === minPrice) return '#10b981'; // green
+              if (price === maxPrice) return '#ef4444'; // red
+              return '#3b82f6'; // blue
+            });
+            
+            const pointRadius = prices.map((price, index) => {
+              if (price === minPrice || price === maxPrice) return 6;
+              return 4;
+            });
+
+            chartInstanceRef.current = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'Price (NT$)',
+                  data: prices,
+                  borderColor: '#3b82f6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderWidth: 2,
+                  pointBackgroundColor: pointBackgroundColors,
+                  pointBorderColor: pointBackgroundColors,
+                  pointRadius: pointRadius,
+                  pointHoverRadius: 8,
+                  tension: 0.2,
+                  fill: true
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                  mode: 'index',
+                  intersect: false,
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    enabled: true,
+                    backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+                    titleColor: darkMode ? '#9ca3af' : '#6b7280',
+                    bodyColor: darkMode ? '#f3f4f6' : '#111827',
+                    borderColor: darkMode ? '#374151' : '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                      label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                          label += ': ';
+                        }
+                        label += 'NT$' + context.parsed.y.toFixed(2);
+                        
+                        // Add annotation for min/max
+                        if (context.parsed.y === minPrice) {
+                          label += ' (Lowest)';
+                        } else if (context.parsed.y === maxPrice) {
+                          label += ' (Highest)';
+                        }
+                        
+                        return label;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: {
+                      color: darkMode ? '#374151' : '#e5e7eb',
+                      drawBorder: false
+                    },
+                    ticks: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 11
+                      }
+                    }
+                  },
+                  y: {
+                    beginAtZero: false,
+                    grid: {
+                      color: darkMode ? '#374151' : '#e5e7eb',
+                      drawBorder: false
+                    },
+                    ticks: {
+                      color: darkMode ? '#9ca3af' : '#6b7280',
+                      font: {
+                        size: 11
+                      },
+                      callback: function(value) {
+                        return 'NT$' + value.toFixed(0);
+                      }
+                    }
+                  }
+                }
+              }
+            });
+
+            // Cleanup function
+            return () => {
+              if (chartInstanceRef.current) {
+                chartInstanceRef.current.destroy();
+              }
+            };
+          }, [chartData, minPrice, maxPrice, darkMode]);
+
+          return (
+            <div className={`rounded-lg shadow-sm border p-6 mb-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Price Trend (Last 12 Months)
+              </h2>
+              <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                <canvas ref={canvasRef}></canvas>
+              </div>
+            </div>
+          );
+        }
+
+        function ShoppingAggregator() {
+          const [recipes, setRecipes] = useState([]);
+          const [selectedRecipes, setSelectedRecipes] = useState({});
+          const [purchasedItems, setPurchasedItems] = useState(new Set());
+          const [planToBuyItems, setPlanToBuyItems] = useState(new Set());
+          const [showManageRecipes, setShowManageRecipes] = useState(false);
+          const [editingRecipe, setEditingRecipe] = useState(null);
+          const [showRecipeForm, setShowRecipeForm] = useState(false);
+          const [searchQuery, setSearchQuery] = useState('');
+          const [ingredientPrices, setIngredientPrices] = useState({});
+          const [lastKnownPrices, setLastKnownPrices] = useState({});
+          const [darkMode, setDarkMode] = useState(false);
+          const [collapsedSections, setCollapsedSections] = useState({});
+          const [showPriceHistory, setShowPriceHistory] = useState(false);
+          const [selectedIngredient, setSelectedIngredient] = useState(null);
+          const [priceHistoryData, setPriceHistoryData] = useState({});
+
+          // Load dark mode preference on mount
+          useEffect(() => {
+            const stored = localStorage.getItem('darkMode');
+            if (stored) {
+              setDarkMode(stored === 'true');
+            }
+          }, []);
+
+          // Save dark mode preference
+          useEffect(() => {
+            localStorage.setItem('darkMode', darkMode.toString());
+          }, [darkMode]);
+
+          // Load recipes from memory on mount
+          useEffect(() => {
+            const stored = localStorage.getItem('restaurantRecipes');
+            if (stored) {
+              try {
+                setRecipes(JSON.parse(stored));
+              } catch (e) {
+                setRecipes(INITIAL_RECIPES);
+              }
+            } else {
+              setRecipes(INITIAL_RECIPES);
+            }
+          }, []);
+
+          // Save recipes to memory whenever they change
+          useEffect(() => {
+            if (recipes.length > 0) {
+              localStorage.setItem('restaurantRecipes', JSON.stringify(recipes));
+            }
+          }, [recipes]);
+
+          // Load last known prices from localStorage
+          useEffect(() => {
+            const stored = localStorage.getItem('lastKnownPrices');
+            if (stored) {
+              try {
+                setLastKnownPrices(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load last known prices:', e);
+              }
+            }
+          }, []);
+
+          // Load price history from localStorage
+          useEffect(() => {
+            const stored = localStorage.getItem('priceHistoryData');
+            if (stored) {
+              try {
+                setPriceHistoryData(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load price history:', e);
+              }
+            }
+          }, []);
+
+          // Save price history to localStorage whenever it changes
+          useEffect(() => {
+            if (Object.keys(priceHistoryData).length > 0) {
+              localStorage.setItem('priceHistoryData', JSON.stringify(priceHistoryData));
+            }
+          }, [priceHistoryData]);
+
+          // Save last known prices whenever ingredientPrices changes (package-based)
+          useEffect(() => {
+            const timer = setTimeout(() => {
+              Object.entries(ingredientPrices).forEach(([name, data]) => {
+                if (data?.price && data.price > 0 && data?.packageQuantity && data.packageQuantity > 0) {
+                  const today = new Date().toISOString().split('T')[0];
+                  
+                  setLastKnownPrices(prev => ({
+                    ...prev,
+                    [name]: {
+                      price: data.price,
+                      packageQuantity: data.packageQuantity,
+                      packageUnit: data.packageUnit || '',
+                      // Keep old format for backward compatibility
+                      unitQty: data.packageQuantity,
+                      unitType: data.packageUnit || '',
+                      date: today
+                    }
+                  }));
+                  
+                  // Also log to price history
+                  setPriceHistoryData(prev => {
+                    const existing = prev[name] || [];
+                    // Only add if price is different from last entry or it's been more than a day
+                    const lastEntry = existing[existing.length - 1];
+                    if (!lastEntry || lastEntry.price !== data.price || lastEntry.date !== today) {
+                      return {
+                        ...prev,
+                        [name]: [...existing, {
+                          date: today,
+                          price: data.price,
+                          packageQuantity: data.packageQuantity,
+                          packageUnit: data.packageUnit || '',
+                          // Keep old format for backward compatibility
+                          unitQty: data.packageQuantity,
+                          unitType: data.packageUnit || ''
+                        }]
+                      };
+                    }
+                    return prev;
+                  });
+                }
+              });
+            }, 2000); // Debounce 2 seconds after user stops typing
+
+            return () => clearTimeout(timer);
+          }, [ingredientPrices]);
+
+          // Save lastKnownPrices to localStorage
+          useEffect(() => {
+            if (Object.keys(lastKnownPrices).length > 0) {
+              localStorage.setItem('lastKnownPrices', JSON.stringify(lastKnownPrices));
+            }
+          }, [lastKnownPrices]);
+
+          const toggleRecipe = (recipeId) => {
+            setSelectedRecipes(prev => {
+              const newState = { ...prev };
+              if (newState[recipeId]) {
+                delete newState[recipeId];
+              } else {
+                newState[recipeId] = 1;
+              }
+              return newState;
+            });
+          };
+
+          const updateBatches = (recipeId, batches) => {
+            const numBatches = Math.max(0, parseInt(batches) || 0);
+            setSelectedRecipes(prev => ({
+              ...prev,
+              [recipeId]: numBatches
+            }));
+          };
+
+          const toggleFavorite = (recipeId) => {
+            setRecipes(prev => prev.map(r => 
+              r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r
+            ));
+          };
+
+          const deleteRecipe = (recipeId) => {
+            if (confirm('Are you sure you want to delete this recipe?')) {
+              setRecipes(prev => prev.filter(r => r.id !== recipeId));
+              setSelectedRecipes(prev => {
+                const newState = { ...prev };
+                delete newState[recipeId];
+                return newState;
+              });
+            }
+          };
+
+          const startEditRecipe = (recipe) => {
+            setEditingRecipe(recipe);
+            setShowRecipeForm(true);
+          };
+
+          const startNewRecipe = () => {
+            setEditingRecipe(null);
+            setShowRecipeForm(true);
+          };
+
+          const duplicateRecipe = (recipe) => {
+            const duplicate = {
+              ...recipe,
+              id: undefined, // Will be assigned when saved
+              name: `${recipe.name} (Copy)`,
+              isFavorite: false // Don't copy favorite status
+            };
+            setEditingRecipe(duplicate);
+            setShowRecipeForm(true);
+          };
+
+          const togglePurchased = (ingredientName) => {
+            setPurchasedItems(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(ingredientName)) {
+                newSet.delete(ingredientName);
+              } else {
+                newSet.add(ingredientName);
+              }
+              return newSet;
+            });
+          };
+
+          const clearPurchasedItems = () => {
+            setPurchasedItems(new Set());
+          };
+
+          const loadLastKnownPrices = () => {
+            const aggregatedNames = aggregatedIngredients.map(ing => ing.name);
+            const newPrices = {};
+            
+            aggregatedNames.forEach(name => {
+              if (lastKnownPrices[name]) {
+                newPrices[name] = {
+                  price: lastKnownPrices[name].price,
+                  unitQty: lastKnownPrices[name].unitQty,
+                  unitType: lastKnownPrices[name].unitType
+                };
+              }
+            });
+            
+            if (Object.keys(newPrices).length > 0) {
+              setIngredientPrices(newPrices);
+              alert(`✓ Loaded prices for ${Object.keys(newPrices).length} ingredient${Object.keys(newPrices).length !== 1 ? 's' : ''} from last shopping trip`);
+            } else {
+              alert('No price history found for these ingredients');
+            }
+          };
+
+          const exportRecipes = () => {
+            const exportData = {
+              version: "1.1",
+              exportDate: new Date().toISOString(),
+              recipes: recipes,
+              lastKnownPrices: lastKnownPrices
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            const dateStr = new Date().toISOString().split('T')[0];
+            link.download = `recipes-backup-${dateStr}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert(`✓ Exported ${recipes.length} recipe${recipes.length !== 1 ? 's' : ''} successfully!`);
+          };
+
+          const importRecipes = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                try {
+                  const importData = JSON.parse(event.target.result);
+                  
+                  // Validate data structure
+                  if (!importData.recipes || !Array.isArray(importData.recipes)) {
+                    alert('❌ Invalid file format. Please select a valid recipe backup file.');
+                    return;
+                  }
+                  
+                  const importedRecipes = importData.recipes;
+                  const importedPrices = importData.lastKnownPrices || {};
+                  
+                  if (importedRecipes.length === 0) {
+                    alert('❌ The file contains no recipes.');
+                    return;
+                  }
+                  
+                  // Show import options
+                  const existingCount = recipes.length;
+                  const importCount = importedRecipes.length;
+                  const priceCount = Object.keys(importedPrices).length;
+                  
+                  let message = `Found ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
+                  if (priceCount > 0) {
+                    message += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                  }
+                  message += ` in the file.\n`;
+                  
+                  if (existingCount > 0) {
+                    message += `You currently have ${existingCount} recipe${existingCount !== 1 ? 's' : ''}.\n\n`;
+                    message += `Choose import mode:\n`;
+                    message += `• OK = Merge (keep existing + add new)\n`;
+                    message += `• Cancel = Go back`;
+                    
+                    if (confirm(message)) {
+                      // Merge mode - update existing recipes by name, add new ones
+                      let updatedCount = 0;
+                      let addedCount = 0;
+                      
+                      setRecipes(prev => {
+                        const updated = [...prev];
+                        const maxId = updated.length > 0 ? Math.max(...updated.map(r => r.id)) : 0;
+                        let nextId = maxId + 1;
+                        
+                        importedRecipes.forEach(importedRecipe => {
+                          // Force lowercase on ingredient names during import
+                          const normalizedRecipe = {
+                            ...importedRecipe,
+                            ingredients: importedRecipe.ingredients.map(ing => ({
+                              ...ing,
+                              name: ing.name.toLowerCase()
+                            }))
+                          };
+                          
+                          // Check if recipe with same name already exists
+                          const existingIndex = updated.findIndex(r => 
+                            r.name.toLowerCase() === normalizedRecipe.name.toLowerCase()
+                          );
+                          
+                          if (existingIndex !== -1) {
+                            // Update existing recipe, keep its ID
+                            updated[existingIndex] = {
+                              ...normalizedRecipe,
+                              id: updated[existingIndex].id
+                            };
+                            updatedCount++;
+                          } else {
+                            // Add new recipe with new ID
+                            updated.push({
+                              ...normalizedRecipe,
+                              id: nextId++
+                            });
+                            addedCount++;
+                          }
+                        });
+                        
+                        return updated;
+                      });
+                      
+                      // Merge price history
+                      if (priceCount > 0) {
+                        setLastKnownPrices(prev => ({...prev, ...importedPrices}));
+                      }
+                      
+                      let successMsg = '✓ Successfully merged: ';
+                      if (updatedCount > 0) {
+                        successMsg += `${updatedCount} updated`;
+                      }
+                      if (addedCount > 0) {
+                        if (updatedCount > 0) successMsg += ', ';
+                        successMsg += `${addedCount} added`;
+                      }
+                      if (priceCount > 0) {
+                        successMsg += `, ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                      }
+                      alert(successMsg + '!');
+                    }
+                  } else {
+                    // No existing recipes, just import with normalized ingredient names
+                    const recipesWithIds = importedRecipes.map((recipe, index) => ({
+                      ...recipe,
+                      id: index + 1,
+                      ingredients: recipe.ingredients.map(ing => ({
+                        ...ing,
+                        name: ing.name.toLowerCase()
+                      }))
+                    }));
+                    setRecipes(recipesWithIds);
+                    
+                    // Import price history
+                    if (priceCount > 0) {
+                      setLastKnownPrices(importedPrices);
+                    }
+                    
+                    let successMsg = `✓ Successfully imported ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
+                    if (priceCount > 0) {
+                      successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                    }
+                    alert(successMsg + '!');
+                  }
+                  
+                } catch (error) {
+                  alert('❌ Error reading file. Please make sure it\'s a valid JSON file.');
+                  console.error('Import error:', error);
+                }
+              };
+              
+              reader.readAsText(file);
+            };
+            
+            input.click();
+          };
+
+          const replaceAllRecipes = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                try {
+                  const importData = JSON.parse(event.target.result);
+                  
+                  if (!importData.recipes || !Array.isArray(importData.recipes)) {
+                    alert('❌ Invalid file format. Please select a valid recipe backup file.');
+                    return;
+                  }
+                  
+                  const importedRecipes = importData.recipes;
+                  const importedPrices = importData.lastKnownPrices || {};
+                  
+                  if (importedRecipes.length === 0) {
+                    alert('❌ The file contains no recipes.');
+                    return;
+                  }
+                  
+                  const priceCount = Object.keys(importedPrices).length;
+                  let message = `⚠️ WARNING: This will replace all ${recipes.length} existing recipe${recipes.length !== 1 ? 's' : ''} with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''} from the file`;
+                  if (priceCount > 0) {
+                    message += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                  }
+                  message += '.\n\nThis cannot be undone!\n\nContinue?';
+                  
+                  if (confirm(message)) {
+                    const recipesWithIds = importedRecipes.map((recipe, index) => ({
+                      ...recipe,
+                      id: index + 1,
+                      ingredients: recipe.ingredients.map(ing => ({
+                        ...ing,
+                        name: ing.name.toLowerCase()
+                      }))
+                    }));
+                    setRecipes(recipesWithIds);
+                    setSelectedRecipes({});
+                    
+                    // Replace price history
+                    if (priceCount > 0) {
+                      setLastKnownPrices(importedPrices);
+                    }
+                    
+                    let successMsg = `✓ Successfully replaced with ${importedRecipes.length} recipe${importedRecipes.length !== 1 ? 's' : ''}`;
+                    if (priceCount > 0) {
+                      successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                    }
+                    alert(successMsg + '!');
+                  }
+                  
+                } catch (error) {
+                  alert('❌ Error reading file. Please make sure it\'s a valid JSON file.');
+                  console.error('Import error:', error);
+                }
+              };
+              
+              reader.readAsText(file);
+            };
+            
+            input.click();
+          };
+
+          const aggregatedIngredients = useMemo(() => {
+            const ingredientMap = new Map();
+
+            Object.entries(selectedRecipes).forEach(([recipeId, batches]) => {
+              if (batches <= 0) return;
+              
+              const recipe = recipes.find(r => r.id === parseInt(recipeId));
+              if (!recipe) return;
+
+              recipe.ingredients.forEach(ingredient => {
+                const key = ingredient.name;
+                
+                if (!ingredientMap.has(key)) {
+                  ingredientMap.set(key, {
+                    name: ingredient.name,
+                    total: 0,
+                    unit: ingredient.unit,
+                    hasQuantity: ingredient.quantity !== null,
+                    price: ingredient.price,
+                    totalCost: 0,
+                    location: ingredient.location || ''
+                  });
+                } else {
+                  // If ingredient already exists, update location if current one has a location set
+                  const item = ingredientMap.get(key);
+                  if (ingredient.location && ingredient.location.trim() && !item.location) {
+                    item.location = ingredient.location;
+                  }
+                }
+
+                const item = ingredientMap.get(key);
+                if (ingredient.quantity !== null) {
+                  item.total += ingredient.quantity * batches;
+                  if (ingredient.price !== null) {
+                    item.totalCost += ingredient.price * ingredient.quantity * batches;
+                  }
+                }
+              });
+            });
+
+            return Array.from(ingredientMap.values()).sort((a, b) => 
+              a.name.localeCompare(b.name)
+            );
+          }, [selectedRecipes, recipes]);
+
+          const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
+          const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+
+          // Initialize planToBuyItems when aggregatedIngredients change
+          useEffect(() => {
+            setPlanToBuyItems(prev => {
+              const newSet = new Set(prev);
+              aggregatedIngredients.forEach(ing => {
+                // Default all items to "plan to buy" if not already set
+                if (!newSet.has(ing.name) && !purchasedItems.has(ing.name)) {
+                  newSet.add(ing.name);
+                }
+              });
+              // Remove items that no longer exist in aggregated list
+              Array.from(newSet).forEach(name => {
+                if (!aggregatedIngredients.find(ing => ing.name === name)) {
+                  newSet.delete(name);
+                }
+              });
+              return newSet;
+            });
+          }, [aggregatedIngredients]);
+
+          // Group remaining items by location
+          const groupedByLocation = useMemo(() => {
+            const groups = {};
+            
+            remainingItems
+              .filter(ingredient => planToBuyItems.has(ingredient.name))
+              .forEach(ingredient => {
+              const location = ingredient.location && ingredient.location.trim() ? ingredient.location.trim() : 'Unspecified';
+              if (!groups[location]) {
+                groups[location] = [];
+              }
+              groups[location].push(ingredient);
+            });
+            
+            // Sort each group alphabetically
+            Object.keys(groups).forEach(location => {
+              groups[location].sort((a, b) => a.name.localeCompare(b.name));
+            });
+            
+            // Return sorted location names and their items
+            const sortedLocations = Object.keys(groups).sort((a, b) => {
+              // "Unspecified" always goes last
+              if (a === 'Unspecified') return 1;
+              if (b === 'Unspecified') return -1;
+              return a.localeCompare(b);
+            });
+            
+            return sortedLocations.map(location => ({
+              location,
+              items: groups[location]
+            }));
+          }, [remainingItems, planToBuyItems]);
+
+          const toggleSection = (location) => {
+            setCollapsedSections(prev => ({
+              ...prev,
+              [location]: !prev[location]
+            }));
+          };
+
+          const togglePlanToBuy = (ingredientName) => {
+            setPlanToBuyItems(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(ingredientName)) {
+                newSet.delete(ingredientName);
+              } else {
+                newSet.add(ingredientName);
+              }
+              return newSet;
+            });
+          };
+
+          const selectAllForPurchase = () => {
+            const allNames = new Set(remainingItems.map(ing => ing.name));
+            setPlanToBuyItems(allNames);
+          };
+
+          const deselectAll = () => {
+            setPlanToBuyItems(new Set());
+          };
+
+          const hasSelections = Object.keys(selectedRecipes).length > 0;
+
+          // Unit conversion helper function
+          const convertToBaseUnit = (qty, unit) => {
+            const lowerUnit = unit?.toLowerCase() || '';
+            // Weight conversions to grams
+            if (lowerUnit === 'kg') return qty * 1000;
+            if (lowerUnit === '斤') return qty * 600; // jin
+            if (lowerUnit === 'lb') return qty * 453.592;
+            if (lowerUnit === 'oz') return qty * 28.3495;
+            // Volume conversions to ml
+            if (lowerUnit === 'l') return qty * 1000;
+            // Default: no conversion
+            return qty;
+          };
+
+          // Calculate total estimated cost from session prices (package-based)
+          const totalCost = useMemo(() => {
+            return aggregatedIngredients.reduce((sum, ing) => {
+              const priceData = ingredientPrices[ing.name];
+              if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ing.hasQuantity) {
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ing.unit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * priceData.price;
+                return sum + itemCost;
+              }
+              return sum;
+            }, 0);
+          }, [aggregatedIngredients, ingredientPrices]);
+
+          const hasPrices = Object.keys(ingredientPrices).some(key => {
+            const priceData = ingredientPrices[key];
+            return priceData?.price > 0 && priceData?.packageQuantity > 0;
+          });
+
+          // Calculate estimated total based on last known prices (package-based)
+          const estimatedTotal = useMemo(() => {
+            let total = 0;
+            let hasEstimates = false;
+            
+            aggregatedIngredients.forEach(ing => {
+              const lastPrice = lastKnownPrices[ing.name];
+              if (lastPrice?.price && ing.hasQuantity) {
+                // Handle both old format (unitQty/unitType) and new format (packageQuantity/packageUnit)
+                const packageQty = lastPrice.packageQuantity || lastPrice.unitQty || 1;
+                const packageUnit = lastPrice.packageUnit || lastPrice.unitType || ing.unit;
+                
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(packageQty, packageUnit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * lastPrice.price;
+                total += itemCost;
+                hasEstimates = true;
+              }
+            });
+            
+            return hasEstimates ? total : null;
+          }, [aggregatedIngredients, lastKnownPrices]);
+
+          // Calculate planned purchase total cost with detailed breakdown (package-based)
+          const plannedPurchaseCost = useMemo(() => {
+            // Include both remaining items AND purchased items that were planned
+            const allPlannedItems = aggregatedIngredients.filter(ing => planToBuyItems.has(ing.name));
+            
+            let totalCost = 0;
+            let itemsWithPrices = 0;
+            let itemsWithoutPrices = [];
+            const locationTotals = {};
+            
+            allPlannedItems.forEach(ing => {
+              const priceData = ingredientPrices[ing.name];
+              
+              if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ing.hasQuantity) {
+                const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
+                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ing.unit);
+                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                const itemCost = packagesNeeded * priceData.price;
+                totalCost += itemCost;
+                itemsWithPrices++;
+                
+                // Track by location
+                const location = ing.location && ing.location.trim() ? ing.location.trim() : 'Unspecified';
+                if (!locationTotals[location]) {
+                  locationTotals[location] = { cost: 0, count: 0 };
+                }
+                locationTotals[location].cost += itemCost;
+                locationTotals[location].count++;
+              } else if (ing.hasQuantity && !purchasedItems.has(ing.name)) {
+                // Only list unpurchased items without prices
+                itemsWithoutPrices.push(ing.name);
+              }
+            });
+            
+            return {
+              total: totalCost,
+              itemCount: allPlannedItems.length,
+              itemsWithPrices,
+              itemsWithoutPrices,
+              locationTotals
+            };
+          }, [aggregatedIngredients, planToBuyItems, ingredientPrices, purchasedItems]);
+
+          // Filter recipes based on search query and sort favorites first
+          const filteredRecipes = useMemo(() => {
+            let filtered = recipes;
+            if (searchQuery.trim()) {
+              const query = searchQuery.toLowerCase();
+              filtered = recipes.filter(recipe => 
+                recipe.name.toLowerCase().includes(query)
+              );
+            }
+            // Sort: favorites first, then alphabetically
+            return filtered.sort((a, b) => {
+              if (a.isFavorite && !b.isFavorite) return -1;
+              if (!a.isFavorite && b.isFavorite) return 1;
+              return a.name.localeCompare(b.name);
+            });
+          }, [recipes, searchQuery]);
+
+          if (showRecipeForm) {
+            return <RecipeForm 
+              recipe={editingRecipe}
+              recipes={recipes}
+              darkMode={darkMode}
+              onSave={(recipe) => {
+                if (editingRecipe) {
+                  setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
+                } else {
+                  const newId = recipes.length > 0 ? Math.max(...recipes.map(r => r.id)) + 1 : 1;
+                  setRecipes(prev => [...prev, { ...recipe, id: newId }]);
+                }
+                setShowRecipeForm(false);
+                setEditingRecipe(null);
+              }}
+              onCancel={() => {
+                setShowRecipeForm(false);
+                setEditingRecipe(null);
+              }}
+            />;
+          }
+
+          // Price History View
+          if (showPriceHistory) {
+            // If viewing a specific ingredient's detail
+            if (selectedIngredient) {
+              const ingredientHistory = priceHistoryData[selectedIngredient] || [];
+              const sortedHistory = [...ingredientHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+              
+              // Calculate statistics
+              const prices = ingredientHistory.map(h => h.price);
+              const currentPrice = prices[prices.length - 1] || 0;
+              const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+              const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+              const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+              
+              // Prepare chart data (show last 12 months)
+              const chartData = [...ingredientHistory]
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .slice(-12)
+                .map(entry => ({
+                  date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                  price: entry.price,
+                  fullDate: entry.date
+                }));
+              
+              return (
+                <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                  <div className="max-w-4xl mx-auto">
+                    {/* Header */}
+                    <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <BarChart2 className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                          <div>
+                            <h1 className={`text-2xl md:text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedIngredient}</h1>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              Last updated: {sortedHistory[0]?.date || 'Never'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedIngredient(null)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                          Back
+                        </button>
+                      </div>
+                      
+                      {/* Current Price */}
+                      <div className={`text-center py-4 ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'} rounded-lg`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Current Price</p>
+                        <p className={`text-4xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                          NT${currentPrice.toFixed(2)}
+                        </p>
+                        {ingredientHistory[ingredientHistory.length - 1] && (
+                          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            per {ingredientHistory[ingredientHistory.length - 1].unitQty} {ingredientHistory[ingredientHistory.length - 1].unitType}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Statistics Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>6-Month Avg</p>
+                        <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>NT${avgPrice.toFixed(2)}</p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>vs Average</p>
+                        <p className={`text-2xl font-bold ${priceChange > 10 ? 'text-red-500' : priceChange < -10 ? 'text-green-500' : darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {priceChange > 0 ? '↑' : priceChange < 0 ? '↓' : '→'} {Math.abs(priceChange).toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Lowest</p>
+                        <p className={`text-2xl font-bold text-green-500`}>NT${minPrice.toFixed(2)}</p>
+                      </div>
+                      <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Highest</p>
+                        <p className={`text-2xl font-bold text-red-500`}>NT${maxPrice.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Price Chart */}
+                    {chartData.length > 0 && (
+                      <PriceChart 
+                        chartData={chartData} 
+                        minPrice={minPrice} 
+                        maxPrice={maxPrice} 
+                        darkMode={darkMode} 
+                      />
+                    )}
+                    
+                    {/* Price History Table */}
+                    <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h2>
+                      {sortedHistory.length === 0 ? (
+                        <p className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No price history yet</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                              <tr>
+                                <th className={`px-4 py-2 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {sortedHistory.slice(0, 15).map((entry, index) => (
+                                <tr key={index} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                                  <td className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                    {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                  </td>
+                                  <td className={`px-4 py-2 text-sm text-right font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    NT${entry.price.toFixed(2)}
+                                  </td>
+                                  <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {entry.unitQty} {entry.unitType}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Price History List View
+            const ingredientsWithHistory = Object.entries(priceHistoryData)
+              .filter(([name, history]) => history.length > 0)
+              .map(([name, history]) => {
+                const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const currentPrice = sortedHistory[0]?.price || 0;
+                const prices = history.map(h => h.price);
+                const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+                const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+                
+                return {
+                  name,
+                  currentPrice,
+                  lastUpdated: sortedHistory[0]?.date || '',
+                  priceChange,
+                  unitQty: sortedHistory[0]?.unitQty || 1,
+                  unitType: sortedHistory[0]?.unitType || ''
+                };
+              });
+            
+            return (
+              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div className="max-w-4xl mx-auto">
+                  {/* Header */}
+                  <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <TrendingUp className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h1>
+                      </div>
+                      <button
+                        onClick={() => setShowPriceHistory(false)}
+                        className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                      >
+                        Back to Shopping List
+                      </button>
+                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Track ingredient prices over time and identify trends
+                    </p>
+                  </div>
+                  
+                  {/* Ingredients List */}
+                  <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tracked Ingredients</h2>
+                    
+                    {ingredientsWithHistory.length === 0 ? (
+                      <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <BarChart2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg mb-2">No price history yet</p>
+                        <p className="text-sm">Prices will be automatically tracked when you update them on your shopping list</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {ingredientsWithHistory
+                          .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+                          .map((ingredient) => (
+                            <div 
+                              key={ingredient.name}
+                              onClick={() => setSelectedIngredient(ingredient.name)}
+                              className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                                darkMode 
+                                  ? 'bg-gray-700 hover:bg-gray-600' 
+                                  : 'bg-gray-50 hover:bg-gray-100'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                    {ingredient.name}
+                                  </h3>
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Last updated: {new Date(ingredient.lastUpdated).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    NT${ingredient.currentPrice.toFixed(2)}
+                                  </p>
+                                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    per {ingredient.unitQty} {ingredient.unitType}
+                                  </p>
+                                  <div className={`text-sm font-medium mt-1 ${
+                                    ingredient.priceChange > 10 
+                                      ? 'text-red-500' 
+                                      : ingredient.priceChange < -10 
+                                      ? 'text-green-500' 
+                                      : darkMode ? 'text-gray-400' : 'text-gray-600'
+                                  }`}>
+                                    {ingredient.priceChange > 0 ? '↑' : ingredient.priceChange < 0 ? '↓' : '→'} {Math.abs(ingredient.priceChange).toFixed(1)}% vs avg
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (showManageRecipes) {
+            return (
+              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                <div className="max-w-4xl mx-auto">
+                  <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Settings className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Manage Recipes</h1>
+                      </div>
+                      <button
+                        onClick={() => setShowManageRecipes(false)}
+                        className={`px-4 py-2 ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      >
+                        Back to Shopping List
+                      </button>
+                    </div>
+                    
+                    {/* Main action buttons */}
+                    <div className="space-y-3">
+                      <button
+                        onClick={startNewRecipe}
+                        className={`w-full px-4 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        + Add New Recipe
+                      </button>
+                      
+                      {/* Import/Export buttons */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={exportRecipes}
+                          disabled={recipes.length === 0}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white disabled:bg-gray-800 disabled:text-gray-600' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:bg-gray-50 disabled:text-gray-400'}`}
+                          title="Export all recipes to JSON file"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span className="hidden sm:inline">Export</span>
+                        </button>
+                        <button
+                          onClick={importRecipes}
+                          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                          title="Import recipes from JSON file (merge with existing)"
+                        >
+                          <Upload className="w-4 h-4" />
+                          <span className="hidden sm:inline">Import</span>
+                        </button>
+                      </div>
+                      
+                      {recipes.length > 0 && (
+                        <button
+                          onClick={replaceAllRecipes}
+                          className={`w-full px-3 py-2 text-sm rounded-lg font-medium transition-colors ${darkMode ? 'bg-red-900/20 hover:bg-red-900/30 text-red-400 border border-red-800' : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200'}`}
+                          title="Replace all recipes with imported file"
+                        >
+                          ⚠️ Replace All Recipes
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recipes.length === 0 ? (
+                      <div className={`text-center py-12 rounded-lg border mt-6 ${darkMode ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
+                        <p className="mb-2">No recipes yet</p>
+                        <p className="text-sm">Add a new recipe or import from a backup file</p>
+                      </div>
+                    ) : (
+                      recipes.map(recipe => (
+                      <div key={recipe.id} className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{recipe.name}</h3>
+                            <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {recipe.ingredients.length} ingredient{recipe.ingredients.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => duplicateRecipe(recipe)}
+                              className={`p-2 rounded ${darkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'}`}
+                              title="Duplicate recipe"
+                            >
+                              <Copy className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => startEditRecipe(recipe)}
+                              className={`p-2 rounded ${darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'}`}
+                              title="Edit recipe"
+                            >
+                              <Edit className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => deleteRecipe(recipe.id)}
+                              className={`p-2 rounded ${darkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-red-50'}`}
+                              title="Delete recipe"
+                            >
+                              <Trash className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className={`mt-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <div className="grid grid-cols-2 gap-2">
+                            {recipe.ingredients.slice(0, 6).map((ing, i) => (
+                              <div key={i} className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                • {ing.name}
+                              </div>
+                            ))}
+                          </div>
+                          {recipe.ingredients.length > 6 && (
+                            <div className="text-gray-500 mt-2">
+                              ... and {recipe.ingredients.length - 6} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )))}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className="max-w-6xl mx-auto">
+                <div className={`rounded-lg shadow-sm border mb-6 p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-2">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <ShoppingCart className={`w-6 h-6 md:w-8 md:h-8 flex-shrink-0 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                      <h1 className={`text-xl md:text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h1>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                      >
+                        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                      </button>
+                      <button
+                        onClick={() => setShowPriceHistory(true)}
+                        className={`flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        title="View price history and trends"
+                      >
+                        <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Price History</span>
+                        <span className="sm:hidden">History</span>
+                      </button>
+                      <button
+                        onClick={() => setShowManageRecipes(true)}
+                        className={`flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                      >
+                        <Settings className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden sm:inline">Manage Recipes</span>
+                        <span className="sm:hidden">Recipes</span>
+                      </button>
+                    </div>
+                  </div>
+                  <p className={`text-sm md:text-base ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Select recipes and specify batch quantities to generate your shopping list</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Recipe Selection Panel */}
+                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Select Recipes</h2>
+                    {recipes.length === 0 ? (
+                      <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p>No recipes yet. Click "Manage Recipes" to add some!</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Search input */}
+                        {recipes.length > 3 && (
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search recipes..."
+                            className={`w-full px-4 py-2 mb-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                          />
+                        )}
+                        
+                        <div className="space-y-3">
+                          {filteredRecipes.length === 0 ? (
+                            <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <p>No recipes match "{searchQuery}"</p>
+                            </div>
+                          ) : (
+                            filteredRecipes.map(recipe => {
+                              const isSelected = selectedRecipes[recipe.id] !== undefined;
+                              const batches = selectedRecipes[recipe.id] || 1;
+
+                              return (
+                                <div key={recipe.id} className={`border rounded-lg p-4 transition-colors ${darkMode ? 'border-gray-700 hover:border-blue-500' : 'border-gray-200 hover:border-blue-300'}`}>
+                                  <div className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => toggleRecipe(recipe.id)}
+                                      className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <label className={`font-medium cursor-pointer ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                          {recipe.name}
+                                        </label>
+                                        <button
+                                          onClick={() => toggleFavorite(recipe.id)}
+                                          className={`p-1 rounded ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                          title={recipe.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                        >
+                                          <Star 
+                                            className={`w-5 h-5 ${recipe.isFavorite ? 'text-yellow-500' : darkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                                            filled={recipe.isFavorite}
+                                          />
+                                        </button>
+                                      </div>
+                                      <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        {recipe.ingredients.length} ingredients
+                                      </div>
+                                      {recipe.notes && (
+                                        <div className={`text-sm mt-1 italic ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                          {recipe.notes}
+                                        </div>
+                                      )}
+                                      
+                                      {isSelected && (
+                                        <div className="mt-3 flex items-center gap-2">
+                                          <button
+                                            onClick={() => updateBatches(recipe.id, batches - 1)}
+                                            className={`p-1 rounded border disabled:opacity-50 text-gray-400 ${darkMode ? 'border-gray-600 hover:bg-gray-700 hover:text-gray-300' : 'border-gray-300 hover:bg-gray-100 hover:text-gray-600'}`}
+                                            disabled={batches <= 1}
+                                          >
+                                            <Minus className="w-4 h-4" />
+                                          </button>
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            value={batches}
+                                            onChange={(e) => updateBatches(recipe.id, e.target.value)}
+                                            className={`w-20 px-3 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                          />
+                                          <button
+                                            onClick={() => updateBatches(recipe.id, batches + 1)}
+                                            className={`p-1 rounded border text-gray-400 ${darkMode ? 'border-gray-600 hover:bg-gray-700 hover:text-gray-300' : 'border-gray-300 hover:bg-gray-100 hover:text-gray-600'}`}
+                                          >
+                                            <Plus className="w-4 h-4" />
+                                          </button>
+                                          <span className={`text-sm ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            {batches === 1 ? 'batch' : 'batches'}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Shopping List Panel */}
+                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+                      <div className="flex flex-col">
+                        <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List</h2>
+                        {hasSelections && estimatedTotal !== null && (
+                          <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Estimated: <span className="font-semibold">{estimatedTotal.toLocaleString('zh-TW', { style: 'currency', currency: 'TWD' })}</span>
+                            <span className="text-xs ml-1">(based on last prices)</span>
+                          </div>
+                        )}
+                        {hasSelections && groupedByLocation.length > 0 && (
+                          <div className={`text-sm mt-1 flex flex-wrap gap-x-2 gap-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {groupedByLocation.map(({ location, items }) => (
+                              <span key={location} className="whitespace-nowrap">
+                                {location === 'Unspecified' ? '📍' : '🛒'} {location} ({items.length})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0 && (
+                          <button
+                            onClick={loadLastKnownPrices}
+                            className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'}`}
+                            title="Load prices from last shopping trip"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Load Prices</span>
+                          </button>
+                        )}
+                        {purchasedItems.size > 0 && (
+                          <button
+                            onClick={clearPurchasedItems}
+                            className={`flex items-center gap-1 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            title="Reset all items"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reset</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {!hasSelections ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                        <p>Select recipes to generate your shopping list</p>
+                      </div>
+                    ) : aggregatedIngredients.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <p>No ingredients to display</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Planned Purchase Cost Summary */}
+                        {hasSelections && plannedPurchaseCost.itemCount > 0 && (
+                          <div className={`rounded-lg border-2 p-4 mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-300'}`}>
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h3 className={`text-lg font-bold ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                                  PLANNED PURCHASE TOTAL
+                                </h3>
+                                <div className={`text-sm mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                                  {plannedPurchaseCost.itemCount} item{plannedPurchaseCost.itemCount !== 1 ? 's' : ''} selected
+                                  {plannedPurchaseCost.itemsWithPrices > 0 && (
+                                    <span> ({plannedPurchaseCost.itemsWithPrices} with price{plannedPurchaseCost.itemsWithPrices !== 1 ? 's' : ''}
+                                    {plannedPurchaseCost.itemsWithoutPrices.length > 0 && `, ${plannedPurchaseCost.itemsWithoutPrices.length} without`})</span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <button
+                                  onClick={selectAllForPurchase}
+                                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-200 hover:bg-blue-300 text-blue-900'}`}
+                                  title="Show all items"
+                                >
+                                  Select All
+                                </button>
+                                <button
+                                  onClick={deselectAll}
+                                  className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                                  title="Hide all items"
+                                >
+                                  Deselect All
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {plannedPurchaseCost.itemsWithPrices > 0 && (
+                              <>
+                                <div className={`text-3xl font-bold mb-3 ${darkMode ? 'text-blue-200' : 'text-blue-900'}`}>
+                                  NT$ {plannedPurchaseCost.total.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </div>
+                                
+                                {Object.keys(plannedPurchaseCost.locationTotals).length > 1 && (
+                                  <div className={`text-sm space-y-1 pt-3 border-t ${darkMode ? 'border-blue-800' : 'border-blue-300'}`}>
+                                    <div className={`font-medium mb-2 ${darkMode ? 'text-blue-400' : 'text-blue-800'}`}>Breakdown by location:</div>
+                                    {Object.entries(plannedPurchaseCost.locationTotals)
+                                      .sort((a, b) => {
+                                        if (a[0] === 'Unspecified') return 1;
+                                        if (b[0] === 'Unspecified') return -1;
+                                        return a[0].localeCompare(b[0]);
+                                      })
+                                      .map(([location, data]) => (
+                                        <div key={location} className={`flex justify-between ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                                          <span>{location === 'Unspecified' ? '📍' : '🛒'} {location}:</span>
+                                          <span className="font-semibold">NT$ {data.cost.toFixed(0)} ({data.count} item{data.count !== 1 ? 's' : ''})</span>
+                                        </div>
+                                      ))}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            
+                            {plannedPurchaseCost.itemsWithoutPrices.length > 0 && (
+                              <div className={`text-xs mt-3 pt-3 border-t ${darkMode ? 'border-blue-800 text-yellow-400' : 'border-blue-300 text-orange-700'}`}>
+                                ⚠️ {plannedPurchaseCost.itemsWithoutPrices.length} item{plannedPurchaseCost.itemsWithoutPrices.length !== 1 ? 's' : ''} missing price{plannedPurchaseCost.itemsWithoutPrices.length !== 1 ? 's' : ''}: {plannedPurchaseCost.itemsWithoutPrices.join(', ')}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Remaining Items Grouped by Location */}
+                        {remainingItems.length > 0 && (
+                          <div className="space-y-2 mb-2">
+                            {groupedByLocation.map(({ location, items }) => (
+                              <div key={location} className={`border rounded-lg ${darkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+                                {/* Location Header - Collapsible */}
+                                <button
+                                  onClick={() => toggleSection(location)}
+                                  className={`w-full px-4 py-3 flex items-center justify-between text-left font-semibold text-base border-b ${
+                                    darkMode 
+                                      ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' 
+                                      : location === 'Unspecified'
+                                        ? 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                                        : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                                  } ${collapsedSections[location] ? 'rounded-lg' : 'rounded-t-lg'}`}
+                                  style={{ minHeight: '44px' }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className={
+                                      darkMode
+                                        ? 'text-white'
+                                        : location === 'Unspecified'
+                                          ? 'text-gray-700'
+                                          : 'text-blue-900'
+                                    }>
+                                      {location === 'Unspecified' ? '📍 ' + location : '🛒 ' + location}
+                                    </span>
+                                    <span className={`text-sm font-normal ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      ({items.length} item{items.length !== 1 ? 's' : ''})
+                                    </span>
+                                  </div>
+                                  <ChevronDown className={`w-5 h-5 transition-transform ${collapsedSections[location] ? '' : 'transform rotate-180'} ${
+                                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                                  }`} />
+                                </button>
+
+                                {/* Location Items */}
+                                {!collapsedSections[location] && (
+                                  <div className="p-2 space-y-1">
+                                    {items.map((ingredient, index) => (
+                                      <div key={index} className={`relative py-1.5 px-2 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                                        {/* Single compact row: Checkboxes + Name/Amount + Plan to Buy toggle */}
+                                        <div className="flex items-center gap-2">
+                                          {/* Left: Purchased checkbox */}
+                                          <input
+                                            type="checkbox"
+                                            checked={false}
+                                            onChange={() => togglePurchased(ingredient.name)}
+                                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                                            style={{ minWidth: '20px', minHeight: '20px' }}
+                                          />
+                                          
+                                          {/* Middle: Ingredient name and amount - compact inline */}
+                                          <div className="flex-1 min-w-0" style={{ lineHeight: '1.3' }}>
+                                            <span className={`font-semibold text-base ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                              {ingredient.name}
+                                            </span>
+                                            <span className={`font-normal text-base ml-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                              {ingredient.hasQuantity 
+                                                ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                                : 'As needed'
+                                              }
+                                            </span>
+                                          </div>
+                                          
+                                          {/* Right: Plan to Buy toggle - smaller */}
+                                          <button
+                                            onClick={() => togglePlanToBuy(ingredient.name)}
+                                            className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+                                              planToBuyItems.has(ingredient.name)
+                                                ? darkMode 
+                                                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                                  : 'bg-blue-500 text-white hover:bg-blue-600'
+                                                : darkMode
+                                                  ? 'bg-gray-600 text-gray-400 hover:bg-gray-500'
+                                                  : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                                            }`}
+                                            style={{ minWidth: '32px', minHeight: '32px', padding: '6px' }}
+                                            title={planToBuyItems.has(ingredient.name) ? "Remove from planned purchase" : "Add to planned purchase"}
+                                          >
+                                            <ShoppingBag className="w-4 h-4" />
+                                          </button>
+                                        </div>
+
+                                        {/* Package-based price entry row */}
+                                        <div className="mt-1.5" style={{ lineHeight: '1.3' }}>
+                                          {/* Recipe amount needed - subtle reference */}
+                                          {ingredient.hasQuantity && (
+                                            <div className={`text-xs mb-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                              Need: {formatAmount(ingredient.total)} {ingredient.unit}
+                                            </div>
+                                          )}
+                                          
+                                          {/* Price entry fields - all independent and always enabled */}
+                                          <div className="flex items-center gap-1 flex-wrap" style={{ lineHeight: '1.2' }}>
+                                            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>NT$</span>
+                                            <input
+                                              type="number"
+                                              value={ingredientPrices[ingredient.name]?.price ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
+                                                }
+                                                
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: value,
+                                                  packageQuantity: newPrices[ingredient.name]?.packageQuantity ?? null,
+                                                  packageUnit: newPrices[ingredient.name]?.packageUnit ?? ingredient.unit
+                                                };
+                                                
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder="0"
+                                              className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                              step="0.01"
+                                              min="0"
+                                            />
+                                            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>/</span>
+                                            <input
+                                              type="number"
+                                              value={ingredientPrices[ingredient.name]?.packageQuantity ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
+                                                }
+                                                
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: newPrices[ingredient.name]?.price ?? null,
+                                                  packageQuantity: value,
+                                                  packageUnit: newPrices[ingredient.name]?.packageUnit ?? ingredient.unit
+                                                };
+                                                
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder={ingredient.hasQuantity ? formatAmount(ingredient.total) : "1"}
+                                              className={`w-14 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                              step="1"
+                                              min="0"
+                                            />
+                                            <input
+                                              type="text"
+                                              list="package-units"
+                                              value={ingredientPrices[ingredient.name]?.packageUnit ?? ''}
+                                              onChange={(e) => {
+                                                const newPrices = {...ingredientPrices};
+                                                
+                                                if (!newPrices[ingredient.name]) {
+                                                  newPrices[ingredient.name] = {};
+                                                }
+                                                
+                                                newPrices[ingredient.name] = {
+                                                  ...newPrices[ingredient.name],
+                                                  price: newPrices[ingredient.name]?.price ?? null,
+                                                  packageQuantity: newPrices[ingredient.name]?.packageQuantity ?? null,
+                                                  packageUnit: e.target.value || ingredient.unit
+                                                };
+                                                
+                                                setIngredientPrices(newPrices);
+                                              }}
+                                              placeholder={ingredient.unit}
+                                              className={`w-16 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                              style={{ fontSize: '16px' }}
+                                            />
+                                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>(package)</span>
+                                            
+                                            {/* Calculated Total - only if complete data */}
+                                            {(() => {
+                                              const priceData = ingredientPrices[ingredient.name];
+                                              const hasPrice = priceData?.price != null && priceData.price > 0;
+                                              const hasPackageQty = priceData?.packageQuantity != null && priceData.packageQuantity > 0;
+                                              const hasPackageUnit = priceData?.packageUnit;
+                                              const isComplete = hasPrice && hasPackageQty && hasPackageUnit && ingredient.hasQuantity;
+                                              
+                                              if (isComplete) {
+                                                // Convert units if necessary
+                                                const convertToBaseUnit = (qty, unit) => {
+                                                  const lowerUnit = unit.toLowerCase();
+                                                  // Weight conversions to grams
+                                                  if (lowerUnit === 'kg') return qty * 1000;
+                                                  if (lowerUnit === '斤') return qty * 600; // jin
+                                                  if (lowerUnit === 'lb') return qty * 453.592;
+                                                  if (lowerUnit === 'oz') return qty * 28.3495;
+                                                  // Volume conversions to ml
+                                                  if (lowerUnit === 'l') return qty * 1000;
+                                                  // Default: no conversion
+                                                  return qty;
+                                                };
+                                                
+                                                const recipeQtyBase = convertToBaseUnit(ingredient.total, ingredient.unit);
+                                                const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit);
+                                                
+                                                const packagesNeeded = recipeQtyBase / packageQtyBase;
+                                                const totalCost = packagesNeeded * priceData.price;
+                                                
+                                                return (
+                                                  <>
+                                                    <span className={`text-sm font-semibold whitespace-nowrap ml-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                      = NT${totalCost.toFixed(0)}
+                                                    </span>
+                                                    {packagesNeeded !== 1 && (
+                                                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                        ({packagesNeeded.toFixed(2)} pkg)
+                                                      </span>
+                                                    )}
+                                                    
+                                                    {/* Price change indicator */}
+                                                    {lastKnownPrices[ingredient.name] && (() => {
+                                                      const currentPricePerUnit = priceData.price / packageQtyBase;
+                                                      const lastPriceData = lastKnownPrices[ingredient.name];
+                                                      const lastPackageQtyBase = convertToBaseUnit(
+                                                        lastPriceData.packageQuantity || lastPriceData.unitQty || 1,
+                                                        lastPriceData.packageUnit || lastPriceData.unitType || ingredient.unit
+                                                      );
+                                                      const lastPricePerUnit = lastPriceData.price / lastPackageQtyBase;
+                                                      const priceDiff = currentPricePerUnit - lastPricePerUnit;
+                                                      const percentDiff = ((priceDiff / lastPricePerUnit) * 100).toFixed(0);
+                                                      
+                                                      if (Math.abs(priceDiff) > 0.001) {
+                                                        return (
+                                                          <span className={`text-xs font-medium ml-1 ${priceDiff > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                            {priceDiff > 0 ? '↑' : '↓'}{Math.abs(percentDiff)}%
+                                                          </span>
+                                                        );
+                                                      }
+                                                      return null;
+                                                    })()}
+                                                  </>
+                                                );
+                                              } else if (hasPrice || hasPackageQty) {
+                                                // Partial data - show warning
+                                                return (
+                                                  <span className={`text-xs ml-1 ${darkMode ? 'text-yellow-500' : 'text-yellow-600'}`}>
+                                                    ⚠ {!hasPrice ? 'Need price' : !hasPackageQty ? 'Need package size' : 'Incomplete'}
+                                                  </span>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
+                                          
+                                          {/* Unit price display when complete */}
+                                          {(() => {
+                                            const priceData = ingredientPrices[ingredient.name];
+                                            if (priceData?.price > 0 && priceData?.packageQuantity > 0) {
+                                              const unitPrice = priceData.price / priceData.packageQuantity;
+                                              return (
+                                                <div className={`text-xs mt-0.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                  NT${unitPrice.toFixed(2)}/{priceData.packageUnit || ingredient.unit}
+                                                </div>
+                                              );
+                                            }
+                                            return null;
+                                          })()}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Unit dropdown datalist */}
+                        <datalist id="package-units">
+                          <option value="g">g (grams)</option>
+                          <option value="kg">kg (kilograms)</option>
+                          <option value="斤">斤 (jin ~600g)</option>
+                          <option value="lb">lb (pounds)</option>
+                          <option value="oz">oz (ounces)</option>
+                          <option value="ml">ml (milliliters)</option>
+                          <option value="L">L (liters)</option>
+                          <option value="pcs">pcs (pieces)</option>
+                          <option value="pack">pack</option>
+                          <option value="bag">bag</option>
+                          <option value="bottle">bottle</option>
+                          <option value="can">can</option>
+                          <option value="jar">jar</option>
+                          <option value="box">box</option>
+                        </datalist>
+
+                        {/* Purchased Items */}
+                        {purchasedItemsList.length > 0 && (
+                          <>
+                            <div className={`border-t pt-2 mt-2 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                              <h3 className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Purchased ({purchasedItemsList.length})</h3>
+                              <div className="space-y-1">
+                                {purchasedItemsList.map((ingredient, index) => (
+                                  <div key={index} className={`py-1.5 px-2 rounded border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-green-50 border-green-200'}`}>
+                                    {/* Compact row with strikethrough */}
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={true}
+                                        onChange={() => togglePurchased(ingredient.name)}
+                                        className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
+                                        style={{ minWidth: '20px', minHeight: '20px' }}
+                                      />
+                                      <div className="flex-1 min-w-0" style={{ lineHeight: '1.3' }}>
+                                        <span className={`font-semibold text-base line-through ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                          {ingredient.name}
+                                        </span>
+                                        <span className={`font-normal text-base line-through ml-1.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                          {ingredient.hasQuantity 
+                                            ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                            : 'As needed'
+                                          }
+                                        </span>
+                                        {ingredient.location && ingredient.location.trim() && (
+                                          <span className={`text-sm font-normal line-through ml-1.5 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                                            • {ingredient.location}
+                                          </span>
+                                        )}
+                                        {/* Show total cost if price was entered - inline, with package info */}
+                                        {(() => {
+                                          const priceData = ingredientPrices[ingredient.name];
+                                          if (priceData?.price > 0 && priceData?.packageQuantity > 0 && ingredient.hasQuantity) {
+                                            // Same unit conversion logic
+                                            const convertToBaseUnit = (qty, unit) => {
+                                              const lowerUnit = unit.toLowerCase();
+                                              if (lowerUnit === 'kg') return qty * 1000;
+                                              if (lowerUnit === '斤') return qty * 600;
+                                              if (lowerUnit === 'lb') return qty * 453.592;
+                                              if (lowerUnit === 'oz') return qty * 28.3495;
+                                              if (lowerUnit === 'l') return qty * 1000;
+                                              return qty;
+                                            };
+                                            
+                                            const recipeQtyBase = convertToBaseUnit(ingredient.total, ingredient.unit);
+                                            const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || ingredient.unit);
+                                            const packagesNeeded = recipeQtyBase / packageQtyBase;
+                                            const totalCost = packagesNeeded * priceData.price;
+                                            
+                                            return (
+                                              <span className={`text-sm ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                (NT${totalCost.toFixed(0)})
+                                              </span>
+                                            );
+                                          }
+                                          return null;
+                                        })()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className={`mt-6 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            <strong>{remainingItems.length}</strong> remaining · <strong>{purchasedItemsList.length}</strong> purchased
+                          </div>
+                          {hasPrices && totalCost > 0 && (
+                            <div className={`mt-3 text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              Estimated Total: <span className="text-blue-600">NT$ {totalCost.toLocaleString('zh-TW')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function RecipeForm({ recipe, recipes, darkMode, onSave, onCancel }) {
+          const [name, setName] = useState(recipe?.name || '');
+          const [yieldUnit, setYieldUnit] = useState(recipe?.yieldUnit || 'batch');
+          const [notes, setNotes] = useState(recipe?.notes || '');
+          const [ingredients, setIngredients] = useState(
+            recipe?.ingredients || [{ name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }]
+          );
+          const [activeAutocomplete, setActiveAutocomplete] = useState(null);
+          const [autocompleteQuery, setAutocompleteQuery] = useState('');
+          const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+
+          // Standardized units list
+          const standardUnits = [
+            // Weight (most common first)
+            { value: 'g', label: 'g (grams)' },
+            { value: 'kg', label: 'kg (kilograms)' },
+            { value: 'lb', label: 'lb (pounds)' },
+            { value: 'oz', label: 'oz (ounces)' },
+            // Volume
+            { value: 'ml', label: 'ml (milliliters)' },
+            { value: 'L', label: 'L (liters)' },
+            { value: 'cup', label: 'cup' },
+            { value: 'Tbsp', label: 'Tbsp (tablespoon)' },
+            { value: 'tsp', label: 'tsp (teaspoon)' },
+            // Count
+            { value: 'pcs', label: 'pcs (pieces)' },
+            { value: 'bag', label: 'bag' },
+            { value: 'bunch', label: 'bunch' },
+            { value: 'can', label: 'can' },
+            { value: 'jar', label: 'jar' },
+            { value: 'bottle', label: 'bottle' },
+            { value: 'box', label: 'box' },
+            // Other
+            { value: 'batch', label: 'batch' },
+            { value: 'as needed', label: 'as needed' }
+          ];
+
+          // Get all unique ingredient names from existing recipes (lowercase)
+          const existingIngredients = useMemo(() => {
+            const ingredientMap = new Map();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                const key = ing.name.toLowerCase();
+                if (key && !ingredientMap.has(key)) {
+                  ingredientMap.set(key, {
+                    name: key,
+                    unit: ing.unit,
+                    quantity: ing.quantity,
+                    location: ing.location || ''
+                  });
+                }
+              });
+            });
+            return Array.from(ingredientMap.values()).sort((a, b) => 
+              a.name.localeCompare(b.name)
+            );
+          }, [recipes]);
+
+          // Get all unique locations from existing recipes
+          const existingLocations = useMemo(() => {
+            const locationSet = new Set();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                if (ing.location && ing.location.trim()) {
+                  locationSet.add(ing.location.trim());
+                }
+              });
+            });
+            return Array.from(locationSet).sort();
+          }, [recipes]);
+
+          // Filter ingredients based on current query
+          const getFilteredSuggestions = (query) => {
+            if (!query) return [];
+            const lowerQuery = query.toLowerCase();
+            
+            // Exact matches first, then starts with, then contains
+            const exact = [];
+            const startsWith = [];
+            const contains = [];
+            
+            existingIngredients.forEach(ing => {
+              if (ing.name === lowerQuery) {
+                exact.push(ing);
+              } else if (ing.name.startsWith(lowerQuery)) {
+                startsWith.push(ing);
+              } else if (ing.name.includes(lowerQuery)) {
+                contains.push(ing);
+              }
+            });
+            
+            return [...exact, ...startsWith, ...contains].slice(0, 10);
+          };
+
+          const addIngredient = () => {
+            setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }]);
+          };
+
+          const removeIngredient = (index) => {
+            setIngredients(ingredients.filter((_, i) => i !== index));
+          };
+
+          const updateIngredient = (index, field, value) => {
+            const updated = [...ingredients];
+            
+            // Convert ingredient names to lowercase automatically
+            if (field === 'name') {
+              value = value.toLowerCase();
+              updated[index] = { ...updated[index], [field]: value };
+              
+              // Auto-fill unit when ingredient name matches existing ingredient
+              const existing = existingIngredients.find(
+                ing => ing.name === value
+              );
+              if (existing && !updated[index].unit) {
+                updated[index].unit = existing.unit;
+              }
+            } else {
+              updated[index] = { ...updated[index], [field]: value };
+            }
+            
+            setIngredients(updated);
+          };
+
+          const handleIngredientNameChange = (index, value) => {
+            updateIngredient(index, 'name', value);
+            setAutocompleteQuery(value);
+            setActiveAutocomplete(index);
+            setSelectedSuggestionIndex(-1);
+          };
+
+          const selectSuggestion = (index, suggestion) => {
+            const updated = [...ingredients];
+            updated[index] = { 
+              ...updated[index], 
+              name: suggestion.name,
+              unit: updated[index].unit || suggestion.unit,
+              location: updated[index].location || suggestion.location || ''
+            };
+            setIngredients(updated);
+            setActiveAutocomplete(null);
+            setAutocompleteQuery('');
+            setSelectedSuggestionIndex(-1);
+          };
+
+          const handleKeyDown = (e, index) => {
+            if (activeAutocomplete !== index) return;
+            
+            const suggestions = getFilteredSuggestions(autocompleteQuery);
+            
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              setSelectedSuggestionIndex(prev => 
+                prev < suggestions.length - 1 ? prev + 1 : prev
+              );
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+            } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+              e.preventDefault();
+              selectSuggestion(index, suggestions[selectedSuggestionIndex]);
+            } else if (e.key === 'Escape') {
+              setActiveAutocomplete(null);
+              setSelectedSuggestionIndex(-1);
+            }
+          };
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            
+            if (!name.trim()) {
+              alert('Please enter a recipe name');
+              return;
+            }
+
+            const filteredIngredients = ingredients.filter(ing => ing.name.trim());
+            
+            if (filteredIngredients.length === 0) {
+              alert('Please add at least one ingredient');
+              return;
+            }
+
+            const processedIngredients = filteredIngredients.map(ing => ({
+              name: ing.name.trim().toLowerCase(), // Force lowercase on save
+              quantity: ing.quantity === '' ? null : parseFloat(ing.quantity),
+              unit: ing.unit,
+              substitution: ing.substitution?.trim() || '',
+              price: ing.price === '' ? null : parseFloat(ing.price),
+              location: ing.location?.trim() || ''
+            }));
+
+            onSave({
+              ...(recipe || {}),
+              name: name.trim(),
+              yieldUnit,
+              notes: notes.trim(),
+              ingredients: processedIngredients
+            });
+          };
+
+          return (
+            <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className="max-w-3xl mx-auto">
+                <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {recipe ? 'Edit Recipe' : 'Add New Recipe'}
+                    </h1>
+                    <button
+                      onClick={onCancel}
+                      className={darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-6">
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Recipe Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., Ayam Goreng Paste"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Yield Unit
+                        </label>
+                        <input
+                          type="text"
+                          value={yieldUnit}
+                          onChange={(e) => setYieldUnit(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., batch, kg, liters"
+                        />
+                      </div>
+
+                      <div>
+                        <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Notes (optional)
+                        </label>
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          placeholder="e.g., 500g equals 30 pieces, Needs 8 hour marination"
+                          rows="3"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            Ingredients *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={addIngredient}
+                            className={`text-sm font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                          >
+                            + Add Ingredient
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {ingredients.map((ingredient, index) => {
+                            const suggestions = activeAutocomplete === index ? getFilteredSuggestions(autocompleteQuery) : [];
+                            
+                            return (
+                              <div key={index} className={`border rounded-lg p-3 ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200'}`}>
+                                <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                                  <div className="flex-1 relative">
+                                    <input
+                                      type="text"
+                                      value={ingredient.name}
+                                      onChange={(e) => handleIngredientNameChange(index, e.target.value)}
+                                      onFocus={() => {
+                                        setActiveAutocomplete(index);
+                                        setAutocompleteQuery(ingredient.name);
+                                      }}
+                                      onBlur={() => {
+                                        // Delay to allow click on suggestion
+                                        setTimeout(() => setActiveAutocomplete(null), 200);
+                                      }}
+                                      onKeyDown={(e) => handleKeyDown(e, index)}
+                                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      placeholder="Ingredient name (lowercase)"
+                                      autoComplete="off"
+                                    />
+                                    
+                                    {/* Custom Autocomplete Dropdown */}
+                                    {suggestions.length > 0 && (
+                                      <div className={`absolute z-50 w-full mt-1 rounded-lg border-2 shadow-xl max-h-64 overflow-y-auto ${darkMode ? 'bg-gray-800 border-blue-500' : 'bg-white border-blue-400'}`}
+                                        style={{
+                                          top: '100%',
+                                          left: 0,
+                                          right: 0
+                                        }}
+                                      >
+                                        {suggestions.map((suggestion, suggestionIndex) => (
+                                          <div
+                                            key={suggestionIndex}
+                                            onMouseDown={(e) => {
+                                              e.preventDefault(); // Prevent input blur
+                                              selectSuggestion(index, suggestion);
+                                            }}
+                                            onTouchStart={(e) => {
+                                              e.preventDefault(); // Prevent input blur
+                                              selectSuggestion(index, suggestion);
+                                            }}
+                                            className={`px-4 py-3 cursor-pointer border-b last:border-b-0 ${
+                                              suggestionIndex === selectedSuggestionIndex
+                                                ? darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-900'
+                                                : darkMode ? 'hover:bg-gray-700 text-white border-gray-700' : 'hover:bg-gray-50 text-gray-900 border-gray-200'
+                                            }`}
+                                            style={{ minHeight: '44px' }}
+                                          >
+                                            <div className="font-medium text-base">{suggestion.name}</div>
+                                            <div className={`text-sm ${suggestionIndex === selectedSuggestionIndex ? 'text-blue-200' : darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                              {suggestion.unit} {suggestion.quantity ? `(~${suggestion.quantity})` : ''}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="number"
+                                      step="0.1"
+                                      value={ingredient.quantity}
+                                      onChange={(e) => updateIngredient(index, 'quantity', e.target.value)}
+                                      className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      placeholder="Qty"
+                                    />
+                                    <select
+                                      value={ingredient.unit}
+                                      onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
+                                      className={`w-24 px-2 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                    >
+                                      {standardUnits.map((unit) => (
+                                        <option key={unit.value} value={unit.value}>
+                                          {unit.value}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {ingredients.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeIngredient(index)}
+                                        className={`p-2 rounded ${darkMode ? 'text-red-400 hover:bg-gray-600' : 'text-red-600 hover:bg-red-50'}`}
+                                      >
+                                        <Trash className="w-5 h-5" />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={ingredient.substitution || ''}
+                                  onChange={(e) => updateIngredient(index, 'substitution', e.target.value)}
+                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm mb-2 ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
+                                  placeholder="Substitution (e.g., or use fresh galangal)"
+                                />
+                                <input
+                                  type="text"
+                                  value={ingredient.location || ''}
+                                  onChange={(e) => updateIngredient(index, 'location', e.target.value)}
+                                  list={`location-suggestions-${index}`}
+                                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500' : 'border-gray-300'}`}
+                                  placeholder="Purchase location (e.g., Street Market, Supermarket)"
+                                />
+                                <datalist id={`location-suggestions-${index}`}>
+                                  {existingLocations.map((loc, i) => (
+                                    <option key={i} value={loc} />
+                                  ))}
+                                </datalist>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Leave quantity blank for ingredients you haven't measured yet
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 mt-8">
+                      <button
+                        type="submit"
+                        className={`flex-1 px-6 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      >
+                        {recipe ? 'Update Recipe' : 'Add Recipe'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onCancel}
+                        className={`px-6 py-3 border rounded-lg font-medium ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ShoppingAggregator />);
+    </script>
+</body>
+</html>
