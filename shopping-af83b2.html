@@ -1467,9 +1467,8 @@
                               </div>
 
                               {/* Package Unit */}
-                              <div className="w-16">
-                                <input
-                                  type="text"
+                              <div className="w-20">
+                                <select
                                   value={currentPrice?.packageUnit || ingredient.quickAddUnit || lastPrice?.packageUnit || ''}
                                   onChange={(e) => {
                                     setIngredientPrices(prev => ({
@@ -1480,10 +1479,13 @@
                                       }
                                     }));
                                   }}
-                                  placeholder={ingredient.unit || "g"}
-                                  list="package-units-list"
-                                  className={`w-full px-2 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' : 'border-gray-300'}`}
-                                />
+                                  className={`w-full px-2 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-600 border-gray-500 text-white' : 'border-gray-300'}`}
+                                >
+                                  <option value="">-</option>
+                                  {packageUnits.map(unit => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </select>
                               </div>
                             </div>
 
