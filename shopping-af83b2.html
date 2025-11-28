@@ -1680,14 +1680,16 @@
                     )}
                   </div>
 
-                  {/* Quick Add Items Panel */}
-                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                    <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ⚡ Quick Add Items
-                    </h3>
-                    <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      Add one-off items without creating a recipe
-                    </p>
+                  {/* Right column: Quick Add + Shopping List */}
+                  <div className="space-y-6">
+                    {/* Quick Add Items Panel */}
+                    <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                      <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        ⚡ Quick Add Items
+                      </h3>
+                      <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        Add one-off items without creating a recipe
+                      </p>
                     
                     <div className="flex gap-2 mb-4">
                       <input
@@ -2260,6 +2262,7 @@
                       </>
                     )}
                   </div>
+                  </div> {/* End right column: Quick Add + Shopping List */}
                 </div>
               </div>
             </div>
