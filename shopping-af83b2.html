@@ -392,6 +392,10 @@
           const [quickAddItems, setQuickAddItems] = useState([]);
           const [quickAddInput, setQuickAddInput] = useState('');
           const [showPriceManagement, setShowPriceManagement] = useState(false);
+          const [packageUnits, setPackageUnits] = useState(['g', 'kg', '斤', 'ml', 'L', 'pcs', 'pack', 'bag', 'bottle', 'can']);
+          const [showScrollTop, setShowScrollTop] = useState(false);
+          const [showIngredientSources, setShowIngredientSources] = useState(false);
+          const [selectedIngredientForSources, setSelectedIngredientForSources] = useState(null);
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -467,6 +471,31 @@
           useEffect(() => {
             localStorage.setItem('quickAddItems', JSON.stringify(quickAddItems));
           }, [quickAddItems]);
+
+          // Load and save package units
+          useEffect(() => {
+            const stored = localStorage.getItem('packageUnits');
+            if (stored) {
+              try {
+                setPackageUnits(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load package units:', e);
+              }
+            }
+          }, []);
+
+          useEffect(() => {
+            localStorage.setItem('packageUnits', JSON.stringify(packageUnits));
+          }, [packageUnits]);
+
+          // Scroll to top button visibility
+          useEffect(() => {
+            const handleScroll = () => {
+              setShowScrollTop(window.scrollY > 500);
+            };
+            window.addEventListener('scroll', handleScroll);
+            return () => window.removeEventListener('scroll', handleScroll);
+          }, []);
 
           // Save price history to localStorage whenever it changes
           useEffect(() => {
@@ -1245,13 +1274,87 @@
             />;
           }
 
+          // Ingredient Sources Modal (show on top of Price Management)
+          if (showIngredientSources && selectedIngredientForSources) {
+            const recipesWithIngredient = recipes.filter(recipe => 
+              recipe.ingredients.some(ing => ing.name === selectedIngredientForSources)
+            );
+
+            return (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className={`rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className={`sticky top-0 p-6 border-b ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        "{selectedIngredientForSources}" appears in:
+                      </h2>
+                      <button
+                        onClick={() => {
+                          setShowIngredientSources(false);
+                          setSelectedIngredientForSources(null);
+                        }}
+                        className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    {recipesWithIngredient.length === 0 ? (
+                      <p className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        This ingredient is from Quick Add Items (not in any recipe)
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {recipesWithIngredient.map(recipe => {
+                          const ingredientInRecipe = recipe.ingredients.find(ing => ing.name === selectedIngredientForSources);
+                          return (
+                            <div 
+                              key={recipe.id}
+                              className={`p-4 rounded-lg border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'}`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <h3 className={`font-semibold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                    {recipe.name}
+                                  </h3>
+                                  <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Uses: {ingredientInRecipe.quantity} {ingredientInRecipe.unit}
+                                    {ingredientInRecipe.location && ` · ${ingredientInRecipe.location}`}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setEditingRecipe(recipe);
+                                    setShowRecipeForm(true);
+                                    setShowIngredientSources(false);
+                                    setSelectedIngredientForSources(null);
+                                    setShowPriceManagement(false);
+                                  }}
+                                  className={`ml-4 px-3 py-1.5 rounded text-sm ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                                >
+                                  Edit Recipe
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           // Price Management View
           if (showPriceManagement) {
             return (
-              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} relative`}>
                 <div className="max-w-6xl mx-auto">
-                  {/* Header */}
-                  <div className={`rounded-lg shadow-sm border mb-6 p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                  {/* Header - sticky on mobile */}
+                  <div className={`sticky top-0 z-10 rounded-lg shadow-sm border mb-6 p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <DollarSign className={`w-8 h-8 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
@@ -1287,9 +1390,16 @@
                           >
                             {/* Ingredient name and history button */}
                             <div className="flex items-center justify-between mb-1">
-                              <h3 className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              <button
+                                onClick={() => {
+                                  setSelectedIngredientForSources(ingredient.name);
+                                  setShowIngredientSources(true);
+                                }}
+                                className={`font-semibold text-sm text-left hover:underline ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                                title="See which recipes use this ingredient"
+                              >
                                 {ingredient.name}
-                              </h3>
+                              </button>
                               {hasHistory && (
                                 <button
                                   onClick={() => {
@@ -1340,7 +1450,7 @@
                                 <input
                                   type="number"
                                   step="0.01"
-                                  value={currentPrice?.packageQuantity || ingredient.quickAddQuantity || ''}
+                                  value={currentPrice?.packageQuantity || ingredient.quickAddQuantity || lastPrice?.packageQuantity || ''}
                                   onChange={(e) => {
                                     const value = e.target.value;
                                     setIngredientPrices(prev => ({
@@ -1360,7 +1470,7 @@
                               <div className="w-16">
                                 <input
                                   type="text"
-                                  value={currentPrice?.packageUnit || ingredient.quickAddUnit || ''}
+                                  value={currentPrice?.packageUnit || ingredient.quickAddUnit || lastPrice?.packageUnit || ''}
                                   onChange={(e) => {
                                     setIngredientPrices(prev => ({
                                       ...prev,
@@ -1398,22 +1508,24 @@
                   </div>
 
                   <datalist id="package-units-list">
-                    <option value="g" />
-                    <option value="kg" />
-                    <option value="斤" />
-                    <option value="ml" />
-                    <option value="L" />
-                    <option value="pcs" />
-                    <option value="pack" />
-                    <option value="bag" />
-                    <option value="bottle" />
-                    <option value="can" />
-                    <option value="jar" />
-                    <option value="box" />
-                    <option value="lb" />
-                    <option value="oz" />
+                    {packageUnits.map(unit => (
+                      <option key={unit} value={unit} />
+                    ))}
                   </datalist>
                 </div>
+
+                {/* Scroll to Top Button */}
+                {showScrollTop && (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title="Scroll to top"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             );
           }
@@ -2520,6 +2632,19 @@
                   </div> {/* End right column: Quick Add + Shopping List */}
                 </div>
               </div>
+
+              {/* Scroll to Top Button */}
+              {showScrollTop && (
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                  title="Scroll to top"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                </button>
+              )}
             </div>
           );
         }
