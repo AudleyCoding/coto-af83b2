@@ -108,6 +108,7 @@ When you "Add to Home Screen":
 28. Shopping List Reset Function
 29. Keyboard Navigation for Autocomplete
 30. Quick Add Items (Add one-off items without recipes)
+31. Price Management (Update all prices in one place)
 
 ---
 
@@ -640,9 +641,63 @@ NT$95.00/kg
 
 ---
 
+### 31. Price Management
+**What it does**: Dedicated view to update prices for all ingredients in one place. Perfect for price-checking trips to the market where you're just gathering price information without shopping.
+
+**How to use**:
+1. Click the green **"Update Prices"** button at the top of the main screen
+2. See master list of ALL unique ingredients from all recipes (alphabetically sorted)
+3. For each ingredient, enter:
+   - **Price (NT$)**: Package price at the market
+   - **Qty**: Package quantity/size
+   - **Unit**: Package unit (g, kg, 斤, ml, L, etc.)
+4. Prices auto-save after 2 seconds (same as shopping list)
+5. Click **"Back to Shopping List"** when done
+
+**Display information**:
+- **Ingredient name**: Bold at top of each card
+- **📊 button**: Quick access to price history charts (if available)
+- **Last known price**: Shows previous price, quantity, unit, and date
+- **Calculated unit price**: Auto-displays when price + quantity entered (e.g., "= NT$0.11/g")
+
+**Example workflow - Market price checking trip**:
+1. Go to market with iPad (no shopping, just checking prices)
+2. Open app → Click "Update Prices"
+3. Walk through vendors:
+   - Street Market: Update shallot paste, garlic paste, ginger prices
+   - Supermarket: Update oil, coconut milk, spice prices  
+   - Big King: Update bulk items
+4. All prices automatically saved and ready for next shopping trip
+5. Return home → Shopping list now shows updated estimates
+
+**Features**:
+- **Compact mobile layout**: 3 input fields in one row, minimal padding
+- **No scrolling needed**: See many ingredients on one screen
+- **Touch-friendly**: Input sizes optimized for finger tapping
+- **Smart placeholders**: "NT$", "Qty", unit suggestions
+- **History access**: Tap 📊 to see price trends for any ingredient
+- **Auto-sync**: Updates lastKnownPrices, price history, and shopping list estimates
+- **Includes quick add items**: All ingredients in one place
+
+**Mobile optimization**:
+- Ultra-compact cards (p-2 instead of p-4)
+- Horizontal input layout (3 fields side-by-side)
+- Small text sizes (text-sm, text-xs)
+- Minimal labels (placeholders only)
+- One-line last price display
+- Icon-only history button (📊)
+
+**Perfect for**:
+- Weekly price-checking trips before big shopping
+- Comparing prices across multiple vendors
+- Updating seasonal ingredient costs
+- Building accurate shopping budgets
+
+---
+
 ## Summary
 
-This app combines 30 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 31 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -654,5 +709,6 @@ This app combines 30 features into a simple, offline-capable shopping list tool 
 8. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
 9. **Data portability**: Export/import for backup and cross-device sync
 10. **Quick add flexibility**: Add one-off items without creating recipes
+11. **Centralized price updates**: Update all ingredient prices in one dedicated view
 
 Perfect for Coto Makassar's daily market shopping needs!
