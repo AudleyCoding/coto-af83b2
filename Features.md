@@ -107,6 +107,7 @@ When you "Add to Home Screen":
 27. localStorage Data Persistence
 28. Shopping List Reset Function
 29. Keyboard Navigation for Autocomplete
+30. Quick Add Items (Add one-off items without recipes)
 
 ---
 
@@ -604,6 +605,41 @@ NT$95.00/kg
 
 ---
 
+### 30. Quick Add Items
+**What it does**: Quickly add one-off items directly to your shopping list without creating a recipe. Perfect for non-recipe items like salt, paper towels, cleaning supplies, or anything you forgot to add to a recipe.
+
+**How to use**:
+1. In the "⚡ Quick Add Items" section above the shopping list
+2. Type the item name (autocomplete suggests from existing ingredients)
+3. Press Enter or tap "+ Add" button
+4. Item appears in both the Quick Items list and your shopping list
+5. Quick add items are marked with a ⚡ badge in the shopping list
+6. Check them off like regular items as you shop
+7. Remove quick items by clicking the X next to them in the Quick Items section
+
+**Example use cases**:
+- Forgot to add "salt" to a recipe, need to grab it anyway
+- One-time items: "batteries", "paper towels", "cleaning spray"
+- Test ingredients you're considering for new recipes
+- Items you need to buy but don't want to create a full recipe for
+
+**Features**:
+- Autocomplete from all known ingredient names
+- Persists in localStorage like all other data
+- Integrates seamlessly with shopping list
+- Visual ⚡ badge distinguishes them from recipe items
+- Can enter prices and track purchases just like recipe ingredients
+- Removes automatically when you delete them (won't reappear)
+
+**Smart behavior**:
+- Prevents duplicates (alerts if item already in quick list)
+- Merges with recipe ingredients if same name (combines quantities)
+- Survives between shopping trips until manually removed
+- Includes in Planned Purchase Cost calculations
+- Shows in location-grouped shopping list sections
+
+---
+
 ## Summary
 
 This app combines 30 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
@@ -617,5 +653,6 @@ This app combines 30 features into a simple, offline-capable shopping list tool 
 7. **Price tracking**: Remembers prices across trips, shows estimates before shopping
 8. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
 9. **Data portability**: Export/import for backup and cross-device sync
+10. **Quick add flexibility**: Add one-off items without creating recipes
 
 Perfect for Coto Makassar's daily market shopping needs!

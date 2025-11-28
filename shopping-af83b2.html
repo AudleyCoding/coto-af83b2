@@ -383,6 +383,8 @@
           const [showPriceHistory, setShowPriceHistory] = useState(false);
           const [selectedIngredient, setSelectedIngredient] = useState(null);
           const [priceHistoryData, setPriceHistoryData] = useState({});
+          const [quickAddItems, setQuickAddItems] = useState([]);
+          const [quickAddInput, setQuickAddInput] = useState('');
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -441,6 +443,23 @@
               }
             }
           }, []);
+
+          // Load quick add items from localStorage
+          useEffect(() => {
+            const stored = localStorage.getItem('quickAddItems');
+            if (stored) {
+              try {
+                setQuickAddItems(JSON.parse(stored));
+              } catch (e) {
+                console.error('Failed to load quick add items:', e);
+              }
+            }
+          }, []);
+
+          // Save quick add items to localStorage whenever they change
+          useEffect(() => {
+            localStorage.setItem('quickAddItems', JSON.stringify(quickAddItems));
+          }, [quickAddItems]);
 
           // Save price history to localStorage whenever it changes
           useEffect(() => {
@@ -598,6 +617,38 @@
             } else {
               alert('No price history found for these ingredients');
             }
+          };
+
+          const handleQuickAdd = () => {
+            const itemName = quickAddInput.trim().toLowerCase();
+            if (!itemName) return;
+            
+            // Check if already exists in quick add items
+            const exists = quickAddItems.some(item => item.name === itemName);
+            if (exists) {
+              alert(`"${itemName}" is already in your quick add list`);
+              setQuickAddInput('');
+              return;
+            }
+            
+            // Add to quick add items
+            setQuickAddItems(prev => [...prev, {
+              name: itemName,
+              isQuickAdd: true,
+              location: ''
+            }]);
+            
+            setQuickAddInput('');
+          };
+
+          const removeQuickAddItem = (itemName) => {
+            setQuickAddItems(prev => prev.filter(item => item.name !== itemName));
+            // Also remove from purchased if it was checked
+            setPurchasedItems(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(itemName);
+              return newSet;
+            });
           };
 
           const exportRecipes = () => {
@@ -841,6 +892,7 @@
           const aggregatedIngredients = useMemo(() => {
             const ingredientMap = new Map();
 
+            // Add items from selected recipes
             Object.entries(selectedRecipes).forEach(([recipeId, batches]) => {
               if (batches <= 0) return;
               
@@ -858,7 +910,8 @@
                     hasQuantity: ingredient.quantity !== null,
                     price: ingredient.price,
                     totalCost: 0,
-                    location: ingredient.location || ''
+                    location: ingredient.location || '',
+                    isQuickAdd: false
                   });
                 } else {
                   // If ingredient already exists, update location if current one has a location set
@@ -878,10 +931,27 @@
               });
             });
 
+            // Add quick add items (they won't have quantities from recipes)
+            quickAddItems.forEach(quickItem => {
+              const key = quickItem.name;
+              if (!ingredientMap.has(key)) {
+                ingredientMap.set(key, {
+                  name: quickItem.name,
+                  total: 0,
+                  unit: '',
+                  hasQuantity: false,
+                  price: null,
+                  totalCost: 0,
+                  location: quickItem.location || '',
+                  isQuickAdd: true
+                });
+              }
+            });
+
             return Array.from(ingredientMap.values()).sort((a, b) => 
               a.name.localeCompare(b.name)
             );
-          }, [selectedRecipes, recipes]);
+          }, [selectedRecipes, recipes, quickAddItems]);
 
           const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
           const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
@@ -1610,6 +1680,79 @@
                     )}
                   </div>
 
+                  {/* Quick Add Items Panel */}
+                  <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      ⚡ Quick Add Items
+                    </h3>
+                    <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Add one-off items without creating a recipe
+                    </p>
+                    
+                    <div className="flex gap-2 mb-4">
+                      <input
+                        type="text"
+                        value={quickAddInput}
+                        onChange={(e) => setQuickAddInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleQuickAdd();
+                          }
+                        }}
+                        placeholder="e.g., salt, paper towels, batteries..."
+                        list="all-ingredients-list"
+                        className={`flex-1 px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                      />
+                      <button
+                        onClick={handleQuickAdd}
+                        disabled={!quickAddInput.trim()}
+                        className={`px-4 py-2 rounded font-medium whitespace-nowrap ${quickAddInput.trim() ? (darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 text-white hover:bg-green-700') : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')}`}
+                      >
+                        + Add
+                      </button>
+                    </div>
+
+                    {/* Autocomplete datalist with all known ingredient names */}
+                    <datalist id="all-ingredients-list">
+                      {/* Get unique ingredient names from recipes */}
+                      {Array.from(new Set(
+                        recipes.flatMap(r => r.ingredients.map(ing => ing.name))
+                      )).sort().map(name => (
+                        <option key={name} value={name} />
+                      ))}
+                      {/* Also include any ingredients from last known prices */}
+                      {Object.keys(lastKnownPrices).sort().map(name => (
+                        <option key={name} value={name} />
+                      ))}
+                    </datalist>
+
+                    {/* Display quick add items */}
+                    {quickAddItems.length > 0 && (
+                      <div className="space-y-2">
+                        <div className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Quick Items ({quickAddItems.length}):
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {quickAddItems.map(item => (
+                            <div 
+                              key={item.name}
+                              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-100 border-gray-300 text-gray-700'}`}
+                            >
+                              <span className="text-sm">{item.name}</span>
+                              <button
+                                onClick={() => removeQuickAddItem(item.name)}
+                                className={`hover:bg-red-500 hover:text-white rounded-full p-0.5 transition-colors ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                                title="Remove item"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Shopping List Panel */}
                   <div className={`rounded-lg shadow-sm border p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
@@ -1791,6 +1934,11 @@
                                             <span className={`font-semibold text-base ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                               {ingredient.name}
                                             </span>
+                                            {ingredient.isQuickAdd && (
+                                              <span className={`text-xs ml-1.5 px-1.5 py-0.5 rounded ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                                                ⚡
+                                              </span>
+                                            )}
                                             <span className={`font-normal text-base ml-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                               {ingredient.hasQuantity 
                                                 ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
@@ -2046,6 +2194,11 @@
                                         <span className={`font-semibold text-base line-through ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                           {ingredient.name}
                                         </span>
+                                        {ingredient.isQuickAdd && (
+                                          <span className={`text-xs ml-1.5 px-1.5 py-0.5 rounded ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                                            ⚡
+                                          </span>
+                                        )}
                                         <span className={`font-normal text-base line-through ml-1.5 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                           {ingredient.hasQuantity 
                                             ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
