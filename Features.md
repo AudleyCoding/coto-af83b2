@@ -607,24 +607,38 @@ NT$95.00/kg
 ---
 
 ### 30. Quick Add Items
-**What it does**: Quickly add one-off items directly to your shopping list without creating a recipe. Perfect for non-recipe items like salt, paper towels, cleaning supplies, or anything you forgot to add to a recipe.
+**What it does**: Quickly add one-off items directly to your shopping list without creating a recipe. Perfect for non-recipe items like salt, paper towels, cleaning supplies, or anything you forgot to add to a recipe. **Now supports smart parsing** - type "salt 1000g" and it automatically extracts name, quantity, and unit!
 
 **How to use**:
 1. In the "⚡ Quick Add Items" section above the shopping list
-2. Type the item name (autocomplete suggests from existing ingredients)
+2. Type the item name with optional quantity and unit:
+   - Simple: `salt` (just the name)
+   - With quantity: `salt 1000g` (parses to: name="salt", qty=1000, unit="g")
+   - With space: `sugar 2 kg` (parses to: name="sugar", qty=2, unit="kg")
+   - Numbers only: `flour 500` (parses to: name="flour", qty=500)
 3. Press Enter or tap "+ Add" button
-4. Item appears in both the Quick Items list and your shopping list
-5. Quick add items are marked with a ⚡ badge in the shopping list
-6. Check them off like regular items as you shop
-7. Remove quick items by clicking the X next to them in the Quick Items section
+4. Item appears in Quick Items list showing the quantity (e.g., "salt 1000g")
+5. Items appear in your shopping list with ⚡ badge
+6. In Price Management view, quantity and unit are **pre-filled** - just add the price!
+
+**Supported formats**:
+- `salt 1000g` → name: "salt", qty: 1000, unit: "g"
+- `sugar 2kg` → name: "sugar", qty: 2, unit: "kg"
+- `flour 500 g` → name: "flour", qty: 500, unit: "g"
+- `oil 1.5L` → name: "oil", qty: 1.5, unit: "L"
+- `salt` → name: "salt" (no quantity)
 
 **Example use cases**:
-- Forgot to add "salt" to a recipe, need to grab it anyway
-- One-time items: "batteries", "paper towels", "cleaning spray"
+- Market prep: Add all items with quantities beforehand, then just fill in prices at market
+- Forgot to add "salt 1000g" to a recipe, need to grab it anyway
+- One-time items: "batteries", "paper towels 6pk", "cleaning spray 500ml"
 - Test ingredients you're considering for new recipes
 - Items you need to buy but don't want to create a full recipe for
 
 **Features**:
+- **Smart parsing**: Automatically extracts quantity and unit from input
+- **Visual display**: Shows "salt 1000g" in Quick Items list (quantity in blue)
+- **Price Management integration**: Quantity/unit pre-filled when updating prices
 - Autocomplete from all known ingredient names
 - Persists in localStorage like all other data
 - Integrates seamlessly with shopping list
