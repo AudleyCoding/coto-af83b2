@@ -2598,11 +2598,11 @@
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0 && (
                           <button
                             onClick={loadLastKnownPrices}
-                            className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${darkMode ? 'text-blue-400 hover:bg-gray-700' : 'text-blue-600 hover:bg-blue-50'}`}
+                            className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg ${darkMode ? 'text-blue-400 hover:bg-gray-700 bg-gray-800' : 'text-blue-600 hover:bg-blue-100 bg-blue-50'}`}
                             title="Load prices from last shopping trip"
                           >
                             <RefreshCw className="w-4 h-4" />
@@ -2613,7 +2613,7 @@
                           <>
                             <button
                               onClick={() => setShowQuickLog(true)}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium text-sm ${darkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                              className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-sm ${darkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                               title="Log this shopping trip"
                             >
                               💰
@@ -2621,7 +2621,7 @@
                             </button>
                             <button
                               onClick={clearPurchasedItems}
-                              className={`flex items-center gap-1 text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg ${darkMode ? 'text-red-400 hover:bg-gray-700 bg-gray-800' : 'text-red-600 hover:bg-red-50 bg-red-50'}`}
                               title="Reset all items"
                             >
                               <RefreshCw className="w-4 h-4" />
