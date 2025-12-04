@@ -2599,36 +2599,45 @@
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        {hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0 && (
-                          <button
-                            onClick={loadLastKnownPrices}
-                            className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                            title="Load prices from last shopping trip"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                            <span className="hidden sm:inline">Load Prices</span>
-                          </button>
-                        )}
-                        {purchasedItems.size > 0 && (
-                          <>
-                            <button
-                              onClick={() => setShowQuickLog(true)}
-                              className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-sm ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                              title="Log this shopping trip"
-                            >
-                              💰
-                              <span className="hidden sm:inline">Quick Log</span>
-                            </button>
-                            <button
-                              onClick={clearPurchasedItems}
-                              className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg font-medium ${darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
-                              title="Reset all items"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                              <span className="hidden sm:inline">Reset</span>
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={loadLastKnownPrices}
+                          disabled={!hasSelections || aggregatedIngredients.length === 0 || Object.keys(lastKnownPrices).length === 0}
+                          className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg font-medium ${
+                            hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0
+                              ? (darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')
+                              : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                          }`}
+                          title="Load prices from last shopping trip"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Load Prices</span>
+                        </button>
+                        <button
+                          onClick={() => setShowQuickLog(true)}
+                          disabled={purchasedItems.size === 0}
+                          className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-sm ${
+                            purchasedItems.size > 0
+                              ? (darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white')
+                              : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                          }`}
+                          title="Log this shopping trip"
+                        >
+                          💰
+                          <span className="hidden sm:inline">Quick Log</span>
+                        </button>
+                        <button
+                          onClick={clearPurchasedItems}
+                          disabled={purchasedItems.size === 0}
+                          className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg font-medium ${
+                            purchasedItems.size > 0
+                              ? (darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white')
+                              : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
+                          }`}
+                          title="Reset all items"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          <span className="hidden sm:inline">Reset</span>
+                        </button>
                       </div>
                     </div>
                     
