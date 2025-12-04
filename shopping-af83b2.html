@@ -401,7 +401,7 @@
           const [shoppingTrips, setShoppingTrips] = useState([]);
           const [showTripHistory, setShowTripHistory] = useState(false);
           const [showQuickLog, setShowQuickLog] = useState(false);
-          const [vendors, setVendors] = useState(['Street Market', 'Big King', 'Carrefour', 'RT-Mart']);
+          const [vendors, setVendors] = useState(['Street Market - Veggies', 'Street Market - Vietnamese', 'Street Market - Shallot', 'Big King', 'RT-Mart']);
           const [tripTotal, setTripTotal] = useState('');
           const [selectedVendor, setSelectedVendor] = useState('');
           const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
@@ -2060,15 +2060,42 @@
                       <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         Vendor
                       </label>
-                      <select
-                        value={selectedVendor}
-                        onChange={(e) => setSelectedVendor(e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                      >
-                        {vendors.map(vendor => (
-                          <option key={vendor} value={vendor}>{vendor}</option>
-                        ))}
-                      </select>
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedVendor}
+                          onChange={(e) => setSelectedVendor(e.target.value)}
+                          className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                        >
+                          {vendors.map(vendor => (
+                            <option key={vendor} value={vendor}>{vendor}</option>
+                          ))}
+                          <option value="__custom__">+ Add New Vendor...</option>
+                        </select>
+                        {selectedVendor === '__custom__' && (
+                          <input
+                            type="text"
+                            placeholder="Enter vendor name"
+                            autoFocus
+                            onBlur={(e) => {
+                              const newVendor = e.target.value.trim();
+                              if (newVendor && !vendors.includes(newVendor)) {
+                                setVendors(prev => [...prev, newVendor]);
+                                setSelectedVendor(newVendor);
+                              } else if (newVendor) {
+                                setSelectedVendor(newVendor);
+                              } else {
+                                setSelectedVendor(vendors[0] || '');
+                              }
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur();
+                              }
+                            }}
+                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -2088,7 +2115,7 @@
                         onClick={() => {
                           saveQuickTrip(tripTotal, selectedVendor, tripDate);
                           setShowQuickLog(false);
-                          clearPurchasedItems();
+                          setTripTotal('');
                           alert('✓ Trip saved!');
                         }}
                         disabled={!tripTotal}
@@ -2159,6 +2186,32 @@
                       >
                         <Download className="w-4 h-4" />
                         Export to CSV
+                      </button>
+                      <button
+                        onClick={() => {
+                          const newVendor = prompt('Add new vendor:', '');
+                          if (newVendor && newVendor.trim() && !vendors.includes(newVendor.trim())) {
+                            setVendors(prev => [...prev, newVendor.trim()]);
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                      >
+                        + Add Vendor
+                      </button>
+                      <button
+                        onClick={() => {
+                          const vendorList = vendors.join('\n');
+                          const updatedList = prompt('Edit vendors (one per line):', vendorList);
+                          if (updatedList !== null) {
+                            const newVendors = updatedList.split('\n').map(v => v.trim()).filter(v => v);
+                            if (newVendors.length > 0) {
+                              setVendors(newVendors);
+                            }
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                      >
+                        ✏️ Manage Vendors
                       </button>
                     </div>
                   </div>
@@ -2396,8 +2449,11 @@
                       <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                         ⚡ Quick Add Items
                       </h3>
-                      <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <p className={`text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         Add one-off items without creating a recipe
+                      </p>
+                      <p className={`text-xs mb-4 px-3 py-2 rounded ${darkMode ? 'bg-blue-900/20 text-blue-300 border border-blue-800' : 'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                        💡 <strong>Format:</strong> "salt 1000g" or "batteries 4 pcs" → auto-fills quantity & unit
                       </p>
                     
                     <div className="flex gap-2 mb-4">
