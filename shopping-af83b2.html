@@ -1118,14 +1118,20 @@
               if (!ingredientMap.has(key)) {
                 ingredientMap.set(key, {
                   name: quickItem.name,
-                  total: 0,
-                  unit: '',
-                  hasQuantity: false,
+                  total: quickItem.quantity || 0,
+                  unit: quickItem.unit || '',
+                  hasQuantity: quickItem.quantity !== null && quickItem.quantity !== undefined,
                   price: null,
                   totalCost: 0,
                   location: quickItem.location || '',
                   isQuickAdd: true
                 });
+              } else {
+                // If already exists from recipes, add the quick add quantity
+                const item = ingredientMap.get(key);
+                if (quickItem.quantity) {
+                  item.total += quickItem.quantity;
+                }
               }
             });
 
