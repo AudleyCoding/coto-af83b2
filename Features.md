@@ -113,6 +113,7 @@ When you "Add to Home Screen":
 33. Quick Log for Multi-Stop Shopping Trips
 34. Vendor Management and Auto-Suggestion
 35. CSV Export for Accounting Integration
+36. Always-Visible Action Buttons with Disabled States
 
 ---
 
@@ -152,12 +153,16 @@ When you "Add to Home Screen":
 ---
 
 ### 4. Ingredient Purchase Tracking (Checkboxes)
-**What it does**: Check off items as you buy them at the market. Checked items move to a "Purchased" section.
+**What it does**: Check off items as you buy them at the market. Checked items move to a "Purchased" section. Action buttons (Quick Log, Reset) are always visible and become enabled when items are checked.
 
 **How to use**:
 - Tap checkbox next to each ingredient as you buy it
 - Checked items move to bottom with green background and strikethrough
-- Tap "Reset" button when done shopping to uncheck all items for next trip
+- Action buttons at the top activate:
+  - **Quick Log (💰)** - Becomes green when items are checked, click to save trip
+  - **Reset (🔄)** - Becomes red when items are checked, click to uncheck all
+  - **Load Prices (🔄)** - Becomes blue when you have saved prices
+- Buttons are always visible but grayed out when disabled (consistent UI layout)
 
 ---
 
@@ -848,9 +853,51 @@ Date,Vendor,Total (TWD),Items,Item Count
 
 ---
 
+### 36. Always-Visible Action Buttons with Disabled States
+
+**What it does**: Shopping list action buttons (Load Prices, Quick Log, Reset) are always visible for consistent UI layout. They use disabled states (grayed out) when not applicable instead of hiding/showing.
+
+**Button behavior**:
+
+**Load Prices (Blue 🔄)**
+- **Disabled (gray bg-gray-300)**: No saved prices yet
+- **Enabled (blue bg-blue-600)**: Have saved prices, can load them
+- Loads last known prices for all ingredients
+
+**Quick Log (Green 💰)**  
+- **Disabled (gray bg-gray-300)**: No items checked off
+- **Enabled (green bg-green-600)**: At least 1 item checked
+- Opens trip logging modal
+
+**Reset (Red 🔄)**
+- **Disabled (gray bg-gray-300)**: No items checked off
+- **Enabled (red bg-red-600)**: At least 1 item checked
+- Unchecks all items and clears logged-items tracker
+
+**Benefits**:
+- **Consistent layout**: Buttons don't appear/disappear (no layout jumping)
+- **Predictable positions**: Always in the same spot
+- **Clear affordance**: Grayed out = not usable yet, colored = ready to use
+- **Discoverable**: Users can see what actions exist before they're usable
+- **Better mobile UX**: No shifting elements on narrow screens
+- **Visual feedback**: Color change indicates when action becomes available
+
+**Design pattern**:
+```javascript
+disabled={condition}
+className={condition 
+  ? 'bg-blue-600 text-white' // Enabled state
+  : 'bg-gray-300 text-gray-500 cursor-not-allowed' // Disabled state
+}
+```
+
+This pattern is superior to conditional rendering (`{condition && <button>}`) for frequently-used actions where users benefit from seeing what's available.
+
+---
+
 ## Summary
 
-This app combines 35 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 36 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -865,6 +912,7 @@ This app combines 35 features into a simple, offline-capable shopping list tool 
 11. **Trip tracking**: Record multi-vendor shopping trips with expense totals
 12. **Smart vendor suggestions**: Auto-suggests where to shop based on purchase history
 13. **CSV export**: Integrates with Apple Numbers for P&L tracking
-11. **Centralized price updates**: Update all ingredient prices in one dedicated view
+14. **Centralized price updates**: Update all ingredient prices in one dedicated view
+15. **Always-visible actions**: Buttons show disabled states instead of hiding for consistent UX
 
 Perfect for Coto Makassar's daily market shopping needs!
