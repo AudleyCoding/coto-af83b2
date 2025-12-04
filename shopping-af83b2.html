@@ -402,6 +402,9 @@
           const [showTripHistory, setShowTripHistory] = useState(false);
           const [showQuickLog, setShowQuickLog] = useState(false);
           const [vendors, setVendors] = useState(['Street Market', 'Big King', 'Carrefour', 'RT-Mart']);
+          const [tripTotal, setTripTotal] = useState('');
+          const [selectedVendor, setSelectedVendor] = useState('');
+          const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -534,6 +537,16 @@
           useEffect(() => {
             localStorage.setItem('vendors', JSON.stringify(vendors));
           }, [vendors]);
+
+          // Auto-suggest vendor when Quick Log opens
+          useEffect(() => {
+            if (showQuickLog) {
+              const suggested = suggestVendor();
+              setSelectedVendor(suggested);
+              setTripDate(new Date().toISOString().split('T')[0]);
+              setTripTotal('');
+            }
+          }, [showQuickLog]);
 
           // Save price history to localStorage whenever it changes
           useEffect(() => {
@@ -2006,10 +2019,6 @@
           // Quick Log Modal
           if (showQuickLog) {
             const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
-            const suggestedVendor = suggestVendor();
-            const [tripTotal, setTripTotal] = useState('');
-            const [selectedVendor, setSelectedVendor] = useState(suggestedVendor);
-            const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
 
             return (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
