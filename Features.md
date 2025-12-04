@@ -109,6 +109,10 @@ When you "Add to Home Screen":
 29. Keyboard Navigation for Autocomplete
 30. Quick Add Items (Add one-off items without recipes)
 31. Price Management (Update all prices in one place)
+32. Shopping Trip History (Track expenses across multiple vendors)
+33. Quick Log for Multi-Stop Shopping Trips
+34. Vendor Management and Auto-Suggestion
+35. CSV Export for Accounting Integration
 
 ---
 
@@ -685,6 +689,11 @@ NT$95.00/kg
 5. Return home → Shopping list now shows updated estimates
 
 **Features**:
+- **Auto-prefill package sizes**: Quantity/unit fields automatically filled from:
+  1. Quick Add items (if you typed "salt 1000g", it pre-fills 1000g)
+  2. Last known prices (if you bought this before, shows previous package size)
+  3. Priority: Quick Add > Last Known > Empty
+- **Time saver**: You buy same package sizes every week - no need to re-enter
 - **Compact mobile layout**: 3 input fields in one row, minimal padding
 - **No scrolling needed**: See many ingredients on one screen
 - **Touch-friendly**: Input sizes optimized for finger tapping
@@ -709,9 +718,139 @@ NT$95.00/kg
 
 ---
 
+### 32. Shopping Trip History
+
+**What it does**: Records every shopping trip with total spent, vendor, date, and items purchased. Provides monthly expense tracking and historical data export.
+
+**How to use**:
+1. After purchasing items (checked off in shopping list), tap the green "💰 Quick Log" button
+2. Enter the total amount spent (e.g., 297)
+3. Select vendor (auto-suggested based on what you bought)
+4. Confirm date (defaults to today)
+5. Tap "Save Trip"
+6. Items you just logged are tracked - next Quick Log only saves newly checked items
+
+**Viewing history**:
+- Tap blue "Trip History" button in navigation
+- See monthly summary (trip count + total spent)
+- Each trip shows: vendor, date, total, item count
+- Tap "View items" to expand and see what you bought
+- Delete trips with X button (with confirmation)
+
+**Benefits**:
+- Track total monthly grocery expenses
+- See spending patterns by vendor
+- Historical record for tax/accounting purposes
+- Identify price changes over time
+- Export data to spreadsheet apps
+
+---
+
+### 33. Quick Log for Multi-Stop Shopping Trips
+
+**What it does**: Handles real-world market shopping where you visit multiple vendors in one trip. Each vendor stop can be logged separately without re-checking items.
+
+**Multi-stop workflow**:
+1. **Stop 1 - Big King**: Check palm sugar, terasi → Quick Log → Enter NT$108 → Save
+2. **Stop 2 - Street Market Veggies**: Check tomatoes → Quick Log → Enter NT$124 → Save
+3. **Stop 3 - Vietnamese Vendor**: Check fish sauce → Quick Log → Enter NT$85 → Save
+
+**Smart tracking**:
+- Items stay checked after logging (don't need to re-check)
+- App remembers which items already saved to a trip
+- Each Quick Log only saves NEW items since last log
+- Shows: "2 new items to log (3 already logged previously)"
+- Prevents duplicate items across vendor trips
+
+**When finished shopping**:
+- Tap "Reset" button to clear all checked items
+- Clears both purchase checkmarks and logged-items tracker
+- Ready for next shopping trip
+
+**Perfect for**:
+- Street markets with multiple specialty vendors
+- Shopping trips across several stores
+- Bundle purchases where you can't split prices
+- Quick expense tracking without detailed price entry
+
+---
+
+### 34. Vendor Management and Auto-Suggestion
+
+**What it does**: Manages your list of shopping locations and intelligently suggests which vendor based on what you're buying.
+
+**Default vendors**:
+- Street Market - Veggies
+- Street Market - Vietnamese
+- Street Market - Shallot
+- Big King
+- RT-Mart
+
+**Auto-suggestion algorithm**:
+When you click Quick Log, the app:
+1. Looks at what items you've checked off
+2. Analyzes your last 10 shopping trips
+3. Finds which vendor you most frequently bought these items from
+4. Pre-selects that vendor in the dropdown
+5. You can change it if the suggestion is wrong
+
+**Adding vendors**:
+- **During Quick Log**: Select "+ Add New Vendor..." from dropdown → Type name → Press Enter
+- **In Trip History**: Click "+ Add Vendor" button → Enter name
+- **Bulk edit**: Click "✏️ Manage Vendors" → Edit full list (one per line)
+
+**Benefits**:
+- Faster logging (fewer clicks)
+- Learns your shopping patterns
+- Separate multiple vendors at same market
+- Custom names for your regular stops
+
+---
+
+### 35. CSV Export for Accounting Integration
+
+**What it does**: Exports all shopping trip data to a CSV file that can be imported into spreadsheet apps like Apple Numbers, Excel, or Google Sheets.
+
+**How to use**:
+1. Open "Trip History" view
+2. Click "Export to CSV" button
+3. File downloads: `shopping-trips-2025-12-04.csv`
+4. Open in Apple Numbers (or Excel/Sheets)
+5. Data includes: Date, Vendor, Total (TWD), Items, Item Count
+
+**CSV format**:
+```
+Date,Vendor,Total (TWD),Items,Item Count
+2025-12-04,Big King,108,"palm sugar; terasi",2
+2025-12-04,Street Market - Veggies,124,"tomatoes",1
+2025-12-03,RT-Mart,567,"flour; sugar; oil; eggs",4
+```
+
+**Integration with Apple Numbers**:
+1. Open your existing P&L spreadsheet
+2. Import the CSV file
+3. Map columns to your expense categories
+4. All trip data flows into your accounting
+
+**Benefits**:
+- Seamless integration with existing workflows
+- No manual re-entry of shopping data
+- Historical expense records preserved
+- Easy sharing with accountants
+- Format compatible with all major spreadsheet apps
+
+**Perfect for**:
+- Restaurant P&L tracking
+- Monthly expense reports
+- Tax preparation documentation
+- Cost analysis and budgeting
+- Sharing data with business partners
+
+---
+
 ## Summary
 
-This app combines 31 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 35 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -723,6 +862,9 @@ This app combines 31 features into a simple, offline-capable shopping list tool 
 8. **Mobile-optimized**: Built for iPhone use at the market with 44px touch targets
 9. **Data portability**: Export/import for backup and cross-device sync
 10. **Quick add flexibility**: Add one-off items without creating recipes
+11. **Trip tracking**: Record multi-vendor shopping trips with expense totals
+12. **Smart vendor suggestions**: Auto-suggests where to shop based on purchase history
+13. **CSV export**: Integrates with Apple Numbers for P&L tracking
 11. **Centralized price updates**: Update all ingredient prices in one dedicated view
 
 Perfect for Coto Makassar's daily market shopping needs!
