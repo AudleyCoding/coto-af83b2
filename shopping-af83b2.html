@@ -405,6 +405,7 @@
           const [tripTotal, setTripTotal] = useState('');
           const [selectedVendor, setSelectedVendor] = useState('');
           const [tripDate, setTripDate] = useState(new Date().toISOString().split('T')[0]);
+          const [loggedItems, setLoggedItems] = useState(new Set()); // Track items already saved to a trip
 
           // Load dark mode preference on mount
           useEffect(() => {
@@ -690,6 +691,7 @@
 
           const clearPurchasedItems = () => {
             setPurchasedItems(new Set());
+            setLoggedItems(new Set()); // Also clear logged items tracker
           };
 
           const loadLastKnownPrices = () => {
@@ -743,7 +745,15 @@
 
           // Save shopping trip (Quick Log mode)
           const saveQuickTrip = (total, vendor, date) => {
-            const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+            // Only include purchased items that haven't been logged yet
+            const purchasedList = aggregatedIngredients.filter(ing => 
+              purchasedItems.has(ing.name) && !loggedItems.has(ing.name)
+            );
+            
+            if (purchasedList.length === 0) {
+              alert('⚠️ All checked items have already been logged to a previous trip.');
+              return null;
+            }
             
             const newTrip = {
               id: `trip-${Date.now()}`,
@@ -761,6 +771,14 @@
             };
 
             setShoppingTrips(prev => [newTrip, ...prev]);
+            
+            // Mark these items as logged
+            setLoggedItems(prev => {
+              const newSet = new Set(prev);
+              purchasedList.forEach(ing => newSet.add(ing.name));
+              return newSet;
+            });
+            
             return newTrip;
           };
 
@@ -2033,6 +2051,8 @@
           // Quick Log Modal
           if (showQuickLog) {
             const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+            const newItemsToLog = purchasedList.filter(ing => !loggedItems.has(ing.name));
+            const alreadyLoggedCount = purchasedList.length - newItemsToLog.length;
 
             return (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -2053,7 +2073,20 @@
                   
                   <div className="p-6 space-y-4">
                     <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {purchasedList.length} items purchased
+                      {newItemsToLog.length > 0 ? (
+                        <>
+                          {newItemsToLog.length} new item{newItemsToLog.length !== 1 ? 's' : ''} to log
+                          {alreadyLoggedCount > 0 && (
+                            <span className={`block text-xs mt-1 ${darkMode ? 'text-yellow-400' : 'text-orange-600'}`}>
+                              ({alreadyLoggedCount} already logged previously)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className={darkMode ? 'text-yellow-400' : 'text-orange-600'}>
+                          All {purchasedList.length} checked item{purchasedList.length !== 1 ? 's have' : ' has'} already been logged
+                        </span>
+                      )}
                     </div>
 
                     <div>
@@ -2127,10 +2160,13 @@
                     <div className="flex gap-3 pt-4">
                       <button
                         onClick={() => {
-                          saveQuickTrip(tripTotal, selectedVendor, tripDate);
-                          setShowQuickLog(false);
-                          setTripTotal('');
-                          alert('✓ Trip saved!');
+                          const result = saveQuickTrip(tripTotal, selectedVendor, tripDate);
+                          if (result) {
+                            setShowQuickLog(false);
+                            setTripTotal('');
+                            alert(`✓ Trip saved! ${result.itemCount} item${result.itemCount !== 1 ? 's' : ''} logged.`);
+                          }
+                          // If result is null, saveQuickTrip already showed an alert
                         }}
                         disabled={!tripTotal}
                         className={`flex-1 px-6 py-3 rounded-lg font-medium ${tripTotal ? (darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white') : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
