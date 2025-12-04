@@ -422,13 +422,21 @@
           // Load recipes from memory on mount
           useEffect(() => {
             const stored = localStorage.getItem('restaurantRecipes');
-            if (stored) {
+            if (stored && stored !== 'null' && stored !== '[]') {
               try {
-                setRecipes(JSON.parse(stored));
+                const parsedRecipes = JSON.parse(stored);
+                if (parsedRecipes && parsedRecipes.length > 0) {
+                  setRecipes(parsedRecipes);
+                } else {
+                  console.log('No recipes in localStorage, loading defaults');
+                  setRecipes(INITIAL_RECIPES);
+                }
               } catch (e) {
+                console.error('Error parsing recipes, loading defaults:', e);
                 setRecipes(INITIAL_RECIPES);
               }
             } else {
+              console.log('No recipes stored, loading defaults');
               setRecipes(INITIAL_RECIPES);
             }
           }, []);
