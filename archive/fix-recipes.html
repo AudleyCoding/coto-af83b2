@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fix Recipes</title>
+</head>
+<body>
+  <h1>Recipe Recovery Tool</h1>
+  <button onclick="fixRecipes()">Click to Restore Recipes</button>
+  <div id="result"></div>
+  
+  <script>
+    function fixRecipes() {
+      // Check if recipes exist
+      const stored = localStorage.getItem('restaurantRecipes');
+      if (!stored || stored === 'null') {
+        // Restore recipes - user can click this button
+        alert('Recipes are missing. They will be restored when you click OK and reload shopping-af83b2.html');
+        localStorage.removeItem('restaurantRecipes');
+        document.getElementById('result').innerHTML = '<p style="color: green;">✓ Cleared corrupted recipe data. Now open shopping-af83b2.html to restore default recipes.</p>';
+      } else {
+        document.getElementById('result').innerHTML = '<p style="color: blue;">Recipes already exist. Count: ' + JSON.parse(stored).length + '</p>';
+      }
+    }
+  </script>
+</body>
+</html>
