@@ -802,7 +802,11 @@ When you click Quick Log, the app:
 **Adding vendors**:
 - **During Quick Log**: Select "+ Add New Vendor..." from dropdown → Type name → Press Enter
 - **In Trip History**: Click "+ Add Vendor" button → Enter name
-- **Bulk edit**: Click "✏️ Manage Vendors" → Edit full list (one per line)
+- **Bulk edit**: Click "✏️ Manage Vendors" → Opens modal with multi-line editor
+  - See all vendors at once (12-row textarea)
+  - Easy visual scanning and editing
+  - Add, remove, or reorder vendors
+  - One vendor per line format
 
 **Benefits**:
 - Faster logging (fewer clicks)

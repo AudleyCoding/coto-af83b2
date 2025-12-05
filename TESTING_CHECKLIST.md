@@ -211,6 +211,18 @@ Trip 2-3+: Repeat
 - [ ] Expected: Shopping list refreshed
 - [ ] Issue: Anything not reset?
 
+### Manage Vendors Test
+- [ ] In Trip History, tap "✏️ Manage Vendors" button
+- [ ] Expected: Modal opens with multi-line textarea
+- [ ] Check: Can you see all vendors at once?
+- [ ] Try editing: Add a new vendor on new line
+- [ ] Try editing: Remove a vendor (delete line)
+- [ ] Try editing: Reorder vendors (cut/paste lines)
+- [ ] Tap "Save Vendors"
+- [ ] Expected: Success message with count
+- [ ] Verify: Changes appear in Quick Log vendor dropdown
+- [ ] Issue: Any usability problems with the editor?
+
 ---
 
 ## Sunday Testing - Second Market Day
