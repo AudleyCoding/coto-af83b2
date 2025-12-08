@@ -224,6 +224,59 @@ This method makes the app work without your laptop running!
 - Perfect for late-night restaurant prep
 - Your preference is saved automatically
 
+### Help System
+
+#### Quick Tooltips
+- **Hover over any button** to see what it does
+- Every button has a detailed tooltip with:
+  - Emoji icon for visual recognition
+  - Clear description of function
+  - When and how to use it
+- Great for quick reminders without leaving your workflow
+
+#### Comprehensive Help Guide
+1. Click the **Help (?) button** in the main navigation (blue icon)
+2. Browse organized sections:
+   - **Main Navigation Buttons**: All header buttons explained
+   - **Shopping List Action Buttons**: Workflow guidance with examples
+   - **Common Questions**: Answers to frequent confusion points
+3. Each button includes:
+   - Color-coded visual reference
+   - Detailed description
+   - Real-world Taiwan market examples (e.g., "NT$297 at store")
+   - Before/after usage context
+4. Key clarifications:
+   - **Load Prices vs Update Prices**: One auto-fills (passive), one lets you enter (active)
+   - **Quick Log**: When to save shopping trips
+   - **Reset**: What gets cleared vs what stays saved
+5. Click "Got it!" or tap outside to close
+
+#### Common Button Confusion - Solved
+
+**Q: What's the difference between "Load Prices" and "Update Prices"?**
+- **Load Prices** (Blue, 🔄): Auto-fills your shopping list with OLD prices from last trip (for estimation)
+  - Use BEFORE shopping to see estimated cost
+  - Temporary - just fills the shopping list view
+  - Helps you know how much cash to bring
+  
+- **Update Prices** (Green, 💲): Opens form to ENTER/EDIT prices you paid (permanent storage)
+  - Use AFTER shopping to record actual prices
+  - Saves to database for future trips
+  - Updates price history and charts
+
+**Q: When should I use "Quick Log"?**
+- After shopping when you want to track expenses
+- Check off items as you buy them
+- Enter vendor name and total spent (e.g., NT$297)
+- Click Quick Log to save the trip
+- Great for accounting/export to CSV
+
+**Q: What does "Reset" do?**
+- Unchecks all items in shopping list
+- Clears temporary prices from shopping view
+- Does NOT delete your saved prices in Update Prices
+- Use after shopping to start fresh for next trip
+
 ## Tips & Tricks
 
 ### Restaurant Use
@@ -248,6 +301,19 @@ This method makes the app work without your laptop running!
 - Match the pricing format used at the market:
   - If vegetables are priced per 600g, enter: `50 / 600 g`
   - If sold by bunch, enter: `30 / 1 bunch`
+
+### New User Onboarding
+- **First time using the app?** Click the Help (?) button for a complete guide
+- **Forgot what a button does?** Hover over it to see the tooltip
+- **Confused about Load vs Update Prices?** Check the Help modal's Common Questions
+- **Need vendor consistency?** Use the Vendors button to manage a master list
+
+### Edit Recipe Improvements
+- **Ingredient names** now have blue backgrounds for easy visibility in dark mode
+- **Alphabetically sorted** ingredients make finding items easier
+- **Add new ingredients** at the top of the list for convenience
+- **Expandable recipes** in shopping list - click "and X more..." to see all ingredients
+- **Autocomplete** now waits for 2+ characters (less intrusive)
   - If sold per piece, enter: `15 / 1 pcs`
 - App automatically calculates total cost based on recipe quantities
 - **Prices are session-based** - they don't save to recipes, so update each trip

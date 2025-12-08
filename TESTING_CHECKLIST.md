@@ -9,10 +9,10 @@
 ## Pre-Market Setup (Friday Evening)
 
 ### PWA Installation
-- [ ] Open https://audleycoding.github.io/coto-af83b2/shopping-af83b2.html on iPhone
-- [ ] Tap Share → Add to Home Screen
-- [ ] Name it "Shopping" or "Coto Shopping"
-- [ ] Verify icon appears on home screen
+- [x] Open https://audleycoding.github.io/coto-af83b2/shopping-af83b2.html on iPhone
+- [x] Tap Share → Add to Home Screen
+- [x] Name it "Shopping" or "Coto Shopping"
+- [x] Verify icon appears on home screen
 
 ### Offline Test
 - [ ] Enable Airplane Mode
@@ -138,6 +138,7 @@
 ### Price Recording Test
 - [ ] Buy at least 5 items with known per-unit prices
 - [ ] After checkout, tap "Update Prices" button
+    * The "Update Prices" button is not clear on mobile! It only says "Prices". It isn't clear that it is the button to update new prices
   
 ### For Each Item:
 Item 1: _______________

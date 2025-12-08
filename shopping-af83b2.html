@@ -222,6 +222,12 @@
           </svg>
         );
 
+        const HelpCircle = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+
         // Helper function to format amounts without unnecessary decimals
         const formatAmount = (amount) => {
           return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
@@ -409,6 +415,7 @@
           const [showTripHistory, setShowTripHistory] = useState(false);
           const [showQuickLog, setShowQuickLog] = useState(false);
           const [showManageVendors, setShowManageVendors] = useState(false);
+          const [showHelp, setShowHelp] = useState(false);
           const [vendors, setVendors] = useState(['Street Market - Veggies', 'Street Market - Vietnamese', 'Street Market - Shallot', 'Big King', 'RT-Mart']);
           const [vendorEditText, setVendorEditText] = useState('');
           const [tripTotal, setTripTotal] = useState('');
@@ -2304,6 +2311,137 @@
             );
           }
 
+          // Help Modal
+          if (showHelp) {
+            return (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowHelp(false)}>
+                <div className={`rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto ${darkMode ? 'bg-gray-800' : 'bg-white'}`} onClick={(e) => e.stopPropagation()}>
+                  <div className={`p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} sticky top-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} z-10`}>
+                    <div className="flex items-center justify-between">
+                      <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        ❓ Button Guide
+                      </h2>
+                      <button
+                        onClick={() => setShowHelp(false)}
+                        className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Main Navigation Buttons</h3>
+                      
+                      <div className="space-y-4">
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                            <span className="font-semibold">Price History</span>
+                          </div>
+                          <p className="text-sm">View charts showing price changes over time. Track if ingredient costs are rising or falling.</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-green-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                            <span className="font-semibold">Update Prices</span>
+                          </div>
+                          <p className="text-sm">Enter or edit prices for ingredients. Use this AFTER shopping to record what you actually paid at the store. Different from "Load Prices" which fills in old prices.</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Settings className="w-5 h-5 text-gray-600" />
+                            <span className="font-semibold">Manage Recipes</span>
+                          </div>
+                          <p className="text-sm">Add, edit, or delete recipes. Manage your ingredient lists and measurements.</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <ShoppingCart className="w-5 h-5 text-blue-600" />
+                            <span className="font-semibold">Trip History</span>
+                          </div>
+                          <p className="text-sm">See all your shopping trips with dates, vendors, totals, and items. Export to CSV for accounting in Apple Numbers.</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-purple-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Store className="w-5 h-5 text-purple-600" />
+                            <span className="font-semibold">Vendors</span>
+                          </div>
+                          <p className="text-sm">Add, edit, or remove vendor names. Automatically syncs with recipe locations and trip logging.</p>
+                        </div>
+                      </div>
+
+                      <h3 className={`text-lg font-bold mb-4 mt-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List Action Buttons</h3>
+                      
+                      <div className="space-y-4">
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <RefreshCw className="w-5 h-5 text-blue-600" />
+                            <span className="font-semibold text-blue-600">Load Prices</span>
+                          </div>
+                          <p className="text-sm"><strong>BEFORE shopping:</strong> Auto-fills your shopping list with prices from your last trip. Helps estimate total cost. Does NOT change your saved prices.</p>
+                          <p className="text-sm mt-2 italic">Example: You're planning to shop. Click "Load Prices" to see estimated cost based on last time.</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-green-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xl">💰</span>
+                            <span className="font-semibold text-green-600">Quick Log</span>
+                          </div>
+                          <p className="text-sm"><strong>AFTER shopping:</strong> Saves checked items as a shopping trip. Records vendor, total spent, date, and items. Use for expense tracking.</p>
+                          <p className="text-sm mt-2 italic">Example: At store, check off items as you buy. Enter total NT$297, click "Quick Log", done!</p>
+                        </div>
+
+                        <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-red-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <RefreshCw className="w-5 h-5 text-red-600" />
+                            <span className="font-semibold text-red-600">Reset</span>
+                          </div>
+                          <p className="text-sm"><strong>After shopping:</strong> Unchecks all items and clears the shopping list. Use when done shopping to start fresh next time.</p>
+                          <p className="text-sm mt-2 italic">Example: Finished shopping for the week. Click "Reset" to clear everything for next trip.</p>
+                        </div>
+                      </div>
+
+                      <h3 className={`text-lg font-bold mb-4 mt-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Common Questions</h3>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'}`}>
+                          <p className="font-semibold">Q: What's the difference between "Update Prices" and "Load Prices"?</p>
+                          <p className="mt-1"><strong>Update Prices:</strong> Save NEW prices after shopping (permanent storage)</p>
+                          <p><strong>Load Prices:</strong> Fill shopping list with OLD prices for estimation (temporary)</p>
+                        </div>
+
+                        <div className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'}`}>
+                          <p className="font-semibold">Q: When should I use "Quick Log"?</p>
+                          <p className="mt-1">Use Quick Log when you want to track expenses. It records what you spent at each vendor. Great for accounting!</p>
+                        </div>
+
+                        <div className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'}`}>
+                          <p className="font-semibold">Q: What does "Reset" do exactly?</p>
+                          <p className="mt-1">Unchecks all items and clears prices from the shopping list view. Your saved prices in "Update Prices" are NOT deleted. Use this to start fresh after shopping.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center pt-4">
+                      <button
+                        onClick={() => setShowHelp(false)}
+                        className={`px-8 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                      >
+                        Got it!
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           // Trip History View
           if (showTripHistory) {
             const thisMonthTrips = shoppingTrips.filter(trip => {
@@ -2455,6 +2593,13 @@
                     </div>
                     <div className="flex gap-2 flex-wrap justify-end">
                       <button
+                        onClick={() => setShowHelp(true)}
+                        className={`p-2 rounded-lg flex-shrink-0 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-blue-400' : 'bg-gray-100 hover:bg-gray-200 text-blue-600'}`}
+                        title="Show button help guide"
+                      >
+                        <HelpCircle className="w-5 h-5" />
+                      </button>
+                      <button
                         onClick={() => setDarkMode(!darkMode)}
                         className={`p-2 rounded-lg flex-shrink-0 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
                         title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -2464,7 +2609,7 @@
                       <button
                         onClick={() => setShowPriceHistory(true)}
                         className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-                        title="View price history and trends"
+                        title="📈 Price History: See price changes over time with charts. Track if ingredient costs are going up or down."
                       >
                         <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden md:inline">Price History</span>
@@ -2473,7 +2618,7 @@
                       <button
                         onClick={() => setShowPriceManagement(true)}
                         className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                        title="Update prices for all ingredients"
+                        title="💲 Update Prices: Enter/edit prices for ingredients. Opens a form to record what you paid at the store."
                       >
                         <DollarSign className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden md:inline">Update Prices</span>
@@ -2490,7 +2635,7 @@
                       <button
                         onClick={() => setShowTripHistory(true)}
                         className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-blue-700 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                        title="View shopping trip history"
+                        title="🛒 Trip History: See all your shopping trips with dates, vendors, totals, and items. Export to CSV for accounting."
                       >
                         <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden md:inline">Trip History</span>
@@ -2502,7 +2647,7 @@
                           setShowManageVendors(true);
                         }}
                         className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-purple-700 hover:bg-purple-600 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
-                        title="Manage vendor list"
+                        title="🏪 Vendors: Add, edit, or remove vendor names. Syncs with recipe locations and trip logging."
                       >
                         <Store className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden md:inline">Vendors</span>
@@ -2731,7 +2876,7 @@
                               ? (darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')
                               : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                           }`}
-                          title="Load prices from last shopping trip"
+                          title="📊 Load Prices: Auto-fill prices from your last shopping trip. Fills the shopping list with previously saved prices so you can see estimated costs."
                         >
                           <RefreshCw className="w-4 h-4" />
                           <span className="hidden sm:inline">Load Prices</span>
@@ -2744,7 +2889,7 @@
                               ? (darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white')
                               : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                           }`}
-                          title="Log this shopping trip"
+                          title="💰 Quick Log: Save checked items as a shopping trip. Records vendor, total cost, and items purchased for expense tracking."
                         >
                           💰
                           <span className="hidden sm:inline">Quick Log</span>
@@ -2757,7 +2902,7 @@
                               ? (darkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white')
                               : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
                           }`}
-                          title="Reset all items"
+                          title="🔄 Reset: Uncheck all items and clear the shopping list. Use after completing your shopping to start fresh."
                         >
                           <RefreshCw className="w-4 h-4" />
                           <span className="hidden sm:inline">Reset</span>
@@ -3560,7 +3705,7 @@
                                         setTimeout(() => setActiveAutocomplete(null), 200);
                                       }}
                                       onKeyDown={(e) => handleKeyDown(e, index)}
-                                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-lg ${darkMode ? 'bg-blue-900 border-blue-600 text-blue-100' : 'bg-blue-50 border-blue-300 text-blue-900'}`}
                                       placeholder="Ingredient name (lowercase)"
                                       autoComplete="off"
                                     />

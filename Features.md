@@ -114,6 +114,117 @@ When you "Add to Home Screen":
 34. Vendor Management and Auto-Suggestion
 35. CSV Export for Accounting Integration
 36. Always-Visible Action Buttons with Disabled States
+37. Enhanced Button Tooltips with Detailed Descriptions
+38. Comprehensive Help Modal with Button Guide
+39. Enhanced Ingredient Visibility in Dark Mode
+40. Alphabetically Sorted Ingredients in Edit Recipe
+41. Expandable Recipe View in Shopping List
+42. Vendor Syncing Between Recipes and Trips
+
+---
+
+### 37. Enhanced Button Tooltips with Detailed Descriptions
+**What it does**: Every button in the app now has a helpful tooltip that appears on hover, explaining exactly what the button does and when to use it.
+
+**How to use**:
+- Hover over any button to see its tooltip
+- Tooltips include emoji icons for visual recognition
+- Each tooltip explains:
+  - What the button does
+  - When to use it
+  - What happens when you click it
+- Examples:
+  - **Load Prices**: "📊 Auto-fill prices from your last shopping trip..."
+  - **Update Prices**: "💲 Enter/edit prices for ingredients..."
+  - **Quick Log**: "💰 Save checked items as a shopping trip..."
+
+---
+
+### 38. Comprehensive Help Modal with Button Guide
+**What it does**: A dedicated help system accessible via the Help (?) button that provides a complete reference guide for all buttons and features.
+
+**How to use**:
+- Click the **Help (?)** button in the main navigation (blue icon with question mark)
+- Browse organized sections:
+  - **Main Navigation Buttons**: All header buttons explained with color-coded examples
+  - **Shopping List Action Buttons**: Load Prices, Quick Log, Reset with before/after context
+  - **Common Questions**: Answers to frequent confusion points
+- Each button explanation includes:
+  - Icon and color for visual reference
+  - Clear description of function
+  - Real-world usage examples
+  - When to use it in your workflow
+- Special FAQ section answers:
+  - "What's the difference between Update Prices and Load Prices?"
+  - "When should I use Quick Log?"
+  - "What does Reset do exactly?"
+- Click "Got it!" or anywhere outside to close
+
+**Key clarifications in Help**:
+- **Update Prices**: Save NEW prices after shopping (permanent storage)
+- **Load Prices**: Fill shopping list with OLD prices for estimation (temporary)
+- Real examples: "Enter total NT$297, click Quick Log, done!"
+
+---
+
+### 39. Enhanced Ingredient Visibility in Dark Mode
+**What it does**: Ingredient name fields in Edit Recipe now have distinctive blue backgrounds and bolder, larger text for better visibility and easier differentiation from vendor/substitution fields.
+
+**How to use**:
+- When editing or adding recipes, ingredient name fields now stand out with:
+  - **Dark Mode**: Deep blue background (bg-blue-900), bright blue text (text-blue-100)
+  - **Light Mode**: Light blue background (bg-blue-50), dark blue text (text-blue-900)
+  - **Bold, larger text**: font-bold text-lg for prominence
+- Makes it easier to:
+  - Quickly scan and identify ingredient names
+  - Distinguish ingredients from metadata (vendor, substitution)
+  - Edit recipes in low-light conditions (at restaurant/market)
+
+---
+
+### 40. Alphabetically Sorted Ingredients in Edit Recipe
+**What it does**: When viewing or editing a recipe, ingredients are automatically sorted alphabetically by name for easier scanning and organization.
+
+**How to use**:
+- Ingredients automatically sort when you:
+  - Save a new recipe
+  - Update an existing recipe
+  - Duplicate a recipe
+- Benefits:
+  - Find specific ingredients faster
+  - Identify duplicates easily
+  - More professional recipe organization
+  - Consistent across all recipes
+
+---
+
+### 41. Expandable Recipe View in Shopping List
+**What it does**: In the shopping list, when a recipe has many ingredients, they're initially collapsed with "and X more..." text. Click to expand and see all ingredients.
+
+**How to use**:
+- Long recipes show first few ingredients
+- Click "and X more..." link to expand full ingredient list
+- Helps keep shopping list compact and scannable
+- Each recipe section can be expanded independently
+
+---
+
+### 42. Vendor Syncing Between Recipes and Trips
+**What it does**: Vendor names in recipe locations automatically sync with the vendor list used in Quick Log and Trip History. Add vendors in one place, use everywhere.
+
+**How to use**:
+- Click **Vendors** button in main navigation (purple icon)
+- Add, edit, or remove vendors from master list
+- Vendors appear in:
+  - Recipe ingredient location dropdown (Edit Recipe)
+  - Quick Log vendor selection
+  - Quick Add vendor grouping
+- Changes sync automatically across all features
+- Benefits:
+  - Consistent vendor naming
+  - No duplicate vendor names
+  - Quick Add items automatically group by existing vendors
+  - Easier expense tracking and reporting
 
 ---
 
