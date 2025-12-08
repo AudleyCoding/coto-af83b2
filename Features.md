@@ -120,6 +120,8 @@ When you "Add to Home Screen":
 40. Alphabetically Sorted Ingredients in Edit Recipe
 41. Expandable Recipe View in Shopping List
 42. Vendor Syncing Between Recipes and Trips
+43. Automatic Price Loading (No Button Needed!)
+44. Contextual Help Button in Shopping List
 
 ---
 
@@ -225,6 +227,48 @@ When you "Add to Home Screen":
   - No duplicate vendor names
   - Quick Add items automatically group by existing vendors
   - Easier expense tracking and reporting
+
+---
+
+### 43. Automatic Price Loading (No Button Needed!)
+**What it does**: Prices from your last shopping trip automatically appear in the shopping list the moment you select recipes. No manual "Load Prices" button needed anymore!
+
+**How it works**:
+- Select any recipe → Prices instantly auto-fill
+- Uses your saved price history (from Update Prices)
+- Happens automatically in the background
+- Shows estimated total cost immediately
+- One less button to remember!
+
+**Benefits**:
+- **Faster workflow**: No extra clicking required
+- **Always ready**: Estimated costs appear instantly
+- **Less confusion**: No need to understand Load vs Update Prices
+- **Better UX**: Prices are there when you need them
+
+**Example**:
+1. Check "Ayam Goreng" recipe
+2. Prices auto-fill instantly (if you've bought these before)
+3. See estimated total: "NT$ 450"
+4. Go shopping!
+
+---
+
+### 44. Contextual Help Button in Shopping List
+**What it does**: A dedicated Help button next to Quick Log and Reset that opens the Help modal and automatically scrolls to the relevant "Shopping List Action Buttons" section.
+
+**How to use**:
+- Look at the action buttons at the top of shopping list
+- See the small **? (Help)** button next to Reset
+- Click it → Help modal opens AND auto-scrolls to action buttons section
+- No need to scroll through navigation button explanations
+- Get help exactly where you need it
+
+**Benefits**:
+- **Contextual**: Help appears right where you're working
+- **Smart scrolling**: Jumps to the relevant section automatically
+- **Quick reference**: Reminds you what Quick Log and Reset do
+- **Better discoverability**: Help is visible when you need it most
 
 ---
 

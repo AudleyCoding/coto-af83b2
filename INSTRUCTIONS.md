@@ -185,15 +185,16 @@ This method makes the app work without your laptop running!
 5. If you need 1200g and price is NT$50/600g, it shows: `= NT$ 100`
 
 #### Price History & Tracking
-1. **Automatic Price Memory**:
+1. **Automatic Price Loading**:
+   - Prices from your last shopping trip automatically appear when you select recipes
+   - No button to click - happens instantly in the background
+   - Shows estimated total cost immediately
+   - Based on your saved price history
+
+2. **Automatic Price Memory**:
    - Every price you enter is automatically saved as "last known price"
    - Date is recorded so you know when you last bought it
    - No manual save needed - happens in the background
-
-2. **Load Last Prices**:
-   - Click **"Load Prices"** button at the top of shopping list
-   - Fills in all price fields with your last known prices
-   - Saves time - no need to re-enter everything
 
 3. **Price Change Indicators**:
    - When you enter a new price, app shows if it changed
@@ -203,9 +204,9 @@ This method makes the app work without your laptop running!
 
 4. **Estimated Total**:
    - Appears at top of shopping list: **"Estimated: NT$ XXX"**
-   - Calculated from last known prices
-   - Shows **before** you go shopping - know how much cash to bring
-   - Updates as you select/deselect recipes
+   - Automatically calculated from your last known prices
+   - Updates instantly as you select/deselect recipes
+   - Know how much cash to bring BEFORE going to market
 
 5. **Price History Backup**:
    - Export includes your price history
@@ -236,6 +237,7 @@ This method makes the app work without your laptop running!
 
 #### Comprehensive Help Guide
 1. Click the **Help (?) button** in the main navigation (blue icon)
+   - OR click the small **? button** next to Quick Log/Reset in shopping list (auto-scrolls to action buttons section)
 2. Browse organized sections:
    - **Main Navigation Buttons**: All header buttons explained
    - **Shopping List Action Buttons**: Workflow guidance with examples
@@ -253,16 +255,17 @@ This method makes the app work without your laptop running!
 
 #### Common Button Confusion - Solved
 
-**Q: What's the difference between "Load Prices" and "Update Prices"?**
-- **Load Prices** (Blue, 🔄): Auto-fills your shopping list with OLD prices from last trip (for estimation)
-  - Use BEFORE shopping to see estimated cost
-  - Temporary - just fills the shopping list view
-  - Helps you know how much cash to bring
+**Q: How do prices get into my shopping list?**
+- **Automatically!** When you select recipes, prices from your last shopping trip instantly appear
+- No button to click - happens in the background
+- Based on prices you saved using "Update Prices" after previous shopping trips
   
-- **Update Prices** (Green, 💲): Opens form to ENTER/EDIT prices you paid (permanent storage)
-  - Use AFTER shopping to record actual prices
-  - Saves to database for future trips
-  - Updates price history and charts
+**Q: What's the "Update Prices" button for?**
+- Use AFTER shopping to save the NEW prices you paid at the store
+- Opens a form where you enter actual prices
+- Saves to database permanently
+- These become your "last known prices" for next time
+- Updates price history charts
 
 **Q: When should I use "Quick Log"?**
 - After shopping when you want to track expenses
@@ -291,10 +294,10 @@ This method makes the app work without your laptop running!
 - **Use substitutions** to remember backup options
 
 ### Cost Tracking
+- **Prices auto-load** when you select recipes (from your last shopping trip)
 - **Enter prices while shopping** using the unit price format (e.g., NT$50/600g)
-- **Load last prices** before shopping to see estimates
 - **Watch price changes** with up/down indicators
-- **Plan your budget** using the estimated total at top
+- **Plan your budget** using the estimated total at top (appears automatically)
 - **Track actual spending** using the total cost at bottom
 - App automatically saves all prices for next time
 - Export your price history to backup or sync devices
@@ -304,8 +307,8 @@ This method makes the app work without your laptop running!
 
 ### New User Onboarding
 - **First time using the app?** Click the Help (?) button for a complete guide
-- **Forgot what a button does?** Hover over it to see the tooltip
-- **Confused about Load vs Update Prices?** Check the Help modal's Common Questions
+- **Forgot what a button does?** Hover over it to see the tooltip, or click the ? next to action buttons
+- **Confused about pricing?** Prices auto-load from your last trip - just select recipes and go!
 - **Need vendor consistency?** Use the Vendors button to manage a master list
 
 ### Edit Recipe Improvements

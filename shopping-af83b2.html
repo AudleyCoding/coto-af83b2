@@ -738,28 +738,6 @@
             setLoggedItems(new Set()); // Also clear logged items tracker
           };
 
-          const loadLastKnownPrices = () => {
-            const aggregatedNames = aggregatedIngredients.map(ing => ing.name);
-            const newPrices = {};
-            
-            aggregatedNames.forEach(name => {
-              if (lastKnownPrices[name]) {
-                newPrices[name] = {
-                  price: lastKnownPrices[name].price,
-                  unitQty: lastKnownPrices[name].unitQty,
-                  unitType: lastKnownPrices[name].unitType
-                };
-              }
-            });
-            
-            if (Object.keys(newPrices).length > 0) {
-              setIngredientPrices(newPrices);
-              alert(`✓ Loaded prices for ${Object.keys(newPrices).length} ingredient${Object.keys(newPrices).length !== 1 ? 's' : ''} from last shopping trip`);
-            } else {
-              alert('No price history found for these ingredients');
-            }
-          };
-
           // Auto-suggest vendor based on purchased items
           const suggestVendor = () => {
             const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
@@ -1219,6 +1197,30 @@
               a.name.localeCompare(b.name)
             );
           }, [selectedRecipes, recipes, quickAddItems]);
+
+          // Auto-load prices when shopping list changes
+          useEffect(() => {
+            if (aggregatedIngredients.length === 0) {
+              return; // No ingredients, nothing to load
+            }
+
+            const aggregatedNames = aggregatedIngredients.map(ing => ing.name);
+            const newPrices = {};
+            
+            aggregatedNames.forEach(name => {
+              if (lastKnownPrices[name]) {
+                newPrices[name] = {
+                  price: lastKnownPrices[name].price,
+                  unitQty: lastKnownPrices[name].unitQty,
+                  unitType: lastKnownPrices[name].unitType
+                };
+              }
+            });
+            
+            if (Object.keys(newPrices).length > 0) {
+              setIngredientPrices(newPrices);
+            }
+          }, [aggregatedIngredients, lastKnownPrices]);
 
           // Get all unique ingredients for Price Management view
           const allIngredients = useMemo(() => {
@@ -2376,16 +2378,16 @@
                         </div>
                       </div>
 
-                      <h3 className={`text-lg font-bold mb-4 mt-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List Action Buttons</h3>
+                      <h3 id="help-action-buttons" className={`text-lg font-bold mb-4 mt-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Shopping List Action Buttons</h3>
                       
                       <div className="space-y-4">
                         <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
                           <div className="flex items-center gap-2 mb-2">
-                            <RefreshCw className="w-5 h-5 text-blue-600" />
-                            <span className="font-semibold text-blue-600">Load Prices</span>
+                            <span className="text-xl">💡</span>
+                            <span className="font-semibold text-blue-600">Automatic Price Loading</span>
                           </div>
-                          <p className="text-sm"><strong>BEFORE shopping:</strong> Auto-fills your shopping list with prices from your last trip. Helps estimate total cost. Does NOT change your saved prices.</p>
-                          <p className="text-sm mt-2 italic">Example: You're planning to shop. Click "Load Prices" to see estimated cost based on last time.</p>
+                          <p className="text-sm"><strong>How it works:</strong> When you select recipes, prices from your last shopping trip automatically appear in the shopping list. No button needed!</p>
+                          <p className="text-sm mt-2 italic">Example: Select "Ayam Goreng" recipe → Prices auto-fill instantly → See estimated cost right away.</p>
                         </div>
 
                         <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-green-50'}`}>
@@ -2411,9 +2413,9 @@
                       
                       <div className="space-y-3 text-sm">
                         <div className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'}`}>
-                          <p className="font-semibold">Q: What's the difference between "Update Prices" and "Load Prices"?</p>
-                          <p className="mt-1"><strong>Update Prices:</strong> Save NEW prices after shopping (permanent storage)</p>
-                          <p><strong>Load Prices:</strong> Fill shopping list with OLD prices for estimation (temporary)</p>
+                          <p className="font-semibold">Q: How do prices get into my shopping list?</p>
+                          <p className="mt-1"><strong>Automatically!</strong> When you select recipes, prices from your last shopping trip automatically appear. No extra steps needed.</p>
+                          <p className="mt-2"><strong>Update Prices button:</strong> Use this AFTER shopping to save new prices you paid at the store.</p>
                         </div>
 
                         <div className={`p-3 rounded ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'}`}>
@@ -2869,19 +2871,6 @@
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
-                          onClick={loadLastKnownPrices}
-                          disabled={!hasSelections || aggregatedIngredients.length === 0 || Object.keys(lastKnownPrices).length === 0}
-                          className={`flex items-center gap-1 text-sm px-3 py-2 rounded-lg font-medium ${
-                            hasSelections && aggregatedIngredients.length > 0 && Object.keys(lastKnownPrices).length > 0
-                              ? (darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white')
-                              : (darkMode ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-300 text-gray-500 cursor-not-allowed')
-                          }`}
-                          title="📊 Load Prices: Auto-fill prices from your last shopping trip. Fills the shopping list with previously saved prices so you can see estimated costs."
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          <span className="hidden sm:inline">Load Prices</span>
-                        </button>
-                        <button
                           onClick={() => setShowQuickLog(true)}
                           disabled={purchasedItems.size === 0}
                           className={`flex items-center gap-1 px-3 py-2 rounded-lg font-medium text-sm ${
@@ -2906,6 +2895,22 @@
                         >
                           <RefreshCw className="w-4 h-4" />
                           <span className="hidden sm:inline">Reset</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowHelp(true);
+                            // Scroll to action buttons section after modal opens
+                            setTimeout(() => {
+                              const element = document.getElementById('help-action-buttons');
+                              if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                          }}
+                          className={`flex items-center gap-1 px-2 py-2 rounded-lg ${
+                            darkMode ? 'bg-gray-700 hover:bg-gray-600 text-blue-400' : 'bg-gray-100 hover:bg-gray-200 text-blue-600'
+                          }`}
+                          title="❓ Help: What do these buttons do?"
+                        >
+                          <HelpCircle className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
