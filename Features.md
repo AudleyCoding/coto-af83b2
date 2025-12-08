@@ -122,6 +122,11 @@ When you "Add to Home Screen":
 42. Vendor Syncing Between Recipes and Trips
 43. Automatic Price Loading (No Button Needed!)
 44. Contextual Help Button in Shopping List
+45. Smart Ingredient Search in Edit Recipe
+46. Smart Ingredient Search in Price Management
+47. Intelligent Search Filtering (Starts-With Prioritization)
+48. iPhone Scroll Stability Fix
+49. Context-Aware Vendor Suggestion
 
 ---
 
@@ -269,6 +274,118 @@ When you "Add to Home Screen":
 - **Smart scrolling**: Jumps to the relevant section automatically
 - **Quick reference**: Reminds you what Quick Log and Reset do
 - **Better discoverability**: Help is visible when you need it most
+
+---
+
+### 45. Smart Ingredient Search in Edit Recipe
+**What it does**: When editing recipes with 6+ ingredients, a search field appears at the top allowing you to quickly filter and find specific ingredients.
+
+**How to use**:
+- Search field appears automatically when recipe has 6+ ingredients
+- Type to filter ingredients in real-time
+- Shows "Showing X of Y ingredients" count
+- Ingredients that START with your search appear first
+- Then ingredients that CONTAIN your search
+- Clear search to see all ingredients again
+
+**Example**:
+- Recipe has 20 ingredients
+- Type "g" → "garlic" and "ginger" appear first
+- Then "turmeric" (contains 'g') appears after
+- Type "garlic" → Shows only "garlic" and "garlic powder"
+
+**Benefits**:
+- Find ingredients instantly in large recipes
+- Edit specific items without scrolling through entire list
+- Smart sorting shows most relevant matches first
+
+---
+
+### 46. Smart Ingredient Search in Price Management
+**What it does**: Search field in Update Prices view allows filtering through all your ingredients (great for lists with 50+ items!).
+
+**How to use**:
+- Open Update Prices view
+- Use search field at top of page
+- Type to filter ingredients in real-time
+- Same smart filtering: starts-with matches appear first
+- Shows count: "Showing X of Y ingredients"
+- Search clears automatically when closing Price Management
+
+**Example**:
+- You have 51 ingredients in Price Management
+- Type "on" → "onion" appears before "lemon"
+- Type "garlic" → Shows "garlic" and "garlic powder" only
+- Clear search to update all prices
+
+**Benefits**:
+- Navigate large ingredient lists quickly
+- Update specific prices without scrolling
+- Green focus ring matches Update Prices theme
+
+---
+
+### 47. Intelligent Search Filtering (Starts-With Prioritization)
+**What it does**: Both Edit Recipe and Price Management searches use smart filtering that prioritizes ingredients starting with your search term.
+
+**How it works**:
+1. Type search term (case-insensitive)
+2. Ingredients are filtered to those containing the term
+3. Results are sorted:
+   - First: Ingredients that START with search term (alphabetical)
+   - Second: Ingredients that CONTAIN search term (alphabetical)
+   - Last: Empty ingredient names (if any)
+
+**Example scenarios**:
+- Search "t":
+  - First: "tamarind", "turmeric" (start with 't')
+  - Then: "butter", "coconut milk" (contain 't')
+- Search "garlic":
+  - First: "garlic", "garlic powder" (start with 'garlic')
+  - Then: (nothing else contains 'garlic')
+
+**Benefits**:
+- More intuitive search - finds what you're looking for faster
+- Reduces scrolling to find the right ingredient
+- Matches natural user expectations
+- Works consistently across Edit Recipe and Price Management
+
+---
+
+### 48. iPhone Scroll Stability Fix
+**What it does**: Prevents the screen from sliding/bouncing horizontally while scrolling vertically on iPhone/iPad.
+
+**Technical implementation**:
+- Viewport meta tag includes: `maximum-scale=1.0, user-scalable=no`
+- Prevents pinch-to-zoom (not needed for this app)
+- Eliminates horizontal scroll drift
+- Provides stable, native app-like experience
+
+**Benefits**:
+- No more accidental horizontal sliding while scrolling shopping list
+- Stable touch interactions
+- Feels like a native iOS app
+- Better usability at the market
+
+---
+
+### 49. Context-Aware Vendor Suggestion
+**What it does**: When clicking Quick Log after shopping, the vendor field defaults to the location where you're currently shopping (based on ingredient locations), not your last trip.
+
+**How it works**:
+1. You check off items while shopping at a store
+2. Click Quick Log button
+3. Vendor field auto-fills with the most common location from checked items
+4. If items have "PX Mart" as location → defaults to "PX Mart"
+
+**Old behavior**: Defaulted to vendor from last shopping trip
+**New behavior**: Defaults to location field of currently checked items
+
+**Benefits**:
+- One less field to change when logging trips
+- Vendor matches WHERE you are, not where you WERE
+- More intuitive workflow
+- Faster trip logging
 
 ---
 

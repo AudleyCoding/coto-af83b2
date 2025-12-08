@@ -82,6 +82,13 @@ This method makes the app work without your laptop running!
 3. Make your changes
 4. Click **"Update Recipe"**
 
+**Tip for large recipes (6+ ingredients)**:
+- A search field appears at the top of the ingredient list
+- Type to filter ingredients in real-time
+- Ingredients that START with your search appear first
+- Example: Type "g" → "garlic" appears before "turmeric"
+- Shows "Showing X of Y ingredients" count
+
 #### Duplicate a Recipe
 1. Go to **"Manage Recipes"**
 2. Click the green **copy icon** on any recipe
@@ -220,6 +227,16 @@ This method makes the app work without your laptop running!
 - **"Estimated Total"** at top shows budget based on last prices
 - Helps budget your shopping trip and compare with actual spending
 
+#### Update Prices Efficiently
+1. Click **"Update Prices"** button in main navigation
+2. Use the **search field** to quickly find ingredients (essential with 50+ items!)
+3. Search is smart: ingredients starting with your term appear first
+   - Type "on" → "onion" before "lemon"
+   - Type "garlic" → Shows only "garlic" and "garlic powder"
+4. Shows "Showing X of Y ingredients" count when filtering
+5. Enter prices for the items you need to update
+6. Search clears automatically when you close the view
+
 ### Dark Mode
 - Click the **moon/sun icon** in the header to toggle dark mode
 - Perfect for late-night restaurant prep
@@ -314,9 +331,22 @@ This method makes the app work without your laptop running!
 ### Edit Recipe Improvements
 - **Ingredient names** now have blue backgrounds for easy visibility in dark mode
 - **Alphabetically sorted** ingredients make finding items easier
+- **Search field** appears for recipes with 6+ ingredients
+- **Smart search**: Type "g" and "garlic" appears before "turmeric"
 - **Add new ingredients** at the top of the list for convenience
 - **Expandable recipes** in shopping list - click "and X more..." to see all ingredients
 - **Autocomplete** now waits for 2+ characters (less intrusive)
+
+### Price Management Tips
+- **Search is essential** with 50+ ingredients - use it!
+- **Smart filtering**: Starts-with matches appear first
+- Type partial names to quickly find what you need
+- Update prices for specific ingredients without scrolling entire list
+
+### iPhone/iPad Users
+- **Stable scrolling**: No more horizontal sliding while scrolling vertically
+- **Add to Home Screen** for offline use and native app feel
+- **Vendor auto-detection**: Quick Log defaults to your current store location
   - If sold per piece, enter: `15 / 1 pcs`
 - App automatically calculates total cost based on recipe quantities
 - **Prices are session-based** - they don't save to recipes, so update each trip
