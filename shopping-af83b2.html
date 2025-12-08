@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Shopping List</title>
     
     <!-- iOS Home Screen App Configuration -->
@@ -3406,6 +3406,7 @@
           const [activeAutocomplete, setActiveAutocomplete] = useState(null);
           const [autocompleteQuery, setAutocompleteQuery] = useState('');
           const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+          const [ingredientSearchQuery, setIngredientSearchQuery] = useState('');
 
           // Standardized units list
           const standardUnits = [
@@ -3489,6 +3490,34 @@
             
             return [...exact, ...startsWith, ...contains].slice(0, 10);
           };
+
+          // Filter and sort ingredients for display
+          const displayedIngredients = useMemo(() => {
+            let filtered = ingredients;
+            
+            // Filter by search query
+            if (ingredientSearchQuery.trim()) {
+              const query = ingredientSearchQuery.toLowerCase();
+              filtered = ingredients.filter((ing, index) => {
+                // Keep the ingredient with its original index for later reference
+                ing._originalIndex = index;
+                return ing.name.toLowerCase().includes(query);
+              });
+            } else {
+              // Add original indices when not filtering
+              filtered = ingredients.map((ing, index) => ({
+                ...ing,
+                _originalIndex: index
+              }));
+            }
+            
+            // Sort alphabetically by name
+            return filtered.sort((a, b) => {
+              if (!a.name) return 1; // Empty names go to bottom
+              if (!b.name) return -1;
+              return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+            });
+          }, [ingredients, ingredientSearchQuery]);
 
           const addIngredient = () => {
             setIngredients([{ name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }, ...ingredients]);
@@ -3685,9 +3714,30 @@
                           </button>
                         </div>
 
+                        {/* Ingredient Search Field */}
+                        {ingredients.length > 5 && (
+                          <div className="mb-3">
+                            <input
+                              type="text"
+                              value={ingredientSearchQuery}
+                              onChange={(e) => setIngredientSearchQuery(e.target.value)}
+                              placeholder="🔍 Search ingredients..."
+                              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-500'}`}
+                            />
+                            {ingredientSearchQuery && (
+                              <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Showing {displayedIngredients.length} of {ingredients.length} ingredients
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div className="space-y-3">
-                          {ingredients.map((ingredient, index) => {
+                          {displayedIngredients.map((ingredient) => {
+                            const index = ingredient._originalIndex;
                             const suggestions = activeAutocomplete === index ? getFilteredSuggestions(autocompleteQuery) : [];
+                            // Remove the temporary _originalIndex property from rendering
+                            const { _originalIndex, ...cleanIngredient } = ingredient;
                             
                             return (
                               <div key={index} className={`border rounded-lg p-3 ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200'}`}>
