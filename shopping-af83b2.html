@@ -738,31 +738,30 @@
             setLoggedItems(new Set()); // Also clear logged items tracker
           };
 
-          // Auto-suggest vendor based on purchased items
+          // Auto-suggest vendor based on purchased items' locations
           const suggestVendor = () => {
             const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
             if (purchasedList.length === 0) return vendors[0] || '';
 
-            // Look at recent trips to find which vendor is most commonly used for these items
+            // Count which vendor/location appears most in the checked items
             const vendorScores = {};
-            vendors.forEach(v => vendorScores[v] = 0);
-
-            shoppingTrips.slice(-10).forEach(trip => {
-              if (!trip.items) return;
-              const tripItems = trip.items.map(i => i.name.toLowerCase());
-              const matchCount = purchasedList.filter(ing => 
-                tripItems.includes(ing.name.toLowerCase())
-              ).length;
-              if (matchCount > 0 && trip.vendor) {
-                vendorScores[trip.vendor] = (vendorScores[trip.vendor] || 0) + matchCount;
+            
+            purchasedList.forEach(item => {
+              if (item.location && item.location.trim()) {
+                vendorScores[item.location] = (vendorScores[item.location] || 0) + 1;
               }
             });
 
-            const topVendor = Object.keys(vendorScores).reduce((a, b) => 
-              vendorScores[a] > vendorScores[b] ? a : b
-            );
+            // If we found locations on the purchased items, use the most common one
+            if (Object.keys(vendorScores).length > 0) {
+              const topVendor = Object.keys(vendorScores).reduce((a, b) => 
+                vendorScores[a] > vendorScores[b] ? a : b
+              );
+              return topVendor;
+            }
 
-            return vendorScores[topVendor] > 0 ? topVendor : vendors[0] || '';
+            // Fallback: if no locations set, return first vendor or empty
+            return vendors[0] || '';
           };
 
           // Save shopping trip (Quick Log mode)
