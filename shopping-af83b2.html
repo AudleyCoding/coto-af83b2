@@ -216,6 +216,12 @@
           </svg>
         );
 
+        const Store = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        );
+
         // Helper function to format amounts without unnecessary decimals
         const formatAmount = (amount) => {
           return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
@@ -550,6 +556,34 @@
             localStorage.setItem('vendors', JSON.stringify(vendors));
           }, [vendors]);
 
+          // Sync recipe locations with vendors list
+          useEffect(() => {
+            const locationSet = new Set();
+            recipes.forEach(r => {
+              r.ingredients.forEach(ing => {
+                if (ing.location && ing.location.trim()) {
+                  locationSet.add(ing.location.trim());
+                }
+              });
+            });
+            
+            const locationsFromRecipes = Array.from(locationSet);
+            const newVendors = [...vendors];
+            let hasChanges = false;
+            
+            // Add recipe locations that aren't in vendors
+            locationsFromRecipes.forEach(loc => {
+              if (!newVendors.includes(loc)) {
+                newVendors.push(loc);
+                hasChanges = true;
+              }
+            });
+            
+            if (hasChanges) {
+              setVendors(newVendors.sort());
+            }
+          }, [recipes]); // Only depend on recipes, not vendors, to avoid infinite loop
+
           // Auto-suggest vendor when Quick Log opens
           useEffect(() => {
             if (showQuickLog) {
@@ -840,14 +874,24 @@
             }
             
             // Add to quick add items with parsed quantity and unit
+            // Try to find existing location for this ingredient from recipes
+            let suggestedLocation = '';
+            for (const recipe of recipes) {
+              const foundIng = recipe.ingredients.find(ing => ing.name === itemName);
+              if (foundIng && foundIng.location) {
+                suggestedLocation = foundIng.location;
+                break;
+              }
+            }
+            
             setQuickAddItems(prev => [...prev, {
               name: itemName,
               isQuickAdd: true,
-              location: '',
+              location: suggestedLocation,
               quantity: quantity,
               unit: unit
             }]);
-            
+
             setQuickAddInput('');
           };
 
@@ -2451,6 +2495,18 @@
                         <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden md:inline">Trip History</span>
                         <span className="md:hidden">Trips</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setVendorEditText(vendors.join('\n'));
+                          setShowManageVendors(true);
+                        }}
+                        className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-purple-700 hover:bg-purple-600 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                        title="Manage vendor list"
+                      >
+                        <Store className="w-4 h-4 md:w-5 md:h-5" />
+                        <span className="hidden md:inline">Vendors</span>
+                        <span className="md:hidden">Vendors</span>
                       </button>
                     </div>
                   </div>
