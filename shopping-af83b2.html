@@ -381,6 +381,7 @@
           const [showManageRecipes, setShowManageRecipes] = useState(false);
           const [editingRecipe, setEditingRecipe] = useState(null);
           const [showRecipeForm, setShowRecipeForm] = useState(false);
+          const [expandedRecipes, setExpandedRecipes] = useState({});
           const [searchQuery, setSearchQuery] = useState('');
           const [ingredientPrices, setIngredientPrices] = useState({});
           const [lastKnownPrices, setLastKnownPrices] = useState({});
@@ -2030,16 +2031,21 @@
                         </div>
                         <div className={`mt-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           <div className="grid grid-cols-2 gap-2">
-                            {recipe.ingredients.slice(0, 6).map((ing, i) => (
+                            {(expandedRecipes[recipe.id] ? recipe.ingredients : recipe.ingredients.slice(0, 6)).map((ing, i) => (
                               <div key={i} className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
                                 • {ing.name}
                               </div>
                             ))}
                           </div>
                           {recipe.ingredients.length > 6 && (
-                            <div className="text-gray-500 mt-2">
-                              ... and {recipe.ingredients.length - 6} more
-                            </div>
+                            <button
+                              onClick={() => setExpandedRecipes(prev => ({ ...prev, [recipe.id]: !prev[recipe.id] }))}
+                              className={`text-sm mt-2 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'} cursor-pointer hover:underline`}
+                            >
+                              {expandedRecipes[recipe.id] 
+                                ? '▲ Show less' 
+                                : `▼ ... and ${recipe.ingredients.length - 6} more`}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -2998,7 +3004,7 @@
                                                     </span>
                                                     {packagesNeeded !== 1 && (
                                                       <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                                                        ({packagesNeeded.toFixed(2)} pkg)
+                                                        ({packagesNeeded.toFixed(2)} units)
                                                       </span>
                                                     )}
                                                     
@@ -3280,7 +3286,7 @@
           };
 
           const addIngredient = () => {
-            setIngredients([...ingredients, { name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }]);
+            setIngredients([{ name: '', quantity: '', unit: 'g', substitution: '', price: '', location: '' }, ...ingredients]);
           };
 
           const removeIngredient = (index) => {
@@ -3374,7 +3380,7 @@
               substitution: ing.substitution?.trim() || '',
               price: ing.price === '' ? null : parseFloat(ing.price),
               location: ing.location?.trim() || ''
-            }));
+            })).sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
 
             onSave({
               ...(recipe || {}),
@@ -3443,6 +3449,23 @@
                         />
                       </div>
 
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 pt-2 pb-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}">
+                        <button
+                          type="submit"
+                          className={`flex-1 px-6 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                        >
+                          {recipe ? 'Update Recipe' : 'Add Recipe'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onCancel}
+                          className={`px-6 py-3 border rounded-lg font-medium ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -3451,7 +3474,7 @@
                           <button
                             type="button"
                             onClick={addIngredient}
-                            className={`text-sm font-medium ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                            className={`px-4 py-2 rounded-lg font-medium ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                           >
                             + Add Ingredient
                           </button>
@@ -3470,15 +3493,18 @@
                                       value={ingredient.name}
                                       onChange={(e) => handleIngredientNameChange(index, e.target.value)}
                                       onFocus={() => {
-                                        setActiveAutocomplete(index);
-                                        setAutocompleteQuery(ingredient.name);
+                                        // Only show autocomplete if there's text to match
+                                        if (ingredient.name.length >= 2) {
+                                          setActiveAutocomplete(index);
+                                          setAutocompleteQuery(ingredient.name);
+                                        }
                                       }}
                                       onBlur={() => {
                                         // Delay to allow click on suggestion
                                         setTimeout(() => setActiveAutocomplete(null), 200);
                                       }}
                                       onKeyDown={(e) => handleKeyDown(e, index)}
-                                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
                                       placeholder="Ingredient name (lowercase)"
                                       autoComplete="off"
                                     />
@@ -3578,22 +3604,6 @@
                           Leave quantity blank for ingredients you haven't measured yet
                         </p>
                       </div>
-                    </div>
-
-                    <div className="flex gap-3 mt-8">
-                      <button
-                        type="submit"
-                        className={`flex-1 px-6 py-3 rounded-lg font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                      >
-                        {recipe ? 'Update Recipe' : 'Add Recipe'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onCancel}
-                        className={`px-6 py-3 border rounded-lg font-medium ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
-                      >
-                        Cancel
-                      </button>
                     </div>
                   </form>
                 </div>
