@@ -405,6 +405,7 @@
           const [quickAddItems, setQuickAddItems] = useState([]);
           const [quickAddInput, setQuickAddInput] = useState('');
           const [showPriceManagement, setShowPriceManagement] = useState(false);
+          const [priceSearchQuery, setPriceSearchQuery] = useState('');
           const [packageUnits, setPackageUnits] = useState(['g', 'kg', '斤', 'ml', 'L', 'pcs', 'pack', 'bag', 'bottle', 'can']);
           const [showScrollTop, setShowScrollTop] = useState(false);
           const [showIngredientSources, setShowIngredientSources] = useState(false);
@@ -1260,6 +1261,32 @@
             return Array.from(ingredientMap.values()).sort((a, b) => a.name.localeCompare(b.name));
           }, [recipes, quickAddItems]);
 
+          // Filtered ingredients for Price Management view
+          const filteredPriceIngredients = useMemo(() => {
+            if (!priceSearchQuery.trim()) {
+              return allIngredients;
+            }
+            
+            const query = priceSearchQuery.toLowerCase();
+            const filtered = allIngredients.filter(ing => 
+              ing.name.toLowerCase().includes(query)
+            );
+            
+            // Sort with starts-with matches first, then contains, then alphabetical
+            return filtered.sort((a, b) => {
+              const aLower = a.name.toLowerCase();
+              const bLower = b.name.toLowerCase();
+              
+              const aStarts = aLower.startsWith(query);
+              const bStarts = bLower.startsWith(query);
+              
+              if (aStarts && !bStarts) return -1;
+              if (!aStarts && bStarts) return 1;
+              
+              return aLower.localeCompare(bLower);
+            });
+          }, [allIngredients, priceSearchQuery]);
+
           const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
           const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
 
@@ -1567,7 +1594,7 @@
                 <div className="max-w-6xl mx-auto">
                   {/* Header - sticky on mobile */}
                   <div className={`sticky top-0 z-10 rounded-lg shadow-sm border mb-6 p-4 md:p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <DollarSign className={`w-8 h-8 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
                         <div>
@@ -1578,19 +1605,38 @@
                         </div>
                       </div>
                       <button
-                        onClick={() => setShowPriceManagement(false)}
+                        onClick={() => {
+                          setShowPriceManagement(false);
+                          setPriceSearchQuery(''); // Clear search when closing
+                        }}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
                       >
                         <ArrowLeft className="w-5 h-5" />
                         Back to Shopping List
                       </button>
                     </div>
+                    
+                    {/* Search Field */}
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        value={priceSearchQuery}
+                        onChange={(e) => setPriceSearchQuery(e.target.value)}
+                        placeholder="🔍 Search ingredients..."
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300 placeholder-gray-500'}`}
+                      />
+                      {priceSearchQuery && (
+                        <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Showing {filteredPriceIngredients.length} of {allIngredients.length} ingredients
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Ingredients List */}
                   <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                     <div className="space-y-4">
-                      {allIngredients.map((ingredient, index) => {
+                      {filteredPriceIngredients.map((ingredient, index) => {
                         const lastPrice = lastKnownPrices[ingredient.name];
                         const currentPrice = ingredientPrices[ingredient.name];
                         const hasHistory = priceHistoryData[ingredient.name]?.length > 0;
@@ -3511,11 +3557,29 @@
               }));
             }
             
-            // Sort alphabetically by name
+            // Sort with smart prioritization:
+            // 1. If searching: starts-with matches first, then contains
+            // 2. Within each group: alphabetical
+            // 3. Empty names always last
             return filtered.sort((a, b) => {
               if (!a.name) return 1; // Empty names go to bottom
               if (!b.name) return -1;
-              return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+              
+              const aLower = a.name.toLowerCase();
+              const bLower = b.name.toLowerCase();
+              
+              // If we're searching, prioritize starts-with matches
+              if (ingredientSearchQuery.trim()) {
+                const query = ingredientSearchQuery.toLowerCase();
+                const aStarts = aLower.startsWith(query);
+                const bStarts = bLower.startsWith(query);
+                
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+              }
+              
+              // Otherwise (or if both match same way), sort alphabetically
+              return aLower.localeCompare(bLower);
             });
           }, [ingredients, ingredientSearchQuery]);
 
