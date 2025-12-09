@@ -1453,10 +1453,14 @@
           }, [remainingItems, planToBuyItems]);
 
           // Auto-collapse all vendor sections when shopping list changes
+          // EXCEPT "Unspecified" if it contains Quick Add items (keep it expanded)
           useEffect(() => {
             const newCollapsed = {};
-            groupedByLocation.forEach(({ location }) => {
-              newCollapsed[location] = true; // true = collapsed
+            groupedByLocation.forEach(({ location, items }) => {
+              // Check if this location has any Quick Add items
+              const hasQuickAdd = items.some(item => item.isQuickAdd);
+              // Collapse all except Unspecified with Quick Add items
+              newCollapsed[location] = location === 'Unspecified' && hasQuickAdd ? false : true;
             });
             setCollapsedSections(newCollapsed);
           }, [groupedByLocation.map(g => g.location).join(',')]);
@@ -1965,7 +1969,7 @@
                         </p>
                         {ingredientHistory[ingredientHistory.length - 1] && (
                           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            per {ingredientHistory[ingredientHistory.length - 1].unitQty} {ingredientHistory[ingredientHistory.length - 1].unitType}
+                            per {ingredientHistory[ingredientHistory.length - 1].packageQuantity || ingredientHistory[ingredientHistory.length - 1].unitQty} {ingredientHistory[ingredientHistory.length - 1].packageUnit || ingredientHistory[ingredientHistory.length - 1].unitType}
                           </p>
                         )}
                       </div>
@@ -2028,7 +2032,7 @@
                                     NT${entry.price.toFixed(2)}
                                   </td>
                                   <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {entry.unitQty} {entry.unitType}
+                                    {entry.packageQuantity || entry.unitQty} {entry.packageUnit || entry.unitType}
                                   </td>
                                 </tr>
                               ))}
