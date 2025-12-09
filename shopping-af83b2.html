@@ -936,10 +936,14 @@
 
           const exportRecipes = () => {
             const exportData = {
-              version: "1.1",
+              version: "1.2",
               exportDate: new Date().toISOString(),
               recipes: recipes,
-              lastKnownPrices: lastKnownPrices
+              lastKnownPrices: lastKnownPrices,
+              priceHistoryData: priceHistoryData,
+              vendors: vendors,
+              shoppingTrips: shoppingTrips,
+              packageUnits: packageUnits
             };
 
             const dataStr = JSON.stringify(exportData, null, 2);
@@ -980,6 +984,10 @@
                   
                   const importedRecipes = importData.recipes;
                   const importedPrices = importData.lastKnownPrices || {};
+                  const importedPriceHistory = importData.priceHistoryData || {};
+                  const importedVendors = importData.vendors || [];
+                  const importedTrips = importData.shoppingTrips || [];
+                  const importedUnits = importData.packageUnits || [];
                   
                   if (importedRecipes.length === 0) {
                     alert('❌ The file contains no recipes.');
@@ -990,10 +998,18 @@
                   const existingCount = recipes.length;
                   const importCount = importedRecipes.length;
                   const priceCount = Object.keys(importedPrices).length;
+                  const priceHistoryCount = Object.keys(importedPriceHistory).length;
+                  const vendorCount = importedVendors.length;
+                  const tripCount = importedTrips.length;
                   
                   let message = `Found ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
-                  if (priceCount > 0) {
-                    message += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                  const extraData = [];
+                  if (priceCount > 0) extraData.push(`${priceCount} price${priceCount !== 1 ? 's' : ''}`);
+                  if (priceHistoryCount > 0) extraData.push(`${priceHistoryCount} price histor${priceHistoryCount !== 1 ? 'ies' : 'y'}`);
+                  if (vendorCount > 0) extraData.push(`${vendorCount} vendor${vendorCount !== 1 ? 's' : ''}`);
+                  if (tripCount > 0) extraData.push(`${tripCount} trip${tripCount !== 1 ? 's' : ''}`);
+                  if (extraData.length > 0) {
+                    message += `, ${extraData.join(', ')}`;
                   }
                   message += ` in the file.\n`;
                   
@@ -1048,22 +1064,54 @@
                         return updated;
                       });
                       
-                      // Merge price history
+                      // Merge price data
                       if (priceCount > 0) {
                         setLastKnownPrices(prev => ({...prev, ...importedPrices}));
                       }
+                      if (priceHistoryCount > 0) {
+                        setPriceHistoryData(prev => ({...prev, ...importedPriceHistory}));
+                      }
+                      
+                      // Merge vendors (avoid duplicates)
+                      if (vendorCount > 0) {
+                        setVendors(prev => {
+                          const combined = [...prev];
+                          importedVendors.forEach(vendor => {
+                            if (!combined.includes(vendor)) {
+                              combined.push(vendor);
+                            }
+                          });
+                          return combined;
+                        });
+                      }
+                      
+                      // Merge trips (append new ones)
+                      if (tripCount > 0) {
+                        setShoppingTrips(prev => [...prev, ...importedTrips]);
+                      }
+                      
+                      // Merge package units (avoid duplicates)
+                      if (importedUnits.length > 0) {
+                        setPackageUnits(prev => {
+                          const combined = [...prev];
+                          importedUnits.forEach(unit => {
+                            if (!combined.includes(unit)) {
+                              combined.push(unit);
+                            }
+                          });
+                          return combined;
+                        });
+                      }
                       
                       let successMsg = '✓ Successfully merged: ';
-                      if (updatedCount > 0) {
-                        successMsg += `${updatedCount} updated`;
-                      }
-                      if (addedCount > 0) {
-                        if (updatedCount > 0) successMsg += ', ';
-                        successMsg += `${addedCount} added`;
-                      }
-                      if (priceCount > 0) {
-                        successMsg += `, ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
-                      }
+                      const successParts = [];
+                      if (updatedCount > 0) successParts.push(`${updatedCount} updated`);
+                      if (addedCount > 0) successParts.push(`${addedCount} added`);
+                      if (priceCount > 0) successParts.push(`${priceCount} price${priceCount !== 1 ? 's' : ''}`);
+                      if (priceHistoryCount > 0) successParts.push(`${priceHistoryCount} price histor${priceHistoryCount !== 1 ? 'ies' : 'y'}`);
+                      if (vendorCount > 0) successParts.push(`${vendorCount} vendor${vendorCount !== 1 ? 's' : ''}`);
+                      if (tripCount > 0) successParts.push(`${tripCount} trip${tripCount !== 1 ? 's' : ''}`);
+                      successMsg += successParts.join(', ');
                       alert(successMsg + '!');
                     }
                   } else {
@@ -1078,14 +1126,31 @@
                     }));
                     setRecipes(recipesWithIds);
                     
-                    // Import price history
+                    // Import all data
                     if (priceCount > 0) {
                       setLastKnownPrices(importedPrices);
                     }
+                    if (priceHistoryCount > 0) {
+                      setPriceHistoryData(importedPriceHistory);
+                    }
+                    if (vendorCount > 0) {
+                      setVendors(importedVendors);
+                    }
+                    if (tripCount > 0) {
+                      setShoppingTrips(importedTrips);
+                    }
+                    if (importedUnits.length > 0) {
+                      setPackageUnits(importedUnits);
+                    }
                     
                     let successMsg = `✓ Successfully imported ${importCount} recipe${importCount !== 1 ? 's' : ''}`;
-                    if (priceCount > 0) {
-                      successMsg += ` and ${priceCount} price${priceCount !== 1 ? 's' : ''}`;
+                    const successExtra = [];
+                    if (priceCount > 0) successExtra.push(`${priceCount} price${priceCount !== 1 ? 's' : ''}`);
+                    if (priceHistoryCount > 0) successExtra.push(`${priceHistoryCount} price histor${priceHistoryCount !== 1 ? 'ies' : 'y'}`);
+                    if (vendorCount > 0) successExtra.push(`${vendorCount} vendor${vendorCount !== 1 ? 's' : ''}`);
+                    if (tripCount > 0) successExtra.push(`${tripCount} trip${tripCount !== 1 ? 's' : ''}`);
+                    if (successExtra.length > 0) {
+                      successMsg += `, ${successExtra.join(', ')}`;
                     }
                     alert(successMsg + '!');
                   }
