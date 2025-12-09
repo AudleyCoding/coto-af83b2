@@ -228,6 +228,12 @@
           </svg>
         );
 
+        const Save = ({ className }) => (
+          <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+        );
+
         // Helper function to format amounts without unnecessary decimals
         const formatAmount = (amount) => {
           return Number.isInteger(amount) ? amount.toString() : amount.toFixed(1);
@@ -507,6 +513,44 @@
               }
             }
           }, []);
+
+          // Migrate lastKnownPrices to priceHistoryData (one-time migration for existing users)
+          useEffect(() => {
+            // Only run if we have lastKnownPrices but missing entries in priceHistoryData
+            if (Object.keys(lastKnownPrices).length > 0) {
+              let needsMigration = false;
+              const updatedHistory = { ...priceHistoryData };
+              
+              Object.entries(lastKnownPrices).forEach(([ingredientName, priceData]) => {
+                // If this ingredient has no history, or last history entry is older than lastKnownPrice
+                const existingHistory = updatedHistory[ingredientName] || [];
+                const lastHistoryEntry = existingHistory[existingHistory.length - 1];
+                
+                // Check if we need to add this price to history
+                const shouldAdd = !lastHistoryEntry || 
+                                  lastHistoryEntry.date !== priceData.date ||
+                                  lastHistoryEntry.price !== priceData.price;
+                
+                if (shouldAdd && priceData.price && priceData.date) {
+                  needsMigration = true;
+                  updatedHistory[ingredientName] = [...existingHistory, {
+                    date: priceData.date,
+                    price: priceData.price,
+                    packageQuantity: priceData.packageQuantity || priceData.unitQty || 1,
+                    packageUnit: priceData.packageUnit || priceData.unitType || '',
+                    // Keep old format for backward compatibility
+                    unitQty: priceData.unitQty || priceData.packageQuantity || 1,
+                    unitType: priceData.unitType || priceData.packageUnit || ''
+                  }];
+                }
+              });
+              
+              if (needsMigration) {
+                setPriceHistoryData(updatedHistory);
+                console.log('Migrated lastKnownPrices to priceHistoryData');
+              }
+            }
+          }, [lastKnownPrices]); // Run when lastKnownPrices loads
 
           // Load quick add items from localStorage
           useEffect(() => {
@@ -807,6 +851,59 @@
 
             // Fallback: if no locations set, return first vendor or empty
             return vendors[0] || '';
+          };
+
+          // Save prices from Update Prices view to history
+          const savePricesFromUpdateView = () => {
+            const today = new Date().toISOString().split('T')[0];
+            let savedCount = 0;
+            
+            Object.entries(ingredientPrices).forEach(([ingredientName, priceData]) => {
+              if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
+                // Save to lastKnownPrices
+                setLastKnownPrices(prev => ({
+                  ...prev,
+                  [ingredientName]: {
+                    price: priceData.price,
+                    packageQuantity: priceData.packageQuantity,
+                    packageUnit: priceData.packageUnit || '',
+                    // Keep old format for backward compatibility
+                    unitQty: priceData.packageQuantity,
+                    unitType: priceData.packageUnit || '',
+                    date: today
+                  }
+                }));
+                
+                // Save to price history
+                setPriceHistoryData(prev => {
+                  const existing = prev[ingredientName] || [];
+                  // Only add if price is different from last entry or it's been more than a day
+                  const lastEntry = existing[existing.length - 1];
+                  if (!lastEntry || lastEntry.price !== priceData.price || lastEntry.date !== today) {
+                    savedCount++;
+                    return {
+                      ...prev,
+                      [ingredientName]: [...existing, {
+                        date: today,
+                        price: priceData.price,
+                        packageQuantity: priceData.packageQuantity,
+                        packageUnit: priceData.packageUnit || '',
+                        // Keep old format for backward compatibility
+                        unitQty: priceData.packageQuantity,
+                        unitType: priceData.packageUnit || ''
+                      }]
+                    };
+                  }
+                  return prev;
+                });
+              }
+            });
+            
+            if (savedCount > 0) {
+              alert(`✓ Saved ${savedCount} price${savedCount !== 1 ? 's' : ''} to history!`);
+            } else {
+              alert('ℹ️ No new prices to save (all prices already up to date).');
+            }
           };
 
           // Save shopping trip (Quick Log mode)
@@ -1726,16 +1823,30 @@
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          setShowPriceManagement(false);
-                          setPriceSearchQuery(''); // Clear search when closing
-                        }}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-                      >
-                        <ArrowLeft className="w-5 h-5" />
-                        Back to Shopping List
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={savePricesFromUpdateView}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
+                            darkMode 
+                              ? 'bg-green-600 hover:bg-green-700 text-white' 
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                          title="Save all entered prices to price history"
+                        >
+                          <Save className="w-5 h-5" />
+                          Save Prices
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPriceManagement(false);
+                            setPriceSearchQuery(''); // Clear search when closing
+                          }}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        >
+                          <ArrowLeft className="w-5 h-5" />
+                          Back to Shopping List
+                        </button>
+                      </div>
                     </div>
                     
                     {/* Search Field */}
