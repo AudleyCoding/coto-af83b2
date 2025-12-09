@@ -660,54 +660,6 @@
             }
           }, [priceHistoryData]);
 
-          // Save last known prices whenever ingredientPrices changes (package-based)
-          useEffect(() => {
-            const timer = setTimeout(() => {
-              Object.entries(ingredientPrices).forEach(([name, data]) => {
-                if (data?.price && data.price > 0 && data?.packageQuantity && data.packageQuantity > 0) {
-                  const today = new Date().toISOString().split('T')[0];
-                  
-                  setLastKnownPrices(prev => ({
-                    ...prev,
-                    [name]: {
-                      price: data.price,
-                      packageQuantity: data.packageQuantity,
-                      packageUnit: data.packageUnit || '',
-                      // Keep old format for backward compatibility
-                      unitQty: data.packageQuantity,
-                      unitType: data.packageUnit || '',
-                      date: today
-                    }
-                  }));
-                  
-                  // Also log to price history
-                  setPriceHistoryData(prev => {
-                    const existing = prev[name] || [];
-                    // Only add if price is different from last entry or it's been more than a day
-                    const lastEntry = existing[existing.length - 1];
-                    if (!lastEntry || lastEntry.price !== data.price || lastEntry.date !== today) {
-                      return {
-                        ...prev,
-                        [name]: [...existing, {
-                          date: today,
-                          price: data.price,
-                          packageQuantity: data.packageQuantity,
-                          packageUnit: data.packageUnit || '',
-                          // Keep old format for backward compatibility
-                          unitQty: data.packageQuantity,
-                          unitType: data.packageUnit || ''
-                        }]
-                      };
-                    }
-                    return prev;
-                  });
-                }
-              });
-            }, 2000); // Debounce 2 seconds after user stops typing
-
-            return () => clearTimeout(timer);
-          }, [ingredientPrices]);
-
           // Save lastKnownPrices to localStorage
           useEffect(() => {
             if (Object.keys(lastKnownPrices).length > 0) {
@@ -780,6 +732,47 @@
                 newSet.delete(ingredientName);
               } else {
                 newSet.add(ingredientName);
+                
+                // Save price when checking off item (if price data is complete)
+                const priceData = ingredientPrices[ingredientName];
+                if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
+                  const today = new Date().toISOString().split('T')[0];
+                  
+                  setLastKnownPrices(prev => ({
+                    ...prev,
+                    [ingredientName]: {
+                      price: priceData.price,
+                      packageQuantity: priceData.packageQuantity,
+                      packageUnit: priceData.packageUnit || '',
+                      // Keep old format for backward compatibility
+                      unitQty: priceData.packageQuantity,
+                      unitType: priceData.packageUnit || '',
+                      date: today
+                    }
+                  }));
+                  
+                  // Also log to price history
+                  setPriceHistoryData(prev => {
+                    const existing = prev[ingredientName] || [];
+                    // Only add if price is different from last entry or it's been more than a day
+                    const lastEntry = existing[existing.length - 1];
+                    if (!lastEntry || lastEntry.price !== priceData.price || lastEntry.date !== today) {
+                      return {
+                        ...prev,
+                        [ingredientName]: [...existing, {
+                          date: today,
+                          price: priceData.price,
+                          packageQuantity: priceData.packageQuantity,
+                          packageUnit: priceData.packageUnit || '',
+                          // Keep old format for backward compatibility
+                          unitQty: priceData.packageQuantity,
+                          unitType: priceData.packageUnit || ''
+                        }]
+                      };
+                    }
+                    return prev;
+                  });
+                }
               }
               return newSet;
             });
@@ -1735,8 +1728,8 @@
 
                             {/* Last price - compact single line */}
                             {lastPrice && (
-                              <div className={`text-xs mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                Last: NT${lastPrice.price} / {lastPrice.packageQuantity}{lastPrice.packageUnit} ({lastPrice.date})
+                              <div className={`text-xs mb-2 font-normal ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Last: NT${lastPrice.price} / {lastPrice.packageQuantity} {lastPrice.packageUnit} ({lastPrice.date})
                               </div>
                             )}
 
