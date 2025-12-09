@@ -1394,6 +1394,15 @@
             }));
           }, [remainingItems, planToBuyItems]);
 
+          // Auto-collapse all vendor sections when shopping list changes
+          useEffect(() => {
+            const newCollapsed = {};
+            groupedByLocation.forEach(({ location }) => {
+              newCollapsed[location] = true; // true = collapsed
+            });
+            setCollapsedSections(newCollapsed);
+          }, [groupedByLocation.map(g => g.location).join(',')]);
+
           const toggleSection = (location) => {
             setCollapsedSections(prev => ({
               ...prev,
