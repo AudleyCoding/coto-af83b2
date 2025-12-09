@@ -877,9 +877,17 @@
                 // Save to price history
                 setPriceHistoryData(prev => {
                   const existing = prev[ingredientName] || [];
-                  // Only add if price is different from last entry or it's been more than a day
                   const lastEntry = existing[existing.length - 1];
-                  if (!lastEntry || lastEntry.price !== priceData.price || lastEntry.date !== today) {
+                  
+                  // Check if we should save this entry
+                  // Save if: no existing entries, OR different date, OR different price/quantity/unit
+                  const shouldSave = !lastEntry || 
+                                    lastEntry.date !== today ||
+                                    parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
+                                    parseFloat(lastEntry.packageQuantity || lastEntry.unitQty) !== parseFloat(priceData.packageQuantity) ||
+                                    (lastEntry.packageUnit || lastEntry.unitType) !== priceData.packageUnit;
+                  
+                  if (shouldSave) {
                     savedCount++;
                     return {
                       ...prev,
