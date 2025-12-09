@@ -610,15 +610,48 @@
             }
           }, [recipes]); // Only depend on recipes, not vendors, to avoid infinite loop
 
-          // Auto-suggest vendor when Quick Log opens
+          // Auto-suggest vendor and calculate total when Quick Log opens
           useEffect(() => {
             if (showQuickLog) {
               const suggested = suggestVendor();
               setSelectedVendor(suggested);
               setTripDate(new Date().toISOString().split('T')[0]);
-              setTripTotal('');
+              
+              // Calculate total from item prices
+              const purchasedList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
+              const newItemsToLog = purchasedList.filter(ing => !loggedItems.has(ing.name));
+              
+              const itemsWithPrices = newItemsToLog.filter(item => {
+                const priceData = ingredientPrices[item.name];
+                return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+              });
+              
+              if (itemsWithPrices.length > 0) {
+                const convertToBaseUnit = (qty, unit) => {
+                  const lowerUnit = unit.toLowerCase();
+                  if (lowerUnit === 'kg') return qty * 1000;
+                  if (lowerUnit === '斤') return qty * 600;
+                  if (lowerUnit === 'lb') return qty * 453.592;
+                  if (lowerUnit === 'oz') return qty * 28.3495;
+                  if (lowerUnit === 'l') return qty * 1000;
+                  return qty;
+                };
+                
+                let calculatedTotal = 0;
+                itemsWithPrices.forEach(item => {
+                  const priceData = ingredientPrices[item.name];
+                  const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
+                  const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
+                  const packagesNeeded = recipeQtyBase / packageQtyBase;
+                  calculatedTotal += packagesNeeded * priceData.price;
+                });
+                
+                setTripTotal(Math.round(calculatedTotal).toString());
+              } else {
+                setTripTotal('');
+              }
             }
-          }, [showQuickLog]);
+          }, [showQuickLog, aggregatedIngredients, purchasedItems, loggedItems, ingredientPrices]);
 
           // Save price history to localStorage whenever it changes
           useEffect(() => {
@@ -2237,18 +2270,136 @@
                       </div>
                     )}
 
+                    {/* Calculate total from entered prices */}
+                    {(() => {
+                      const itemsWithPrices = newItemsToLog.filter(item => {
+                        const priceData = ingredientPrices[item.name];
+                        return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                      });
+                      
+                      const itemsWithoutPrices = newItemsToLog.filter(item => {
+                        const priceData = ingredientPrices[item.name];
+                        return !(priceData?.price > 0 && priceData?.packageQuantity > 0);
+                      });
+
+                      const convertToBaseUnit = (qty, unit) => {
+                        const lowerUnit = unit.toLowerCase();
+                        if (lowerUnit === 'kg') return qty * 1000;
+                        if (lowerUnit === '斤') return qty * 600;
+                        if (lowerUnit === 'lb') return qty * 453.592;
+                        if (lowerUnit === 'oz') return qty * 28.3495;
+                        if (lowerUnit === 'l') return qty * 1000;
+                        return qty;
+                      };
+
+                      let calculatedTotal = 0;
+                      itemsWithPrices.forEach(item => {
+                        const priceData = ingredientPrices[item.name];
+                        const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
+                        const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
+                        const packagesNeeded = recipeQtyBase / packageQtyBase;
+                        calculatedTotal += packagesNeeded * priceData.price;
+                      });
+
+                      const hasCalculatedTotal = itemsWithPrices.length > 0;
+                      const hasMissingPrices = itemsWithoutPrices.length > 0;
+
+                      return (
+                        <>
+                          {/* Calculated Total Display */}
+                          {hasCalculatedTotal && (
+                            <div className={`p-3 rounded-lg border ${darkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+                              <div className={`text-sm font-medium ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                                💰 Calculated from {itemsWithPrices.length} item{itemsWithPrices.length !== 1 ? 's' : ''} with prices:
+                              </div>
+                              <div className={`text-2xl font-bold mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                NT$ {Math.round(calculatedTotal)}
+                              </div>
+                              {hasMissingPrices && (
+                                <div className={`text-xs mt-1 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                  (+ {itemsWithoutPrices.length} item{itemsWithoutPrices.length !== 1 ? 's' : ''} without prices)
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Missing Prices Warning */}
+                          {hasMissingPrices && (
+                            <div className={`p-3 rounded-lg border ${darkMode ? 'bg-yellow-900/20 border-yellow-700' : 'bg-yellow-50 border-yellow-300'}`}>
+                              <div className={`text-sm font-medium ${darkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>
+                                ⚠ Missing prices for {itemsWithoutPrices.length} item{itemsWithoutPrices.length !== 1 ? 's' : ''}:
+                              </div>
+                              <div className="max-h-20 overflow-y-auto mt-1">
+                                <ul className={`text-xs space-y-0.5 ${darkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                                  {itemsWithoutPrices.map(item => (
+                                    <li key={item.name}>• {item.name}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div className={`text-xs mt-2 ${darkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                                💡 Add prices later in "Update Prices" to track costs
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+
                     <div>
                       <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Total Spent (TWD)
+                        {(() => {
+                          const itemsWithPrices = newItemsToLog.filter(item => {
+                            const priceData = ingredientPrices[item.name];
+                            return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                          });
+                          return itemsWithPrices.length > 0 ? 'Actual Total (or edit calculated)' : 'Total Spent (TWD)';
+                        })()}
                       </label>
                       <input
                         type="number"
                         value={tripTotal}
                         onChange={(e) => setTripTotal(e.target.value)}
-                        placeholder="297"
+                        placeholder={(() => {
+                          const itemsWithPrices = newItemsToLog.filter(item => {
+                            const priceData = ingredientPrices[item.name];
+                            return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                          });
+                          if (itemsWithPrices.length === 0) return '297';
+                          
+                          const convertToBaseUnit = (qty, unit) => {
+                            const lowerUnit = unit.toLowerCase();
+                            if (lowerUnit === 'kg') return qty * 1000;
+                            if (lowerUnit === '斤') return qty * 600;
+                            if (lowerUnit === 'lb') return qty * 453.592;
+                            if (lowerUnit === 'oz') return qty * 28.3495;
+                            if (lowerUnit === 'l') return qty * 1000;
+                            return qty;
+                          };
+                          
+                          let calculatedTotal = 0;
+                          itemsWithPrices.forEach(item => {
+                            const priceData = ingredientPrices[item.name];
+                            const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
+                            const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
+                            const packagesNeeded = recipeQtyBase / packageQtyBase;
+                            calculatedTotal += packagesNeeded * priceData.price;
+                          });
+                          
+                          return Math.round(calculatedTotal).toString();
+                        })()}
                         className={`w-full px-4 py-3 text-lg border rounded-lg focus:ring-2 focus:ring-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                        autoFocus
                       />
+                      <div className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        {(() => {
+                          const itemsWithPrices = newItemsToLog.filter(item => {
+                            const priceData = ingredientPrices[item.name];
+                            return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                          });
+                          return itemsWithPrices.length > 0 
+                            ? 'Auto-filled from item prices. Edit if your receipt total differs.'
+                            : 'Enter the total from your receipt';
+                        })()}
+                      </div>
                     </div>
 
                     <div>
