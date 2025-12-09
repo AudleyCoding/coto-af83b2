@@ -3217,7 +3217,7 @@
                                               className={`w-16 px-1.5 py-1.5 text-sm border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
                                               style={{ fontSize: '16px' }}
                                             />
-                                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>(package)</span>
+                                            <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>(units)</span>
                                             
                                             {/* Calculated Total - only if complete data */}
                                             {(() => {
@@ -3286,7 +3286,7 @@
                                                 // Partial data - show warning
                                                 return (
                                                   <span className={`text-xs ml-1 ${darkMode ? 'text-yellow-500' : 'text-yellow-600'}`}>
-                                                    ⚠ {!hasPrice ? 'Need price' : !hasPackageQty ? 'Need package size' : 'Incomplete'}
+                                                    ⚠ {!hasPrice ? 'Need price' : !hasPackageQty ? 'Need unit size' : 'Incomplete'}
                                                   </span>
                                                 );
                                               }
