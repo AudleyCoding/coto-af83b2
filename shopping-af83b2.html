@@ -1493,7 +1493,7 @@
             setPlanToBuyItems(new Set());
           };
 
-          const hasSelections = Object.keys(selectedRecipes).length > 0;
+          const hasSelections = Object.keys(selectedRecipes).length > 0 || quickAddItems.length > 0;
 
           // Unit conversion helper function
           const convertToBaseUnit = (qty, unit) => {
@@ -2061,8 +2061,8 @@
                   currentPrice,
                   lastUpdated: sortedHistory[0]?.date || '',
                   priceChange,
-                  unitQty: sortedHistory[0]?.unitQty || 1,
-                  unitType: sortedHistory[0]?.unitType || ''
+                  unitQty: sortedHistory[0]?.packageQuantity || sortedHistory[0]?.unitQty || 1,
+                  unitType: sortedHistory[0]?.packageUnit || sortedHistory[0]?.unitType || ''
                 };
               });
             
