@@ -858,6 +858,11 @@
             const today = new Date().toISOString().split('T')[0];
             const updates = [];
             
+            console.log('=== SAVE PRICES DEBUG ===');
+            console.log('Today:', today);
+            console.log('ingredientPrices:', ingredientPrices);
+            console.log('priceHistoryData:', priceHistoryData);
+            
             // Collect all valid price entries
             Object.entries(ingredientPrices).forEach(([ingredientName, priceData]) => {
               if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
