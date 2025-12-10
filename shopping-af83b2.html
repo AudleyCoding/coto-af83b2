@@ -2646,11 +2646,22 @@
 
                       // Quick Log always uses flat package prices (what you paid at the store)
                       let calculatedTotal = 0;
+                      console.log('=== QUICK LOG CALCULATION START ===');
+                      console.log('Items with prices:', itemsWithPrices.length);
                       itemsWithPrices.forEach(item => {
                         const priceData = ingredientPrices[item.name];
-                        calculatedTotal += parseFloat(priceData.price);
-                        console.log(`Quick Log: ${item.name} = $${priceData.price} (total: $${calculatedTotal})`);
+                        const itemPrice = parseFloat(priceData.price);
+                        console.log(`${item.name}:`, {
+                          price: priceData.price,
+                          parsedPrice: itemPrice,
+                          hasQuantity: item.hasQuantity,
+                          total: item.total,
+                          unit: item.unit
+                        });
+                        calculatedTotal += itemPrice;
+                        console.log(`  Running total: $${calculatedTotal}`);
                       });
+                      console.log('=== FINAL TOTAL: $' + calculatedTotal + ' ===');
 
                       const hasCalculatedTotal = itemsWithPrices.length > 0;
                       const hasMissingPrices = itemsWithoutPrices.length > 0;
