@@ -447,29 +447,6 @@
             localStorage.setItem('darkMode', darkMode.toString());
           }, [darkMode]);
 
-          // Auto-populate tripTotal with calculated total when Quick Log opens
-          useEffect(() => {
-            if (showQuickLog && newItemsToLog.length > 0) {
-              const itemsWithPrices = newItemsToLog.filter(item => {
-                const priceData = ingredientPrices[item.name];
-                if (item.hasQuantity) {
-                  return priceData?.price > 0 && priceData?.packageQuantity > 0;
-                } else {
-                  return priceData?.price > 0;
-                }
-              });
-              
-              if (itemsWithPrices.length > 0) {
-                let calculatedTotal = 0;
-                itemsWithPrices.forEach(item => {
-                  const priceData = ingredientPrices[item.name];
-                  calculatedTotal += parseFloat(priceData.price);
-                });
-                setTripTotal(Math.round(calculatedTotal).toString());
-              }
-            }
-          }, [showQuickLog, newItemsToLog, ingredientPrices]);
-
           // Load recipes from memory on mount
           useEffect(() => {
             const stored = localStorage.getItem('restaurantRecipes');
@@ -656,27 +633,20 @@
               
               const itemsWithPrices = newItemsToLog.filter(item => {
                 const priceData = ingredientPrices[item.name];
-                return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                // Accept items with price - for recipe items also need packageQuantity
+                if (item.hasQuantity) {
+                  return priceData?.price > 0 && priceData?.packageQuantity > 0;
+                } else {
+                  return priceData?.price > 0;
+                }
               });
               
               if (itemsWithPrices.length > 0) {
-                const convertToBaseUnit = (qty, unit) => {
-                  const lowerUnit = unit.toLowerCase();
-                  if (lowerUnit === 'kg') return qty * 1000;
-                  if (lowerUnit === '斤') return qty * 600;
-                  if (lowerUnit === 'lb') return qty * 453.592;
-                  if (lowerUnit === 'oz') return qty * 28.3495;
-                  if (lowerUnit === 'l') return qty * 1000;
-                  return qty;
-                };
-                
+                // Quick Log uses flat package prices (what you paid at store)
                 let calculatedTotal = 0;
                 itemsWithPrices.forEach(item => {
                   const priceData = ingredientPrices[item.name];
-                  const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
-                  const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
-                  const packagesNeeded = recipeQtyBase / packageQtyBase;
-                  calculatedTotal += packagesNeeded * priceData.price;
+                  calculatedTotal += parseFloat(priceData.price);
                 });
                 
                 setTripTotal(Math.round(calculatedTotal).toString());
