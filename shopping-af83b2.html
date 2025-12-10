@@ -447,6 +447,29 @@
             localStorage.setItem('darkMode', darkMode.toString());
           }, [darkMode]);
 
+          // Auto-populate tripTotal with calculated total when Quick Log opens
+          useEffect(() => {
+            if (showQuickLog && newItemsToLog.length > 0) {
+              const itemsWithPrices = newItemsToLog.filter(item => {
+                const priceData = ingredientPrices[item.name];
+                if (item.hasQuantity) {
+                  return priceData?.price > 0 && priceData?.packageQuantity > 0;
+                } else {
+                  return priceData?.price > 0;
+                }
+              });
+              
+              if (itemsWithPrices.length > 0) {
+                let calculatedTotal = 0;
+                itemsWithPrices.forEach(item => {
+                  const priceData = ingredientPrices[item.name];
+                  calculatedTotal += parseFloat(priceData.price);
+                });
+                setTripTotal(Math.round(calculatedTotal).toString());
+              }
+            }
+          }, [showQuickLog, newItemsToLog, ingredientPrices]);
+
           // Load recipes from memory on mount
           useEffect(() => {
             const stored = localStorage.getItem('restaurantRecipes');
@@ -3762,7 +3785,11 @@
                                               const hasPrice = priceData?.price != null && priceData.price > 0;
                                               const hasPackageQty = priceData?.packageQuantity != null && priceData.packageQuantity > 0;
                                               const hasPackageUnit = priceData?.packageUnit;
-                                              const isComplete = hasPrice && hasPackageQty && hasPackageUnit && ingredient.hasQuantity;
+                                              // Quick Add items (hasQuantity=false) only need price
+                                              // Recipe items need price, packageQty, packageUnit, and hasQuantity
+                                              const isComplete = ingredient.hasQuantity 
+                                                ? (hasPrice && hasPackageQty && hasPackageUnit)
+                                                : hasPrice;
                                               
                                               if (isComplete) {
                                                 // Convert units if necessary
