@@ -2629,10 +2629,10 @@
                           const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
                           const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
                           const packagesNeeded = recipeQtyBase / packageQtyBase;
-                          calculatedTotal += packagesNeeded * priceData.price;
+                          calculatedTotal += packagesNeeded * parseFloat(priceData.price);
                         } else {
                           // For Quick Add items without quantities, just add the price
-                          calculatedTotal += priceData.price;
+                          calculatedTotal += parseFloat(priceData.price);
                         }
                       });
 
@@ -3866,20 +3866,9 @@
                         
                         {/* Unit dropdown datalist */}
                         <datalist id="package-units">
-                          <option value="g">g (grams)</option>
-                          <option value="kg">kg (kilograms)</option>
-                          <option value="斤">斤 (jin ~600g)</option>
-                          <option value="lb">lb (pounds)</option>
-                          <option value="oz">oz (ounces)</option>
-                          <option value="ml">ml (milliliters)</option>
-                          <option value="L">L (liters)</option>
-                          <option value="pcs">pcs (pieces)</option>
-                          <option value="pack">pack</option>
-                          <option value="bag">bag</option>
-                          <option value="bottle">bottle</option>
-                          <option value="can">can</option>
-                          <option value="jar">jar</option>
-                          <option value="box">box</option>
+                          {packageUnits.map(unit => (
+                            <option key={unit} value={unit} />
+                          ))}
                         </datalist>
 
                         {/* Purchased Items */}
