@@ -514,43 +514,8 @@
             }
           }, []);
 
-          // Migrate lastKnownPrices to priceHistoryData (one-time migration for existing users)
-          useEffect(() => {
-            // Only run if we have lastKnownPrices but missing entries in priceHistoryData
-            if (Object.keys(lastKnownPrices).length > 0) {
-              let needsMigration = false;
-              const updatedHistory = { ...priceHistoryData };
-              
-              Object.entries(lastKnownPrices).forEach(([ingredientName, priceData]) => {
-                // If this ingredient has no history, or last history entry is older than lastKnownPrice
-                const existingHistory = updatedHistory[ingredientName] || [];
-                const lastHistoryEntry = existingHistory[existingHistory.length - 1];
-                
-                // Check if we need to add this price to history
-                const shouldAdd = !lastHistoryEntry || 
-                                  lastHistoryEntry.date !== priceData.date ||
-                                  lastHistoryEntry.price !== priceData.price;
-                
-                if (shouldAdd && priceData.price && priceData.date) {
-                  needsMigration = true;
-                  updatedHistory[ingredientName] = [...existingHistory, {
-                    date: priceData.date,
-                    price: priceData.price,
-                    packageQuantity: priceData.packageQuantity || priceData.unitQty || 1,
-                    packageUnit: priceData.packageUnit || priceData.unitType || '',
-                    // Keep old format for backward compatibility
-                    unitQty: priceData.unitQty || priceData.packageQuantity || 1,
-                    unitType: priceData.unitType || priceData.packageUnit || ''
-                  }];
-                }
-              });
-              
-              if (needsMigration) {
-                setPriceHistoryData(updatedHistory);
-                console.log('Migrated lastKnownPrices to priceHistoryData');
-              }
-            }
-          }, [lastKnownPrices]); // Run when lastKnownPrices loads
+          // Migration code removed - all data has been migrated to new format
+          // Reading code still supports old format (unitQty/unitType) for backward compatibility with imports // Run when lastKnownPrices loads
 
           // Load quick add items from localStorage
           useEffect(() => {
@@ -788,9 +753,6 @@
                       price: priceData.price,
                       packageQuantity: priceData.packageQuantity,
                       packageUnit: priceData.packageUnit || '',
-                      // Keep old format for backward compatibility
-                      unitQty: priceData.packageQuantity,
-                      unitType: priceData.packageUnit || '',
                       date: today
                     }
                   }));
@@ -807,10 +769,7 @@
                           date: today,
                           price: priceData.price,
                           packageQuantity: priceData.packageQuantity,
-                          packageUnit: priceData.packageUnit || '',
-                          // Keep old format for backward compatibility
-                          unitQty: priceData.packageQuantity,
-                          unitType: priceData.packageUnit || ''
+                          packageUnit: priceData.packageUnit || ''
                         }]
                       };
                     }
@@ -890,8 +849,6 @@
                   price: priceData.price,
                   packageQuantity: priceData.packageQuantity,
                   packageUnit: priceData.packageUnit || '',
-                  unitQty: priceData.packageQuantity,
-                  unitType: priceData.packageUnit || '',
                   date: today
                 }
               }));
@@ -905,9 +862,7 @@
                   date: today,
                   price: priceData.price,
                   packageQuantity: priceData.packageQuantity,
-                  packageUnit: priceData.packageUnit || '',
-                  unitQty: priceData.packageQuantity,
-                  unitType: priceData.packageUnit || ''
+                  packageUnit: priceData.packageUnit || ''
                 }]
               }));
             });
