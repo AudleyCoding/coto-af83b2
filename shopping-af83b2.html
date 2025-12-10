@@ -2621,33 +2621,12 @@
                         return qty;
                       };
 
+                      // Quick Log always uses flat package prices (what you paid at the store)
                       let calculatedTotal = 0;
                       itemsWithPrices.forEach(item => {
                         const priceData = ingredientPrices[item.name];
-                        console.log(`Quick Log calc - ${item.name}:`, {
-                          hasQuantity: item.hasQuantity,
-                          total: item.total,
-                          unit: item.unit,
-                          price: priceData.price,
-                          packageQuantity: priceData.packageQuantity,
-                          packageUnit: priceData.packageUnit,
-                          isQuickAdd: item.isQuickAdd
-                        });
-                        
-                        if (item.hasQuantity && priceData.packageQuantity > 0) {
-                          // Calculate based on recipe quantity vs package quantity
-                          const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
-                          const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
-                          const packagesNeeded = recipeQtyBase / packageQtyBase;
-                          const itemCost = packagesNeeded * parseFloat(priceData.price);
-                          console.log(`  -> Recipe calculation: ${item.total}${item.unit} / ${priceData.packageQuantity}${priceData.packageUnit} = ${packagesNeeded} packages × $${priceData.price} = $${itemCost}`);
-                          calculatedTotal += itemCost;
-                        } else {
-                          // For Quick Add items without quantities, just add the price
-                          console.log(`  -> Flat price: $${priceData.price}`);
-                          calculatedTotal += parseFloat(priceData.price);
-                        }
-                        console.log(`  -> Running total: $${calculatedTotal}`);
+                        calculatedTotal += parseFloat(priceData.price);
+                        console.log(`Quick Log: ${item.name} = $${priceData.price} (total: $${calculatedTotal})`);
                       });
 
                       const hasCalculatedTotal = itemsWithPrices.length > 0;
