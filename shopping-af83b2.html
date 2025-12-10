@@ -2707,10 +2707,7 @@
                           let calculatedTotal = 0;
                           itemsWithPrices.forEach(item => {
                             const priceData = ingredientPrices[item.name];
-                            const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
-                            const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
-                            const packagesNeeded = recipeQtyBase / packageQtyBase;
-                            calculatedTotal += packagesNeeded * priceData.price;
+                            calculatedTotal += parseFloat(priceData.price);
                           });
                           
                           return Math.round(calculatedTotal).toString();
