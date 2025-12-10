@@ -513,9 +513,7 @@
               }
             }
           }, []);
-
-          // Migration code removed - all data has been migrated to new format
-          // Reading code still supports old format (unitQty/unitType) for backward compatibility with imports // Run when lastKnownPrices loads
+ // Run when lastKnownPrices loads
 
           // Load quick add items from localStorage
           useEffect(() => {
@@ -827,8 +825,8 @@
                 const isNew = !lastEntry || 
                              lastEntry.date !== today ||
                              parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
-                             parseFloat(lastEntry.packageQuantity || lastEntry.unitQty || 0) !== parseFloat(priceData.packageQuantity) ||
-                             (lastEntry.packageUnit || lastEntry.unitType || '') !== (priceData.packageUnit || '');
+                             parseFloat(lastEntry.packageQuantity || 0) !== parseFloat(priceData.packageQuantity) ||
+                             (lastEntry.packageUnit || '') !== (priceData.packageUnit || '');
                 
                 updates.push({ ingredientName, priceData, isNew });
               }
@@ -1386,8 +1384,8 @@
               if (lastKnownPrices[name]) {
                 newPrices[name] = {
                   price: lastKnownPrices[name].price,
-                  unitQty: lastKnownPrices[name].unitQty,
-                  unitType: lastKnownPrices[name].unitType
+                  packageQuantity: lastKnownPrices[name].packageQuantity,
+                  packageUnit: lastKnownPrices[name].packageUnit
                 };
               }
             });
@@ -1603,9 +1601,8 @@
             aggregatedIngredients.forEach(ing => {
               const lastPrice = lastKnownPrices[ing.name];
               if (lastPrice?.price && ing.hasQuantity) {
-                // Handle both old format (unitQty/unitType) and new format (packageQuantity/packageUnit)
-                const packageQty = lastPrice.packageQuantity || lastPrice.unitQty || 1;
-                const packageUnit = lastPrice.packageUnit || lastPrice.unitType || ing.unit;
+                const packageQty = lastPrice.packageQuantity || 1;
+                const packageUnit = lastPrice.packageUnit || ing.unit;
                 
                 const recipeQtyBase = convertToBaseUnit(ing.total, ing.unit);
                 const packageQtyBase = convertToBaseUnit(packageQty, packageUnit);
@@ -2049,7 +2046,7 @@
                         </p>
                         {ingredientHistory[ingredientHistory.length - 1] && (
                           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            per {ingredientHistory[ingredientHistory.length - 1].packageQuantity || ingredientHistory[ingredientHistory.length - 1].unitQty} {ingredientHistory[ingredientHistory.length - 1].packageUnit || ingredientHistory[ingredientHistory.length - 1].unitType}
+                            per {ingredientHistory[ingredientHistory.length - 1].packageQuantity} {ingredientHistory[ingredientHistory.length - 1].packageUnit}
                           </p>
                         )}
                       </div>
@@ -2112,7 +2109,7 @@
                                     NT${entry.price.toFixed(2)}
                                   </td>
                                   <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {entry.packageQuantity || entry.unitQty} {entry.packageUnit || entry.unitType}
+                                    {entry.packageQuantity} {entry.packageUnit}
                                   </td>
                                 </tr>
                               ))}
@@ -2141,8 +2138,8 @@
                   currentPrice,
                   lastUpdated: sortedHistory[0]?.date || '',
                   priceChange,
-                  unitQty: sortedHistory[0]?.packageQuantity || sortedHistory[0]?.unitQty || 1,
-                  unitType: sortedHistory[0]?.packageUnit || sortedHistory[0]?.unitType || ''
+                  packageQuantity: sortedHistory[0]?.packageQuantity || 1,
+                  packageUnit: sortedHistory[0]?.packageUnit || ''
                 };
               });
             
@@ -2206,7 +2203,7 @@
                                     NT${ingredient.currentPrice.toFixed(2)}
                                   </p>
                                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    per {ingredient.unitQty} {ingredient.unitType}
+                                    per {ingredient.packageQuantity} {ingredient.packageUnit}
                                   </p>
                                   <div className={`text-sm font-medium mt-1 ${
                                     ingredient.priceChange > 10 
@@ -3019,8 +3016,8 @@
                           Object.entries(lastKnownPrices).forEach(([name, data]) => {
                             initialPrices[name] = {
                               price: data.price,
-                              packageQuantity: data.packageQuantity || data.unitQty,
-                              packageUnit: data.packageUnit || data.unitType
+                              packageQuantity: data.packageQuantity,
+                              packageUnit: data.packageUnit
                             };
                           });
                           setIngredientPrices(initialPrices);
@@ -3627,8 +3624,8 @@
                                                       const currentPricePerUnit = priceData.price / packageQtyBase;
                                                       const lastPriceData = lastKnownPrices[ingredient.name];
                                                       const lastPackageQtyBase = convertToBaseUnit(
-                                                        lastPriceData.packageQuantity || lastPriceData.unitQty || 1,
-                                                        lastPriceData.packageUnit || lastPriceData.unitType || ingredient.unit
+                                                        lastPriceData.packageQuantity || 1,
+                                                        lastPriceData.packageUnit || ingredient.unit
                                                       );
                                                       const lastPricePerUnit = lastPriceData.price / lastPackageQtyBase;
                                                       const priceDiff = currentPricePerUnit - lastPricePerUnit;
