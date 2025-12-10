@@ -2422,12 +2422,22 @@
                     {(() => {
                       const itemsWithPrices = newItemsToLog.filter(item => {
                         const priceData = ingredientPrices[item.name];
-                        return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                        // Accept price if it exists, regardless of packageQuantity for Quick Add items
+                        if (item.hasQuantity) {
+                          return priceData?.price > 0 && priceData?.packageQuantity > 0;
+                        } else {
+                          // For Quick Add items without quantities, just check if price exists
+                          return priceData?.price > 0;
+                        }
                       });
                       
                       const itemsWithoutPrices = newItemsToLog.filter(item => {
                         const priceData = ingredientPrices[item.name];
-                        return !(priceData?.price > 0 && priceData?.packageQuantity > 0);
+                        if (item.hasQuantity) {
+                          return !(priceData?.price > 0 && priceData?.packageQuantity > 0);
+                        } else {
+                          return !(priceData?.price > 0);
+                        }
                       });
 
                       const convertToBaseUnit = (qty, unit) => {
@@ -2443,10 +2453,16 @@
                       let calculatedTotal = 0;
                       itemsWithPrices.forEach(item => {
                         const priceData = ingredientPrices[item.name];
-                        const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
-                        const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
-                        const packagesNeeded = recipeQtyBase / packageQtyBase;
-                        calculatedTotal += packagesNeeded * priceData.price;
+                        if (item.hasQuantity && priceData.packageQuantity > 0) {
+                          // Calculate based on recipe quantity vs package quantity
+                          const recipeQtyBase = convertToBaseUnit(item.total, item.unit);
+                          const packageQtyBase = convertToBaseUnit(priceData.packageQuantity, priceData.packageUnit || item.unit);
+                          const packagesNeeded = recipeQtyBase / packageQtyBase;
+                          calculatedTotal += packagesNeeded * priceData.price;
+                        } else {
+                          // For Quick Add items without quantities, just add the price
+                          calculatedTotal += priceData.price;
+                        }
                       });
 
                       const hasCalculatedTotal = itemsWithPrices.length > 0;
@@ -2498,7 +2514,7 @@
                         {(() => {
                           const itemsWithPrices = newItemsToLog.filter(item => {
                             const priceData = ingredientPrices[item.name];
-                            return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                            return priceData?.price > 0;
                           });
                           return itemsWithPrices.length > 0 ? 'Actual Total (or edit calculated)' : 'Total Spent (TWD)';
                         })()}
@@ -2510,7 +2526,7 @@
                         placeholder={(() => {
                           const itemsWithPrices = newItemsToLog.filter(item => {
                             const priceData = ingredientPrices[item.name];
-                            return priceData?.price > 0 && priceData?.packageQuantity > 0 && item.hasQuantity;
+                            return priceData?.price > 0;
                           });
                           if (itemsWithPrices.length === 0) return '297';
                           
