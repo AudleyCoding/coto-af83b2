@@ -3077,7 +3077,19 @@
                         <span className="md:hidden">History</span>
                       </button>
                       <button
-                        onClick={() => setShowPriceManagement(true)}
+                        onClick={() => {
+                          // Initialize ingredientPrices with lastKnownPrices when opening Update Prices
+                          const initialPrices = {};
+                          Object.entries(lastKnownPrices).forEach(([name, data]) => {
+                            initialPrices[name] = {
+                              price: data.price,
+                              packageQuantity: data.packageQuantity || data.unitQty,
+                              packageUnit: data.packageUnit || data.unitType
+                            };
+                          });
+                          setIngredientPrices(initialPrices);
+                          setShowPriceManagement(true);
+                        }}
                         className={`flex items-center gap-1 px-2 py-2 md:px-4 rounded-lg font-medium text-sm md:text-base flex-shrink-0 ${darkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
                         title="💲 Update Prices: Enter/edit prices for ingredients. Opens a form to record what you paid at the store."
                       >
