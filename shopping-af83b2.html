@@ -408,6 +408,9 @@
           const [showPriceHistory, setShowPriceHistory] = useState(false);
           const [selectedIngredient, setSelectedIngredient] = useState(null);
           const [priceHistoryData, setPriceHistoryData] = useState({});
+          const [priceHistorySearchQuery, setPriceHistorySearchQuery] = useState('');
+          const [priceHistorySortBy, setPriceHistorySortBy] = useState('newest'); // 'newest' or 'alphabetical'
+          const [editingPriceEntry, setEditingPriceEntry] = useState(null); // {ingredientName, entryIndex, date, price, packageQuantity, packageUnit}
           const [quickAddItems, setQuickAddItems] = useState([]);
           const [quickAddInput, setQuickAddInput] = useState('');
           const [showPriceManagement, setShowPriceManagement] = useState(false);
@@ -910,6 +913,45 @@
             });
             
             return newTrip;
+          };
+
+          // Delete a price history entry
+          const deletePriceHistoryEntry = (ingredientName, entryIndex) => {
+            if (!confirm(`Delete this price entry for ${ingredientName}?`)) {
+              return;
+            }
+            
+            setPriceHistoryData(prev => {
+              const history = prev[ingredientName] || [];
+              const updated = history.filter((_, index) => index !== entryIndex);
+              
+              if (updated.length === 0) {
+                // Remove ingredient entirely if no history left
+                const { [ingredientName]: removed, ...rest } = prev;
+                return rest;
+              }
+              
+              return {
+                ...prev,
+                [ingredientName]: updated
+              };
+            });
+          };
+
+          // Update a price history entry
+          const updatePriceHistoryEntry = (ingredientName, entryIndex, updatedEntry) => {
+            setPriceHistoryData(prev => {
+              const history = prev[ingredientName] || [];
+              const updated = [...history];
+              updated[entryIndex] = updatedEntry;
+              
+              return {
+                ...prev,
+                [ingredientName]: updated
+              };
+            });
+            
+            setEditingPriceEntry(null);
           };
 
           // Export trips to CSV
@@ -2097,22 +2139,115 @@
                                 <th className={`px-4 py-2 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
                                 <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</th>
                                 <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</th>
+                                <th className={`px-4 py-2 text-center text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                              {sortedHistory.slice(0, 15).map((entry, index) => (
-                                <tr key={index} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
-                                  <td className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                                    {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                  </td>
-                                  <td className={`px-4 py-2 text-sm text-right font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                    NT${entry.price.toFixed(2)}
-                                  </td>
-                                  <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {entry.packageQuantity} {entry.packageUnit}
-                                  </td>
-                                </tr>
-                              ))}
+                              {sortedHistory.map((entry, displayIndex) => {
+                                // Find the actual index in the unsorted array
+                                const actualIndex = ingredientHistory.findIndex(e => 
+                                  e.date === entry.date && e.price === entry.price && e.packageQuantity === entry.packageQuantity
+                                );
+                                
+                                const isEditing = editingPriceEntry?.ingredientName === selectedIngredient && editingPriceEntry?.entryIndex === actualIndex;
+                                
+                                return (
+                                  <tr key={actualIndex} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
+                                    {isEditing ? (
+                                      <>
+                                        <td className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                          <input
+                                            type="date"
+                                            value={editingPriceEntry.date}
+                                            onChange={(e) => setEditingPriceEntry({...editingPriceEntry, date: e.target.value})}
+                                            className={`w-full px-2 py-1 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                          />
+                                        </td>
+                                        <td className={`px-4 py-2 text-sm`}>
+                                          <input
+                                            type="number"
+                                            value={editingPriceEntry.price}
+                                            onChange={(e) => setEditingPriceEntry({...editingPriceEntry, price: parseFloat(e.target.value) || 0})}
+                                            className={`w-full px-2 py-1 border rounded text-right ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            step="0.01"
+                                          />
+                                        </td>
+                                        <td className={`px-4 py-2 text-sm`}>
+                                          <div className="flex gap-1">
+                                            <input
+                                              type="number"
+                                              value={editingPriceEntry.packageQuantity}
+                                              onChange={(e) => setEditingPriceEntry({...editingPriceEntry, packageQuantity: parseFloat(e.target.value) || 0})}
+                                              className={`w-16 px-2 py-1 border rounded text-right ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            />
+                                            <input
+                                              type="text"
+                                              value={editingPriceEntry.packageUnit}
+                                              onChange={(e) => setEditingPriceEntry({...editingPriceEntry, packageUnit: e.target.value})}
+                                              className={`w-16 px-2 py-1 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                                            />
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <div className="flex gap-1 justify-center">
+                                            <button
+                                              onClick={() => updatePriceHistoryEntry(selectedIngredient, actualIndex, editingPriceEntry)}
+                                              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                                              title="Save"
+                                            >
+                                              Save
+                                            </button>
+                                            <button
+                                              onClick={() => setEditingPriceEntry(null)}
+                                              className={`px-2 py-1 text-xs rounded ${darkMode ? 'bg-gray-600 hover:bg-gray-500 text-white' : 'bg-gray-300 hover:bg-gray-400'}`}
+                                              title="Cancel"
+                                            >
+                                              Cancel
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <td className={`px-4 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                                          {new Date(entry.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </td>
+                                        <td className={`px-4 py-2 text-sm text-right font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                          NT${entry.price.toFixed(2)}
+                                        </td>
+                                        <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                          {entry.packageQuantity} {entry.packageUnit}
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <div className="flex gap-1 justify-center">
+                                            <button
+                                              onClick={() => setEditingPriceEntry({
+                                                ingredientName: selectedIngredient,
+                                                entryIndex: actualIndex,
+                                                date: entry.date,
+                                                price: entry.price,
+                                                packageQuantity: entry.packageQuantity,
+                                                packageUnit: entry.packageUnit
+                                              })}
+                                              className={`px-2 py-1 text-xs rounded ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                                              title="Edit"
+                                            >
+                                              Edit
+                                            </button>
+                                            <button
+                                              onClick={() => deletePriceHistoryEntry(selectedIngredient, actualIndex)}
+                                              className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                                              title="Delete"
+                                            >
+                                              Delete
+                                            </button>
+                                          </div>
+                                        </td>
+                                      </>
+                                    )}
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -2124,7 +2259,7 @@
             }
             
             // Price History List View
-            const ingredientsWithHistory = Object.entries(priceHistoryData)
+            let ingredientsWithHistory = Object.entries(priceHistoryData)
               .filter(([name, history]) => history.length > 0)
               .map(([name, history]) => {
                 const sortedHistory = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -2142,6 +2277,21 @@
                   packageUnit: sortedHistory[0]?.packageUnit || ''
                 };
               });
+            
+            // Apply search filter
+            if (priceHistorySearchQuery.trim()) {
+              ingredientsWithHistory = ingredientsWithHistory.filter(item =>
+                item.name.toLowerCase().includes(priceHistorySearchQuery.toLowerCase())
+              );
+            }
+            
+            // Apply sorting
+            if (priceHistorySortBy === 'alphabetical') {
+              ingredientsWithHistory.sort((a, b) => a.name.localeCompare(b.name));
+            } else {
+              // Sort by newest (most recent update first)
+              ingredientsWithHistory.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+            }
             
             return (
               <div className={`min-h-screen p-4 md:p-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -2163,17 +2313,38 @@
                     <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       Track ingredient prices over time and identify trends
                     </p>
+                    
+                    {/* Search and Sort Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                      <input
+                        type="text"
+                        placeholder="Search ingredients..."
+                        value={priceHistorySearchQuery}
+                        onChange={(e) => setPriceHistorySearchQuery(e.target.value)}
+                        className={`flex-1 px-4 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
+                      />
+                      <select
+                        value={priceHistorySortBy}
+                        onChange={(e) => setPriceHistorySortBy(e.target.value)}
+                        className={`px-4 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                      >
+                        <option value="newest">Sort: Newest First</option>
+                        <option value="alphabetical">Sort: A-Z</option>
+                      </select>
+                    </div>
                   </div>
                   
                   {/* Ingredients List */}
                   <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Tracked Ingredients</h2>
+                    <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Tracked Ingredients {priceHistorySearchQuery && `(${ingredientsWithHistory.length} found)`}
+                    </h2>
                     
                     {ingredientsWithHistory.length === 0 ? (
                       <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <BarChart2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg mb-2">No price history yet</p>
-                        <p className="text-sm">Prices will be automatically tracked when you update them on your shopping list</p>
+                        <p className="text-lg mb-2">{priceHistorySearchQuery ? 'No ingredients found' : 'No price history yet'}</p>
+                        <p className="text-sm">{priceHistorySearchQuery ? 'Try a different search term' : 'Prices will be automatically tracked when you update them on your shopping list'}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
