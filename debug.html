@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Test the calculation
+const items = [
+  {name: 'coconut water', hasQuantity: false, total: 1, unit: 'pcs'},
+  {name: 'honey', hasQuantity: false, total: 1, unit: 'bottle'},
+  {name: 'underwear', hasQuantity: false, total: 1, unit: 'pcs'}
+];
+
+const ingredientPrices = {
+  'coconut water': {price: '79'},
+  'honey': {price: '399'},
+  'underwear': {price: '529'}
+};
+
+let calculatedTotal = 0;
+items.forEach(item => {
+  const priceData = ingredientPrices[item.name];
+  console.log(`Item: ${item.name}, hasQuantity: ${item.hasQuantity}, price: ${priceData.price}, type: ${typeof priceData.price}`);
+  
+  if (item.hasQuantity && priceData.packageQuantity > 0) {
+    console.log('  -> Using recipe calculation');
+  } else {
+    console.log(`  -> Adding price: ${parseFloat(priceData.price)}`);
+    calculatedTotal += parseFloat(priceData.price);
+  }
+  console.log(`  -> Running total: ${calculatedTotal}`);
+});
+
+console.log(`Final total: ${calculatedTotal}`);
+</script>
+</body>
+</html>
