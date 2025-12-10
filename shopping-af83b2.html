@@ -856,63 +856,67 @@
           // Save prices from Update Prices view to history
           const savePricesFromUpdateView = () => {
             const today = new Date().toISOString().split('T')[0];
-            let savedCount = 0;
+            const updates = [];
             
+            // Collect all valid price entries
             Object.entries(ingredientPrices).forEach(([ingredientName, priceData]) => {
               if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
-                // Check if we should save this entry BEFORE updating state
                 const existing = priceHistoryData[ingredientName] || [];
                 const lastEntry = existing[existing.length - 1];
                 
-                const shouldSave = !lastEntry || 
-                                  lastEntry.date !== today ||
-                                  parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
-                                  parseFloat(lastEntry.packageQuantity || lastEntry.unitQty) !== parseFloat(priceData.packageQuantity) ||
-                                  (lastEntry.packageUnit || lastEntry.unitType) !== priceData.packageUnit;
+                // Check if this is new/different
+                const isNew = !lastEntry || 
+                             lastEntry.date !== today ||
+                             parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
+                             parseFloat(lastEntry.packageQuantity || lastEntry.unitQty || 0) !== parseFloat(priceData.packageQuantity) ||
+                             (lastEntry.packageUnit || lastEntry.unitType || '') !== (priceData.packageUnit || '');
                 
-                if (shouldSave) {
-                  savedCount++;
-                }
-                
-                // Save to lastKnownPrices
-                setLastKnownPrices(prev => ({
-                  ...prev,
-                  [ingredientName]: {
-                    price: priceData.price,
-                    packageQuantity: priceData.packageQuantity,
-                    packageUnit: priceData.packageUnit || '',
-                    // Keep old format for backward compatibility
-                    unitQty: priceData.packageQuantity,
-                    unitType: priceData.packageUnit || '',
-                    date: today
-                  }
-                }));
-                
-                // Save to price history
-                if (shouldSave) {
-                  setPriceHistoryData(prev => {
-                    const existing = prev[ingredientName] || [];
-                    return {
-                      ...prev,
-                      [ingredientName]: [...existing, {
-                        date: today,
-                        price: priceData.price,
-                        packageQuantity: priceData.packageQuantity,
-                        packageUnit: priceData.packageUnit || '',
-                        // Keep old format for backward compatibility
-                        unitQty: priceData.packageQuantity,
-                        unitType: priceData.packageUnit || ''
-                      }]
-                    };
-                  });
-                }
+                updates.push({ ingredientName, priceData, isNew });
               }
             });
             
-            if (savedCount > 0) {
-              alert(`✓ Saved ${savedCount} price${savedCount !== 1 ? 's' : ''} to history!`);
+            if (updates.length === 0) {
+              alert('ℹ️ No prices to save. Please enter price and quantity for at least one ingredient.');
+              return;
+            }
+            
+            const newPriceCount = updates.filter(u => u.isNew).length;
+            
+            // Save all to lastKnownPrices
+            updates.forEach(({ ingredientName, priceData }) => {
+              setLastKnownPrices(prev => ({
+                ...prev,
+                [ingredientName]: {
+                  price: priceData.price,
+                  packageQuantity: priceData.packageQuantity,
+                  packageUnit: priceData.packageUnit || '',
+                  unitQty: priceData.packageQuantity,
+                  unitType: priceData.packageUnit || '',
+                  date: today
+                }
+              }));
+            });
+            
+            // Save new prices to history
+            updates.filter(u => u.isNew).forEach(({ ingredientName, priceData }) => {
+              setPriceHistoryData(prev => ({
+                ...prev,
+                [ingredientName]: [...(prev[ingredientName] || []), {
+                  date: today,
+                  price: priceData.price,
+                  packageQuantity: priceData.packageQuantity,
+                  packageUnit: priceData.packageUnit || '',
+                  unitQty: priceData.packageQuantity,
+                  unitType: priceData.packageUnit || ''
+                }]
+              }));
+            });
+            
+            // Show message
+            if (newPriceCount > 0) {
+              alert(`✓ Saved ${newPriceCount} price${newPriceCount !== 1 ? 's' : ''} to history!`);
             } else {
-              alert('ℹ️ No new prices to save (all prices already up to date).');
+              alert('ℹ️ No new prices to save (all prices already up to date for today).');
             }
           };
 
