@@ -1,8 +1,58 @@
 # Code Audit - Shopping List Aggregator
-**Date:** December 4, 2025  
+**Date:** December 10, 2025  
 **File:** shopping-af83b2.html  
-**Current Size:** ~3,538 lines  
+**Current Size:** ~4,250 lines  
 **Status:** Working, deployed, feature-complete
+
+---
+
+## Recent Changes (December 2025)
+
+### Code Cleanup (December 10, 2025)
+**Branch:** code-cleanup → merged to main
+
+**Changes:**
+- ✅ Removed migration code (one-time data migration complete)
+- ✅ Eliminated old data format (unitQty/unitType) completely
+- ✅ Simplified to single format: packageQuantity/packageUnit
+- ✅ Removed all backward compatibility fallbacks
+- ✅ Net reduction: ~52 lines of code
+
+**Impact:**
+- Cleaner, more maintainable code
+- Single source of truth for data format
+- Reduced complexity in comparisons and data structures
+- No performance impact, same functionality
+
+### Price History System (December 9-10, 2025)
+**Previous state:** Prices saved to lastKnownPrices only (no history tracking)
+
+**Implemented:**
+- ✅ Added priceHistoryData state for full price tracking
+- ✅ Save Prices button in Update Prices view
+- ✅ Price history displays past prices with dates
+- ✅ Auto-save on checkout (when checking off items)
+- ✅ Proper duplicate detection (same price on same day)
+
+**Data Format (Current):**
+```javascript
+priceHistoryData: {
+  "bananas": [
+    {
+      date: "2025-11-28",
+      price: 19,
+      packageQuantity: 600,
+      packageUnit: "g"
+    },
+    {
+      date: "2025-12-10",
+      price: 30,
+      packageQuantity: 600,
+      packageUnit: "g"
+    }
+  ]
+}
+```
 
 ---
 

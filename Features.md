@@ -850,8 +850,18 @@ NT$95.00/kg
 ### 30. Price History Tracking and Visualization
 **What it does**: Automatically tracks ingredient prices over time and visualizes trends with interactive charts and statistics.
 
+**Recent Updates (December 2025)**:
+- ✅ Full price history storage in priceHistoryData
+- ✅ **Save Prices button** in Update Prices view for manual saving
+- ✅ Auto-save on checkout when checking off purchased items
+- ✅ Proper duplicate detection (won't save same price twice on same day)
+- ✅ Data format simplified to packageQuantity/packageUnit only
+- ✅ Backward compatibility removed for cleaner codebase
+
 **How to use**:
-- Tap "Price History" button in main header (trending up icon)
+- **Save prices manually**: Go to "Update Prices" → enter prices → click "Save Prices" button
+- **Save prices on checkout**: Check off items after purchase (if prices are filled in)
+- **View history**: Tap "Price History" button in main header (trending up icon)
 - View all ingredients with price data, sorted by most recent update
 - See trend indicators: ↑ (>10% above average - red), ↓ (>10% below average - green), → (stable - gray)
 - Tap any ingredient to view detailed price history
@@ -861,8 +871,20 @@ NT$95.00/kg
   - Percentage change vs average
   - Full price history table (reverse chronological)
   - Min and max points highlighted on chart (green/red dots)
-- **Automatic logging**: Prices auto-save to history when you update them on shopping list
-- Works offline - all data stored locally in browser localStorage
+
+**Data Format**:
+```javascript
+{
+  "bananas": [
+    {
+      "date": "2025-12-10",
+      "price": 30,
+      "packageQuantity": 600,
+      "packageUnit": "g"
+    }
+  ]
+}
+```
 
 **Why it's useful**:
 - Identify seasonal price patterns (when is ginger cheapest?)
@@ -881,7 +903,7 @@ NT$95.00/kg
 - 44px+ tap targets throughout
 
 **Export/Import**:
-- Price history is included in recipe exports
+- Price history is included in recipe exports (priceHistoryData field)
 - Transfer data between devices using Export → Import
 - View JSON in browser if download doesn't work, copy/paste into text editor, save, then import
 

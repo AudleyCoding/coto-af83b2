@@ -116,4 +116,20 @@ Based on effort vs value analysis:
 
 ---
 
-*Last updated: November 27, 2025*
+*Last updated: December 10, 2025*
+
+## Completed Features (December 2025)
+
+### ✅ Price History Tracking (Dec 9-10, 2025)
+- Full price history storage in priceHistoryData
+- Save Prices button in Update Prices view
+- Auto-save on checkout flow
+- Price history visualization with dates
+- Proper duplicate detection
+
+### ✅ Code Cleanup (Dec 10, 2025)
+- Removed migration code
+- Simplified data format to packageQuantity/packageUnit only
+- Eliminated backward compatibility fallbacks
+- Reduced codebase by ~52 lines
+
