@@ -860,6 +860,20 @@
             
             Object.entries(ingredientPrices).forEach(([ingredientName, priceData]) => {
               if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
+                // Check if we should save this entry BEFORE updating state
+                const existing = priceHistoryData[ingredientName] || [];
+                const lastEntry = existing[existing.length - 1];
+                
+                const shouldSave = !lastEntry || 
+                                  lastEntry.date !== today ||
+                                  parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
+                                  parseFloat(lastEntry.packageQuantity || lastEntry.unitQty) !== parseFloat(priceData.packageQuantity) ||
+                                  (lastEntry.packageUnit || lastEntry.unitType) !== priceData.packageUnit;
+                
+                if (shouldSave) {
+                  savedCount++;
+                }
+                
                 // Save to lastKnownPrices
                 setLastKnownPrices(prev => ({
                   ...prev,
@@ -875,20 +889,9 @@
                 }));
                 
                 // Save to price history
-                setPriceHistoryData(prev => {
-                  const existing = prev[ingredientName] || [];
-                  const lastEntry = existing[existing.length - 1];
-                  
-                  // Check if we should save this entry
-                  // Save if: no existing entries, OR different date, OR different price/quantity/unit
-                  const shouldSave = !lastEntry || 
-                                    lastEntry.date !== today ||
-                                    parseFloat(lastEntry.price) !== parseFloat(priceData.price) ||
-                                    parseFloat(lastEntry.packageQuantity || lastEntry.unitQty) !== parseFloat(priceData.packageQuantity) ||
-                                    (lastEntry.packageUnit || lastEntry.unitType) !== priceData.packageUnit;
-                  
-                  if (shouldSave) {
-                    savedCount++;
+                if (shouldSave) {
+                  setPriceHistoryData(prev => {
+                    const existing = prev[ingredientName] || [];
                     return {
                       ...prev,
                       [ingredientName]: [...existing, {
@@ -901,9 +904,8 @@
                         unitType: priceData.packageUnit || ''
                       }]
                     };
-                  }
-                  return prev;
-                });
+                  });
+                }
               }
             });
             
