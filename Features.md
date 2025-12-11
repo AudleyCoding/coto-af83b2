@@ -127,6 +127,13 @@ When you "Add to Home Screen":
 47. Intelligent Search Filtering (Starts-With Prioritization)
 48. iPhone Scroll Stability Fix
 49. Context-Aware Vendor Suggestion
+50. Price History Search and Filtering
+51. Price History Sort Options (Newest/Alphabetical)
+52. Edit Price History Entries
+53. Delete Price History Entries
+54. Manual Price Entry Addition
+55. Quick Log Flat Price Calculation
+56. Quick Add Item Support in Quick Log
 
 ---
 
@@ -1193,14 +1200,146 @@ This pattern is superior to conditional rendering (`{condition && <button>}`) fo
 
 ---
 
+### 50. Price History Search and Filtering
+**What it does**: Search for specific ingredients in the Price History view to quickly find the items you need.
+
+**How to use**:
+- In Price History view, use the search box at the top
+- Type any part of an ingredient name (e.g., "tom" finds "tomato")
+- Results filter in real-time as you type
+- Clear the search to see all ingredients again
+
+**Benefits**:
+- Quickly find specific ingredients in long lists
+- Check price trends for specific items
+- No need to scroll through entire history
+
+---
+
+### 51. Price History Sort Options (Newest/Alphabetical)
+**What it does**: Sort the Price History list either by most recently updated items or alphabetically by name.
+
+**How to use**:
+- Use the dropdown next to the search box
+- Choose **"Sort: Newest First"** to see recently updated prices at top
+- Choose **"Sort: A-Z"** to see ingredients alphabetically
+- Default is Newest First to prioritize recent changes
+
+**Benefits**:
+- Newest First: See what you've updated recently
+- A-Z: Find items by name more easily
+
+---
+
+### 52. Edit Price History Entries
+**What it does**: Modify existing price entries if you made a mistake or need to correct historical data.
+
+**How to use**:
+1. Click on an ingredient in Price History
+2. Find the entry you want to edit in the table
+3. Click the **Edit** button
+4. Modify any of the fields:
+   - Date
+   - Price
+   - Package Quantity
+   - Package Unit
+5. Click **Save** or **Cancel**
+
+**Benefits**:
+- Fix typos or data entry errors
+- Correct dates if entered wrong
+- Update package sizes that changed
+
+---
+
+### 53. Delete Price History Entries
+**What it does**: Remove incorrect or duplicate price entries from history.
+
+**How to use**:
+1. Click on an ingredient in Price History
+2. Find the entry you want to remove
+3. Click the **Delete** button
+4. Confirm the deletion
+5. If it's the last entry, the entire ingredient is removed from history
+
+**Benefits**:
+- Clean up mistakes or test data
+- Remove duplicate entries
+- Maintain accurate price history
+
+---
+
+### 54. Manual Price Entry Addition
+**What it does**: Add historical price entries manually, allowing you to backdate prices or add entries from written notes.
+
+**How to use**:
+1. Click on an ingredient in Price History
+2. Click the **Add Entry** button (top right of history table)
+3. A form appears with fields pre-filled from the latest entry
+4. Modify as needed:
+   - **Date**: Change to backdate the entry
+   - **Price**: Enter the price you paid
+   - **Quantity**: Package size
+   - **Unit**: Package unit (g, ml, kg, etc.)
+5. Click **Save** or **Cancel**
+
+**Use cases**:
+- Restore prices lost during data migration
+- Add prices from written shopping notes when you didn't have your phone
+- Backdate entries to build historical data
+- Correct gaps in price history
+
+---
+
+### 55. Quick Log Flat Price Calculation
+**What it does**: Quick Log now uses flat package prices (what you paid at the store) instead of calculating proportional costs based on recipe quantities.
+
+**How it works**:
+- **Old behavior**: If you bought coconut water (500ml) with a 1000ml package price of $79, it calculated 500/1000 × $79 = $39.50
+- **New behavior**: It shows $79 (the full package price you paid at the store)
+- **Calculated Total** shows the sum of all package prices
+- **Actual Total** field pre-fills with this calculated sum
+
+**Why this matters**:
+- Quick Log is for tracking what you spent at the store, not recipe costs
+- You bought 3 items for $1007 total → that's what it should show
+- Recipe cost calculations happen when viewing recipes, not when logging trips
+
+**Benefits**:
+- Accurate expense tracking
+- Matches your receipt total
+- Clear separation between "what I spent" vs "what the recipe costs"
+
+---
+
+### 56. Quick Add Item Support in Quick Log
+**What it does**: Quick Add items (items added without recipes) now work correctly in Quick Log calculations.
+
+**How it works**:
+- Quick Add items only need a **price** (no package quantity/unit required)
+- They're included in the Quick Log calculated total
+- No "Incomplete" warning shown if only price is entered
+
+**Example**:
+- Add "underwear" as Quick Add item with price $529
+- Enter prices for recipe items (coconut water $79, honey $399)
+- Quick Log shows: $79 + $399 + $529 = **$1007**
+
+**Benefits**:
+- Flexible item tracking without creating recipes
+- One-off purchases included in trip totals
+- Cleaner interface (no false warnings)
+
+---
+
 ## Summary
 
-This app combines 36 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 56 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
 3. **Smart cost calculator**: Calculate total only for items you plan to buy, hide items you already have
-4. **Price analytics**: Track historical prices, visualize trends, identify seasonal patterns
+4. **Price analytics**: Track historical prices, visualize trends, identify seasonal patterns, search and edit history
 5. **Consistent naming**: Autocomplete + automatic lowercase prevents aggregation errors
 6. **Standardized units**: Dropdown ensures uniform unit naming across all recipes
 7. **Price tracking**: Remembers prices across trips, shows estimates before shopping
@@ -1212,5 +1351,7 @@ This app combines 36 features into a simple, offline-capable shopping list tool 
 13. **CSV export**: Integrates with Apple Numbers for P&L tracking
 14. **Centralized price updates**: Update all ingredient prices in one dedicated view
 15. **Always-visible actions**: Buttons show disabled states instead of hiding for consistent UX
+16. **Comprehensive price history management**: Search, sort, edit, delete, and manually add price entries
+17. **Accurate expense tracking**: Quick Log uses flat prices to match your actual spending
 
 Perfect for Coto Makassar's daily market shopping needs!
