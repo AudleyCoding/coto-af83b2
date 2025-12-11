@@ -411,6 +411,7 @@
           const [priceHistorySearchQuery, setPriceHistorySearchQuery] = useState('');
           const [priceHistorySortBy, setPriceHistorySortBy] = useState('newest'); // 'newest' or 'alphabetical'
           const [editingPriceEntry, setEditingPriceEntry] = useState(null); // {ingredientName, entryIndex, date, price, packageQuantity, packageUnit}
+          const [addingPriceEntry, setAddingPriceEntry] = useState(null); // {ingredientName, date, price, packageQuantity, packageUnit}
           const [quickAddItems, setQuickAddItems] = useState([]);
           const [quickAddInput, setQuickAddInput] = useState('');
           const [showPriceManagement, setShowPriceManagement] = useState(false);
@@ -945,6 +946,15 @@
             });
             
             setEditingPriceEntry(null);
+          };
+
+          const addPriceHistoryEntry = (ingredientName, newEntry) => {
+            setPriceHistoryData(prev => {
+              const history = prev[ingredientName] || [];
+              const updated = [...history, newEntry];
+              return { ...prev, [ingredientName]: updated };
+            });
+            setAddingPriceEntry(null);
           };
 
           // Export trips to CSV
@@ -2121,7 +2131,92 @@
                     
                     {/* Price History Table */}
                     <div className={`rounded-lg shadow-sm border p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-                      <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h2>
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Price History</h2>
+                        <button
+                          onClick={() => {
+                            const latestEntry = ingredientHistory[ingredientHistory.length - 1];
+                            setAddingPriceEntry({
+                              ingredientName: selectedIngredient,
+                              date: new Date().toISOString().split('T')[0],
+                              price: latestEntry?.price || 0,
+                              packageQuantity: latestEntry?.packageQuantity || 1,
+                              packageUnit: latestEntry?.packageUnit || 'g'
+                            });
+                          }}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add Entry
+                        </button>
+                      </div>
+                      
+                      {/* Add Entry Form */}
+                      {addingPriceEntry && (
+                        <div className={`mb-4 p-4 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-blue-50 border-blue-200'}`}>
+                          <h3 className={`text-sm font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Add New Price Entry</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                              <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</label>
+                              <input
+                                type="date"
+                                value={addingPriceEntry.date}
+                                onChange={(e) => setAddingPriceEntry({...addingPriceEntry, date: e.target.value})}
+                                className={`w-full px-2 py-1 border rounded text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price (NT$)</label>
+                              <input
+                                type="number"
+                                value={addingPriceEntry.price}
+                                onChange={(e) => setAddingPriceEntry({...addingPriceEntry, price: parseFloat(e.target.value) || 0})}
+                                className={`w-full px-2 py-1 border rounded text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                step="0.01"
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Quantity</label>
+                              <input
+                                type="number"
+                                value={addingPriceEntry.packageQuantity}
+                                onChange={(e) => setAddingPriceEntry({...addingPriceEntry, packageQuantity: parseFloat(e.target.value) || 0})}
+                                className={`w-full px-2 py-1 border rounded text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-xs mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</label>
+                              <input
+                                type="text"
+                                value={addingPriceEntry.packageUnit}
+                                onChange={(e) => setAddingPriceEntry({...addingPriceEntry, packageUnit: e.target.value})}
+                                className={`w-full px-2 py-1 border rounded text-sm ${darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'border-gray-300'}`}
+                                list="package-units"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => addPriceHistoryEntry(selectedIngredient, {
+                                date: addingPriceEntry.date,
+                                price: addingPriceEntry.price,
+                                packageQuantity: addingPriceEntry.packageQuantity,
+                                packageUnit: addingPriceEntry.packageUnit
+                              })}
+                              className={`px-3 py-1 text-sm rounded ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setAddingPriceEntry(null)}
+                              className={`px-3 py-1 text-sm rounded ${darkMode ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
                       {sortedHistory.length === 0 ? (
                         <p className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No price history yet</p>
                       ) : (
