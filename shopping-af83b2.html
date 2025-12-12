@@ -3275,11 +3275,12 @@
                       </button>
                       <button
                         onClick={() => {
-                          // Initialize ingredientPrices with lastKnownPrices when opening Update Prices
+                          // Initialize ingredientPrices with package quantity/unit only (not price)
+                          // Price field should start empty to avoid accidental duplicate entries
                           const initialPrices = {};
                           Object.entries(lastKnownPrices).forEach(([name, data]) => {
                             initialPrices[name] = {
-                              price: data.price,
+                              price: null, // Start empty - user must enter new price
                               packageQuantity: data.packageQuantity,
                               packageUnit: data.packageUnit
                             };
