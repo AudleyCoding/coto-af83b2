@@ -999,19 +999,28 @@
             const input = quickAddInput.trim().toLowerCase();
             if (!input) return;
             
-            // Parse input like "salt 1000g" into name, quantity, and unit
-            // Regex matches: name + optional(whitespace + number + optional(whitespace) + unit)
-            const match = input.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*([a-zA-Z]+)?\s*$/) || 
-                         input.match(/^(.+)$/);
+            // Parse input like "garlic paste 300g" or "salt 1000 g" into name, quantity, and unit
+            // Match patterns:
+            // - "garlic paste 300g" (space before number, no space before unit)
+            // - "garlic paste 300 g" (space before number, space before unit)
+            // - "salt300g" or "salt 300g" (with or without space)
+            const quantityMatch = input.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*([a-zA-Z]+)\s*$/);
             
             let itemName, quantity, unit;
-            if (match && match[2]) {
-              // Has quantity (and maybe unit)
-              itemName = match[1].trim();
-              quantity = parseFloat(match[2]);
-              unit = match[3] || '';
+            if (quantityMatch && quantityMatch[3]) {
+              // Has quantity and unit (unit is required for this pattern)
+              itemName = quantityMatch[1].trim();
+              quantity = parseFloat(quantityMatch[2]);
+              unit = quantityMatch[3];
+              
+              // If itemName is empty (e.g., "300g" with no name), treat whole thing as name
+              if (!itemName) {
+                itemName = input;
+                quantity = null;
+                unit = '';
+              }
             } else {
-              // Just name, no quantity
+              // Just name, no quantity/unit pattern found
               itemName = input;
               quantity = null;
               unit = '';
