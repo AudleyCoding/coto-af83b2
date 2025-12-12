@@ -2063,21 +2063,24 @@
               const ingredientHistory = priceHistoryData[selectedIngredient] || [];
               const sortedHistory = [...ingredientHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
               
-              // Calculate statistics
-              const prices = ingredientHistory.map(h => h.price);
-              const currentPrice = prices[prices.length - 1] || 0;
-              const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-              const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-              const priceChange = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice * 100) : 0;
+              // Calculate statistics based on unit prices
+              const unitPrices = ingredientHistory.map(h => h.price / h.packageQuantity);
+              const currentUnitPrice = unitPrices[unitPrices.length - 1] || 0;
+              const avgUnitPrice = unitPrices.length > 0 ? unitPrices.reduce((a, b) => a + b, 0) / unitPrices.length : 0;
+              const minUnitPrice = unitPrices.length > 0 ? Math.min(...unitPrices) : 0;
+              const maxUnitPrice = unitPrices.length > 0 ? Math.max(...unitPrices) : 0;
+              const priceChange = avgUnitPrice > 0 ? ((currentUnitPrice - avgUnitPrice) / avgUnitPrice * 100) : 0;
               
-              // Prepare chart data (show last 12 months)
+              // Keep raw prices for display context
+              const currentEntry = ingredientHistory[ingredientHistory.length - 1];
+              
+              // Prepare chart data (show last 12 months) - use unit prices
               const chartData = [...ingredientHistory]
                 .sort((a, b) => new Date(a.date) - new Date(b.date))
                 .slice(-12)
                 .map(entry => ({
                   date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  price: entry.price,
+                  price: entry.price / entry.packageQuantity, // Use unit price for chart
                   fullDate: entry.date
                 }));
               
@@ -2107,13 +2110,13 @@
                       
                       {/* Current Price */}
                       <div className={`text-center py-4 ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'} rounded-lg`}>
-                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Current Price</p>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Current Unit Price</p>
                         <p className={`text-4xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                          NT${currentPrice.toFixed(2)}
+                          NT${currentUnitPrice.toFixed(2)}
                         </p>
-                        {ingredientHistory[ingredientHistory.length - 1] && (
+                        {currentEntry && (
                           <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            per {ingredientHistory[ingredientHistory.length - 1].packageQuantity} {ingredientHistory[ingredientHistory.length - 1].packageUnit}
+                            per {currentEntry.packageUnit} (NT${currentEntry.price} for {currentEntry.packageQuantity} {currentEntry.packageUnit})
                           </p>
                         )}
                       </div>
@@ -2123,7 +2126,8 @@
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>6-Month Avg</p>
-                        <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>NT${avgPrice.toFixed(2)}</p>
+                        <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>NT${avgUnitPrice.toFixed(2)}</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>per {currentEntry?.packageUnit || 'unit'}</p>
                       </div>
                       <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>vs Average</p>
@@ -2133,11 +2137,13 @@
                       </div>
                       <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Lowest</p>
-                        <p className={`text-2xl font-bold text-green-500`}>NT${minPrice.toFixed(2)}</p>
+                        <p className={`text-2xl font-bold text-green-500`}>NT${minUnitPrice.toFixed(2)}</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>per {currentEntry?.packageUnit || 'unit'}</p>
                       </div>
                       <div className={`rounded-lg shadow-sm border p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
                         <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Highest</p>
-                        <p className={`text-2xl font-bold text-red-500`}>NT${maxPrice.toFixed(2)}</p>
+                        <p className={`text-2xl font-bold text-red-500`}>NT${maxUnitPrice.toFixed(2)}</p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>per {currentEntry?.packageUnit || 'unit'}</p>
                       </div>
                     </div>
                     
@@ -2145,8 +2151,8 @@
                     {chartData.length > 0 && (
                       <PriceChart 
                         chartData={chartData} 
-                        minPrice={minPrice} 
-                        maxPrice={maxPrice} 
+                        minPrice={minUnitPrice} 
+                        maxPrice={maxUnitPrice} 
                         darkMode={darkMode} 
                       />
                     )}
@@ -2248,7 +2254,8 @@
                               <tr>
                                 <th className={`px-4 py-2 text-left text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
                                 <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Price</th>
-                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Package</th>
+                                <th className={`px-4 py-2 text-right text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Unit Price</th>
                                 <th className={`px-4 py-2 text-center text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Actions</th>
                               </tr>
                             </thead>
@@ -2298,6 +2305,13 @@
                                             />
                                           </div>
                                         </td>
+                                        <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                          {editingPriceEntry.price > 0 && editingPriceEntry.packageQuantity > 0 ? (
+                                            <span className={`text-xs ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                              NT${(editingPriceEntry.price / editingPriceEntry.packageQuantity).toFixed(2)}/{editingPriceEntry.packageUnit}
+                                            </span>
+                                          ) : '-'}
+                                        </td>
                                         <td className="px-4 py-2 text-center">
                                           <div className="flex gap-1 justify-center">
                                             <button
@@ -2327,6 +2341,9 @@
                                         </td>
                                         <td className={`px-4 py-2 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                           {entry.packageQuantity} {entry.packageUnit}
+                                        </td>
+                                        <td className={`px-4 py-2 text-sm text-right font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                          NT${(entry.price / entry.packageQuantity).toFixed(2)}/{entry.packageUnit}
                                         </td>
                                         <td className="px-4 py-2 text-center">
                                           <div className="flex gap-1 justify-center">
