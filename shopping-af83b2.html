@@ -13,6 +13,20 @@
     <!-- App Icon for iOS Home Screen (using emoji as data URI) -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234F46E5' rx='20'/><text x='50' y='70' font-size='60' text-anchor='middle' fill='white'>🛒</text></svg>">
     
+    <!-- Hide number input spinner arrows -->
+    <style>
+        /* Chrome, Safari, Edge, Opera */
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+    
     <!-- Theme color for mobile browsers -->
     <meta name="theme-color" content="#4F46E5">
     
@@ -3432,11 +3446,6 @@
                                             value={batches}
                                             onChange={(e) => updateBatches(recipe.id, e.target.value)}
                                             className={`w-20 px-3 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                                            style={{
-                                              MozAppearance: 'textfield',
-                                              WebkitAppearance: 'none',
-                                              appearance: 'textfield'
-                                            }}
                                           />
                                           <button
                                             onClick={() => updateBatches(recipe.id, batches + 0.5)}
