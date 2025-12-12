@@ -25,6 +25,20 @@
 - [ ] Check quantities make sense
 - [ ] Note any ingredients that look wrong
 
+### Recipe Scaling Test (NEW FEATURE)
+- [ ] Try making 0.5 batches of a recipe (half recipe)
+- [ ] Try making 1.5 batches of a recipe
+- [ ] Verify quantities scale correctly in shopping list
+- [ ] Test that -/+ buttons work (increment by 0.5)
+- [ ] Verify no spinner arrows appear in batch input field
+
+### Package Cost Calculation (NEW FEATURE)
+- [ ] Load prices or enter prices for ingredients
+- [ ] Check Estimated Total at top of shopping list
+- [ ] Verify costs show whole packages (e.g., "2 pkgs" not "1.73 units")
+- [ ] Confirm total reflects actual packages you must buy
+- [ ] Example: If recipe needs 500ml but package is 1000ml, should charge for 1 full package
+
 ### Data Reset
 - [ ] Clear any test shopping trips from history
 - [ ] Clear any test Quick Add items

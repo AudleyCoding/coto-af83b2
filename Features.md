@@ -134,6 +134,8 @@ When you "Add to Home Screen":
 54. Manual Price Entry Addition
 55. Quick Log Flat Price Calculation
 56. Quick Add Item Support in Quick Log
+57. Recipe Scaling with Decimal Batches
+58. Whole Package Cost Calculation
 
 ---
 
@@ -1332,9 +1334,81 @@ This pattern is superior to conditional rendering (`{condition && <button>}`) fo
 
 ---
 
+### 57. Recipe Scaling with Decimal Batches
+**What it does**: Allows you to make half recipes, 1.5x recipes, or any fractional batch size instead of only whole numbers.
+
+**How it works**:
+- Batch selector now accepts decimal values (0.5, 1.5, 2.5, etc.)
+- Minimum batch size is 0.5 (half a recipe)
+- Increment/decrement buttons adjust by 0.5
+- Number input allows precise decimal entry
+- All ingredient quantities scale proportionally
+
+**How to use**:
+1. Select a recipe in "Recipes" section
+2. Use the **-** button to decrease by 0.5 batches
+3. Use the **+** button to increase by 0.5 batches
+4. Or type directly: `0.5`, `1.5`, `2.5`, etc.
+5. Shopping list updates automatically with scaled quantities
+
+**Examples**:
+- **0.5 batches**: Testing a new recipe? Make half to avoid waste
+- **1.5 batches**: Need more than 1 but less than 2? Perfect for medium demand
+- **2.5 batches**: Weekend rush? Scale up precisely
+
+**Benefits**:
+- Flexible portion control for varying demand
+- Reduce waste when testing new recipes
+- Precise scaling for optimal ingredient usage
+- No need to calculate fractions manually
+
+---
+
+### 58. Whole Package Cost Calculation
+**What it does**: Shopping list costs now round UP to whole packages, reflecting what you actually have to buy at the store.
+
+**The Problem**:
+- Recipe needs 500ml coconut milk, package is 1000ml at NT$150
+- Old calculation: 0.5 packages × $150 = **$75** ❌ (can't buy half a package!)
+- New calculation: 1 package × $150 = **$150** ✅ (must buy full package)
+
+**How it works**:
+- Calculates packages needed: recipe quantity ÷ package quantity
+- Rounds UP to next whole number using `Math.ceil()`
+- Multiplies by package price
+- Displays package count: "2 pkgs" instead of "1.73 units"
+
+**Where it applies**:
+- **Estimated Total** (top of shopping list): Sum of all items you plan to buy
+- **Last Known Prices total**: Based on your most recent prices
+- **Planned Purchase Cost**: What you'll actually spend
+- **Individual item costs**: Shows per-item cost with package count
+
+**Examples**:
+
+| Scenario | Recipe Needs | Package Size | Package Price | Packages | Total Cost |
+|----------|-------------|--------------|---------------|----------|------------|
+| Coconut milk | 500ml | 1000ml | NT$150 | 1 pkg | NT$150 |
+| Soy sauce | 250ml | 500ml | NT$80 | 1 pkg | NT$80 |
+| Oyster sauce | 750ml | 500ml | NT$120 | 2 pkgs | NT$240 |
+| Rice vinegar | 1.2L | 500ml | NT$60 | 3 pkgs | NT$180 |
+
+**Benefits**:
+- **Accurate budgeting**: See what you'll actually spend, not theoretical recipe cost
+- **No surprises**: Estimated total matches your cart total
+- **Clear package counts**: Know exactly how many bottles/cartons to grab
+- **Prevents underestimation**: Especially important for expensive ingredients
+
+**UI Improvements**:
+- Clean package display: "2 pkgs" instead of decimal units
+- Browser spinner arrows hidden (uses -/+ buttons only)
+- Consistent rounding across all cost displays
+
+---
+
 ## Summary
 
-This app combines 56 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 58 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -1353,5 +1427,7 @@ This app combines 56 features into a simple, offline-capable shopping list tool 
 15. **Always-visible actions**: Buttons show disabled states instead of hiding for consistent UX
 16. **Comprehensive price history management**: Search, sort, edit, delete, and manually add price entries
 17. **Accurate expense tracking**: Quick Log uses flat prices to match your actual spending
+18. **Decimal recipe scaling**: Make 0.5x, 1.5x, or any fractional batch size for flexible portioning
+19. **Whole package costing**: Rounds up to actual packages you must buy for accurate budgeting
 
 Perfect for Coto Makassar's daily market shopping needs!
