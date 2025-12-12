@@ -136,6 +136,7 @@ When you "Add to Home Screen":
 56. Quick Add Item Support in Quick Log
 57. Recipe Scaling with Decimal Batches
 58. Whole Package Cost Calculation
+59. Unit Price-Based Price History
 
 ---
 
@@ -1406,9 +1407,92 @@ This pattern is superior to conditional rendering (`{condition && <button>}`) fo
 
 ---
 
+### 59. Unit Price-Based Price History
+**What it does**: Price History now tracks and displays **unit prices** instead of raw package prices, showing accurate price trends even when you buy different package sizes.
+
+**The Problem (Before)**:
+- Bought palm sugar: NT$39 for 6 pcs, NT$78 for 12 pcs, NT$195 for 30 pcs
+- Chart showed: NT$39 → NT$78 → NT$195 (looks like 400% increase! 📈)
+- Statistics: "Current: NT$195, Highest: NT$195, +87% vs average" 😱
+- **Reality**: Unit price stayed constant at NT$6.5/pc (no increase!)
+
+**The Solution (After)**:
+- Chart shows: NT$6.5 → NT$6.5 → NT$6.5 (flat line = stable price! —)
+- Statistics: "Current: NT$6.5/pc, vs Average: 0%" 😊
+- **Truth revealed**: Price per piece hasn't changed
+
+**How it works**:
+1. **Calculates unit price**: `price ÷ packageQuantity`
+2. **Plots unit price**: Chart Y-axis shows NT$/unit (not raw price)
+3. **Statistics use unit prices**: Min/max/average all based on cost per unit
+4. **Comparison across sizes**: Fairly compares 6-pack vs 30-pack purchases
+
+**Where you see unit prices**:
+
+1. **Update Prices Modal** (already had this):
+   - Real-time unit price as you type
+   - "NT$195 for 30 pcs = **NT$6.5 per pc**"
+
+2. **Price History Statistics**:
+   - **Current Unit Price**: NT$6.5/pc (not NT$195)
+   - **6-Month Average**: NT$6.5/pc
+   - **Lowest**: NT$6.0/pc (best deal you've found)
+   - **Highest**: NT$7.0/pc (most expensive)
+   - **vs Average**: Shows if current unit price is higher/lower
+
+3. **Price History Chart**:
+   - Y-axis: "Unit Price (NT$ per [unit])"
+   - Plots cost per piece/gram/liter over time
+   - Shows TRUE price trends (not package size changes)
+
+4. **Price History Table**:
+   - New **"Unit Price"** column added
+   - Example row:
+     * Date: December 13, 2025
+     * Price: NT$195
+     * Package: 30 pcs
+     * **Unit Price: NT$6.5/pc** ← NEW!
+     * Actions: Edit | Delete
+   - Unit price shown in green for easy scanning
+   - Edit mode shows calculated unit price too
+
+**Real-world examples**:
+
+| Ingredient | Purchase 1 | Purchase 2 | Purchase 3 | Unit Price Trend |
+|------------|-----------|-----------|-----------|------------------|
+| Palm sugar | NT$39/6pcs | NT$78/12pcs | NT$195/30pcs | NT$6.5 (stable) |
+| Coconut milk | NT$75/1L | NT$150/2L | NT$360/5L | NT$75, NT$75, NT$72 (↓ bulk discount!) |
+| Fish sauce | NT$80/500ml | NT$90/500ml | NT$95/500ml | NT$0.16, NT$0.18, NT$0.19 (↑ inflation!) |
+| Beef powder | NT$200/1kg | NT$100/500g | NT$400/2kg | NT$0.20 (stable) |
+
+**Benefits**:
+- **Accurate trends**: See real price changes, not package size changes
+- **Fair comparisons**: Compare 6-pack vs 30-pack fairly
+- **Bulk discount visibility**: Spot when buying larger packages saves money per unit
+- **Inflation tracking**: Detect when suppliers raise prices per unit
+- **Better decisions**: Know if you're paying more or less per actual unit
+- **No false alarms**: Don't panic when the chart shows "increases" that are just larger purchases
+
+**Technical details**:
+- All calculations use: `unitPrice = price / packageQuantity`
+- Chart plots unit prices chronologically
+- Statistics (min/max/avg) calculated from unit prices
+- Table shows both raw price AND unit price for complete context
+- Non-breaking change: Works with all existing price history data
+- Update Prices modal already had this (now consistent everywhere)
+
+**Use cases**:
+1. **Bulk buying analysis**: "Is the 30-pack actually cheaper per piece?"
+2. **Vendor comparison**: "Big King charges NT$6.5/pc, Carrefour charges NT$7/pc"
+3. **Seasonal pricing**: "Limes cost NT$30/kg in summer, NT$50/kg in winter"
+4. **Inflation monitoring**: "Cooking oil went from NT$150/L to NT$180/L over 6 months"
+5. **Package size changes**: "Supplier switched from 1kg to 900g bags—am I paying more per gram?"
+
+---
+
 ## Summary
 
-This app combines 58 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 59 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -1429,5 +1513,6 @@ This app combines 58 features into a simple, offline-capable shopping list tool 
 17. **Accurate expense tracking**: Quick Log uses flat prices to match your actual spending
 18. **Decimal recipe scaling**: Make 0.5x, 1.5x, or any fractional batch size for flexible portioning
 19. **Whole package costing**: Rounds up to actual packages you must buy for accurate budgeting
+20. **Unit price tracking**: Charts show cost per unit (not package price) for accurate trend analysis
 
 Perfect for Coto Makassar's daily market shopping needs!
