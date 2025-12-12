@@ -1029,6 +1029,13 @@
               quantity: quantity,
               unit: unit
             }]);
+            
+            // Add to planToBuyItems so it appears in shopping list
+            setPlanToBuyItems(prev => {
+              const newSet = new Set(prev);
+              newSet.add(itemName);
+              return newSet;
+            });
 
             setQuickAddInput('');
           };
@@ -1513,8 +1520,9 @@
             setPlanToBuyItems(prev => {
               const newSet = new Set(prev);
               aggregatedIngredients.forEach(ing => {
-                // Default all items to "plan to buy" if not already set
-                if (!newSet.has(ing.name) && !purchasedItems.has(ing.name)) {
+                // Only auto-add non-QuickAdd items (recipe items) to "plan to buy"
+                // QuickAdd items should require explicit user action to avoid resetting list
+                if (!ing.isQuickAdd && !newSet.has(ing.name) && !purchasedItems.has(ing.name)) {
                   newSet.add(ing.name);
                 }
               });
@@ -2627,7 +2635,11 @@
                         💰 Quick Log Trip
                       </h2>
                       <button
-                        onClick={() => setShowQuickLog(false)}
+                        onClick={() => {
+                          const scrollY = window.scrollY;
+                          setShowQuickLog(false);
+                          setTimeout(() => window.scrollTo(0, scrollY), 0);
+                        }}
                         className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
                       >
                         <X className="w-6 h-6" />
@@ -2873,8 +2885,14 @@
                         onClick={() => {
                           const result = saveQuickTrip(tripTotal, selectedVendor, tripDate);
                           if (result) {
+                            // Save current scroll position
+                            const scrollY = window.scrollY;
                             setShowQuickLog(false);
                             setTripTotal('');
+                            // Restore scroll position after modal closes
+                            setTimeout(() => {
+                              window.scrollTo(0, scrollY);
+                            }, 0);
                             alert(`✓ Trip saved! ${result.itemCount} item${result.itemCount !== 1 ? 's' : ''} logged.`);
                           }
                           // If result is null, saveQuickTrip already showed an alert
@@ -2885,7 +2903,11 @@
                         Save Trip
                       </button>
                       <button
-                        onClick={() => setShowQuickLog(false)}
+                        onClick={() => {
+                          const scrollY = window.scrollY;
+                          setShowQuickLog(false);
+                          setTimeout(() => window.scrollTo(0, scrollY), 0);
+                        }}
                         className={`px-6 py-3 border rounded-lg font-medium ${darkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
                       >
                         Cancel
