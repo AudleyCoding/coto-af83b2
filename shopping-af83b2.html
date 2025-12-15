@@ -3793,10 +3793,14 @@
                                               </span>
                                             )}
                                             <span className={`font-normal text-base ml-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                              {ingredient.hasQuantity 
-                                                ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
-                                                : 'As needed'
-                                              }
+                                              {(() => {
+                                                if (ingredient.isQuickAdd) {
+                                                  console.log('Displaying Quick Add item:', ingredient.name, 'hasQuantity:', ingredient.hasQuantity, 'total:', ingredient.total, 'unit:', ingredient.unit);
+                                                }
+                                                return ingredient.hasQuantity 
+                                                  ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                                  : 'As needed';
+                                              })()}
                                             </span>
                                           </div>
                                           
