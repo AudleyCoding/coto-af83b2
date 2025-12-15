@@ -1421,9 +1421,8 @@
             // Add quick add items (they won't have quantities from recipes)
             quickAddItems.forEach(quickItem => {
               const key = quickItem.name;
-              console.log('Processing Quick Add Item:', quickItem);
               if (!ingredientMap.has(key)) {
-                const aggregatedItem = {
+                ingredientMap.set(key, {
                   name: quickItem.name,
                   total: quickItem.quantity || 0,
                   unit: quickItem.unit || '',
@@ -1432,9 +1431,7 @@
                   totalCost: 0,
                   location: quickItem.location || '',
                   isQuickAdd: true
-                };
-                console.log('Creating aggregated item:', aggregatedItem);
-                ingredientMap.set(key, aggregatedItem);
+                });
               } else {
                 // If already exists from recipes, add the quick add quantity
                 const item = ingredientMap.get(key);
@@ -3793,14 +3790,10 @@
                                               </span>
                                             )}
                                             <span className={`font-normal text-base ml-1.5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                              {(() => {
-                                                if (ingredient.isQuickAdd) {
-                                                  console.log('Displaying Quick Add item:', ingredient.name, 'hasQuantity:', ingredient.hasQuantity, 'total:', ingredient.total, 'unit:', ingredient.unit);
-                                                }
-                                                return ingredient.hasQuantity 
-                                                  ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
-                                                  : 'As needed';
-                                              })()}
+                                              {ingredient.hasQuantity 
+                                                ? `${formatAmount(ingredient.total)} ${ingredient.unit}`
+                                                : 'As needed'
+                                              }
                                             </span>
                                           </div>
                                           
