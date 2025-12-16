@@ -140,6 +140,7 @@ When you "Add to Home Screen":
 60. Auto-Remove Quick Add Items When Checked
 61. Scroll-to-Top Buttons on All Major Views
 62. Removed Items Restoration
+63. Edit Shopping Trips
 
 ---
 
@@ -1644,9 +1645,102 @@ This pattern is superior to conditional rendering (`{condition && <button>}`) fo
 
 ---
 
+### 63. Edit Shopping Trips
+**What it does**: Made a mistake entering trip information? You can now edit the vendor, total amount, and date for any shopping trip directly in Trip History, or delete and re-log items without errors.
+
+**The Problem (Before)**:
+- Entered wrong total in Quick Log (typo, wrong calculation)
+- Trip saved with incorrect amount
+- No way to fix it - only Delete button
+- If deleted trip, couldn't re-log same items
+- Got "already logged" error when trying to re-log
+- Had to manually track corrections outside the app
+
+**The Solution (After)**:
+- **Edit button** on every trip
+- Click Edit → modify vendor, total, or date
+- Save changes instantly
+- OR delete trip → items unmarked → can re-log correctly
+
+**How it works:**
+
+**Option A - Edit in place:**
+1. Go to Trip History
+2. Find trip with incorrect information
+3. Click ✏️ Edit button
+4. Modify:
+   - **Vendor** (dropdown with all your vendors)
+   - **Total** (NT$ amount - fix typos)
+   - **Date** (if logged wrong day)
+5. Click **Save** or **Cancel**
+
+**Option B - Delete and re-log:**
+1. Delete the incorrect trip
+2. Items automatically unmarked as "logged"
+3. Return to Shopping List
+4. Items still checked off (in Purchased section)
+5. Click Quick Log again
+6. Enter correct information
+7. **No more "already logged" error!**
+
+**Real-world scenarios:**
+
+| Problem | Solution |
+|---------|----------|
+| Entered NT$297 instead of NT$279 | Edit trip → change total to 279 → Save |
+| Logged to wrong vendor | Edit trip → select correct vendor → Save |
+| Forgot to log yesterday's trip | Edit trip → change date to yesterday → Save |
+| Total completely wrong | Delete trip → Re-log with correct amount |
+| Accidentally logged twice | Delete duplicate trip → Items can be re-logged |
+
+**Visual design:**
+- **Edit mode**: Shows three input fields (Vendor dropdown, Total input, Date picker)
+- **Save button**: Green, confirms changes
+- **Cancel button**: Gray, discards changes
+- **Edit icon**: Blue pencil next to Delete (X) button
+- **Inline editing**: No modal - edit directly in trip card
+
+**Benefits:**
+- **Fix typos instantly**: No need to delete and re-create
+- **Correct mistakes**: Update wrong vendor or date
+- **No data loss**: Edit preserves trip items and history
+- **Re-logging works**: Deleted items can be logged again
+- **Accounting accuracy**: Keep your expense records correct
+- **Time-saver**: Edit in place vs. delete + re-enter all items
+
+**Technical details:**
+- Edit updates: `vendor`, `total`, and `date` fields
+- Items list preserved during edit (not editable)
+- Delete now clears `loggedItems` status for trip's items
+- Prevents "already logged" error on re-logging
+- Edit state stored in `editingTrip` with trip ID
+- Changes saved to `shoppingTrips` array in localStorage
+
+**Edge cases handled:**
+- Can't edit while another trip is being edited (one at a time)
+- Cancel restores original values
+- Delete asks for confirmation
+- Re-logging after delete works immediately
+- Edit doesn't affect other trips' data
+
+**Workflow example:**
+```
+Morning: Quick Log NT$350 at Big King
+Afternoon: Check receipt - actually NT$380! 
+Solution: Trip History → Edit → Change 350 to 380 → Save ✓
+
+OR
+
+Morning: Quick Log NT$500 at wrong vendor
+Afternoon: Need to fix for accounting
+Solution: Delete trip → Items unmarked → Quick Log again with correct vendor ✓
+```
+
+---
+
 ## Summary
 
-This app combines 62 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 63 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -1671,5 +1765,6 @@ This app combines 62 features into a simple, offline-capable shopping list tool 
 21. **Auto-cleanup Quick Add**: Checked items automatically removed from Quick Add panel
 22. **Easy navigation**: Scroll-to-top buttons on all major views for long lists
 23. **Mistake prevention**: Removed Items section lets you restore accidentally removed ingredients
+24. **Trip editing**: Edit or correct shopping trip details after logging
 
 Perfect for Coto Makassar's daily market shopping needs!

@@ -1,6 +1,6 @@
 # Testing Checklist - December 16, 2025 Update
 **Test Date:** December 16, 2025  
-**Features Added:** Quick Add auto-remove, Scroll buttons, Removed Items restoration  
+**Features Added:** Quick Add auto-remove, Scroll buttons, Removed Items restoration, Trip editing  
 **Device:** iPhone/iPad  
 **Goal:** Validate new UX improvements and bug fixes
 
@@ -141,6 +141,64 @@
 - [ ] Item names and quantities clearly visible
 - [ ] Hover/tap feedback works on buttons
 - [ ] Section auto-hides when empty (no clutter)
+
+**Notes:**
+```
+[Record any issues or observations here]
+```
+
+---
+
+### Feature 63: Edit Shopping Trips
+**Status:** ⬜ Not Tested | ⬜ Pass | ⬜ Fail
+
+**Edit Trip Functionality:**
+1. [ ] Navigate to Trip History
+2. [ ] Find an existing trip
+3. [ ] Click ✏️ Edit button (blue pencil icon)
+4. [ ] **EXPECTED:** Trip card switches to edit mode with three fields
+5. [ ] Modify vendor (select from dropdown)
+6. [ ] Modify total amount (enter new NT$ value)
+7. [ ] Modify date (select new date)
+8. [ ] Click **Save** button
+9. [ ] **EXPECTED:** Changes saved, card returns to display mode
+10. [ ] **VERIFY:** Updated values shown correctly
+
+**Cancel Edit:**
+1. [ ] Click Edit on a trip
+2. [ ] Change some values
+3. [ ] Click **Cancel** button
+4. [ ] **EXPECTED:** Changes discarded, original values restored
+5. [ ] **VERIFY:** No changes saved
+
+**Delete and Re-log:**
+1. [ ] Create a trip via Quick Log with 3+ items
+2. [ ] Go to Trip History
+3. [ ] Delete the trip
+4. [ ] **EXPECTED:** Confirmation dialog appears
+5. [ ] Confirm deletion
+6. [ ] **VERIFY:** Trip removed from list
+7. [ ] Return to Shopping List
+8. [ ] **VERIFY:** Items still checked off (in Purchased section)
+9. [ ] Click Quick Log again
+10. [ ] Enter new total and vendor
+11. [ ] **EXPECTED:** No "already logged" error
+12. [ ] **VERIFY:** New trip created successfully
+
+**Edit Mode UI:**
+- [ ] Edit mode shows Vendor dropdown (not plain text)
+- [ ] Total field accepts decimal input
+- [ ] Date picker shows calendar
+- [ ] Save button is green
+- [ ] Cancel button is gray
+- [ ] Only one trip can be edited at a time
+- [ ] Edit and Delete buttons side-by-side (pencil and X)
+
+**Real-World Scenarios:**
+- [ ] **Typo fix**: Enter NT$350, realize it was NT$380 → Edit and fix
+- [ ] **Wrong vendor**: Logged to "Big King" but was "RT-Mart" → Edit and change
+- [ ] **Wrong date**: Logged today but trip was yesterday → Edit date
+- [ ] **Complete redo**: Total way off → Delete trip → Re-log correctly
 
 **Notes:**
 ```
