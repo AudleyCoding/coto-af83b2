@@ -1543,25 +1543,43 @@
           const remainingItems = aggregatedIngredients.filter(ing => !purchasedItems.has(ing.name));
           const purchasedItemsList = aggregatedIngredients.filter(ing => purchasedItems.has(ing.name));
 
+          // Track previous aggregatedIngredients to detect NEW items
+          const prevIngredientsRef = useRef(new Set());
+
           // Initialize planToBuyItems when aggregatedIngredients change
           useEffect(() => {
+            const currentNames = new Set(aggregatedIngredients.map(ing => ing.name));
+            const prevNames = prevIngredientsRef.current;
+            
             setPlanToBuyItems(prev => {
               const newSet = new Set(prev);
+              
               aggregatedIngredients.forEach(ing => {
-                // Only auto-add non-QuickAdd items (recipe items) to "plan to buy"
-                // QuickAdd items should require explicit user action to avoid resetting list
-                if (!ing.isQuickAdd && !newSet.has(ing.name) && !purchasedItems.has(ing.name)) {
+                // Only auto-add if:
+                // 1. It's NOT a QuickAdd item (recipe items auto-add)
+                // 2. It's NOT already in planToBuyItems
+                // 3. It's NOT purchased
+                // 4. It's a NEW item (wasn't in previous aggregatedIngredients)
+                if (!ing.isQuickAdd && 
+                    !newSet.has(ing.name) && 
+                    !purchasedItems.has(ing.name) &&
+                    !prevNames.has(ing.name)) {
                   newSet.add(ing.name);
                 }
               });
-              // Remove items that no longer exist in aggregated list
+              
+              // Remove items that no longer exist in aggregated list (recipes deselected)
               Array.from(newSet).forEach(name => {
-                if (!aggregatedIngredients.find(ing => ing.name === name)) {
+                if (!currentNames.has(name)) {
                   newSet.delete(name);
                 }
               });
+              
               return newSet;
             });
+            
+            // Update the ref for next comparison
+            prevIngredientsRef.current = currentNames;
           }, [aggregatedIngredients]);
 
           // Group remaining items by location
