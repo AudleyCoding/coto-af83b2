@@ -137,6 +137,9 @@ When you "Add to Home Screen":
 57. Recipe Scaling with Decimal Batches
 58. Whole Package Cost Calculation
 59. Unit Price-Based Price History
+60. Auto-Remove Quick Add Items When Checked
+61. Scroll-to-Top Buttons on All Major Views
+62. Removed Items Restoration
 
 ---
 
@@ -1490,9 +1493,160 @@ This pattern is superior to conditional rendering (`{condition && <button>}`) fo
 
 ---
 
+### 60. Auto-Remove Quick Add Items When Checked
+**What it does**: Quick Add items automatically disappear from the Quick Add panel when you check them off as purchased, keeping your shopping list clean and organized.
+
+**The Problem (Before)**:
+- Added "garlic paste 300g" via Quick Add
+- Item appeared in shopping list ✓
+- Checked it off as purchased ✓
+- Item stayed in Quick Add panel ✗
+- Had to manually remove it with X button
+- Quick Add panel got cluttered with purchased items
+
+**The Solution (After)**:
+- Add "garlic paste 300g" via Quick Add
+- Item appears in shopping list
+- Check it off as purchased → **automatically removed from Quick Add panel**
+- Quick Add stays clean and shows only items you haven't bought yet
+
+**How it works**:
+1. Add item via Quick Add (appears in both Quick Add panel and shopping list)
+2. Check off item in shopping list
+3. Item moves to Purchased section
+4. Item automatically removed from Quick Add items array
+5. Quick Add panel updates instantly
+
+**Benefits**:
+- **Cleaner interface**: No need to manually clean up Quick Add items
+- **Less confusion**: Purchased items don't clutter the Quick Add panel
+- **Faster workflow**: One action (checking off) handles both marking as purchased and cleanup
+- **Automatic maintenance**: Shopping list stays organized without extra steps
+
+**Technical details**:
+- Triggered in `togglePurchased()` function when checking item
+- Filters Quick Add items array to remove checked item
+- Only affects Quick Add items (recipe items unaffected)
+- Maintains price history for removed Quick Add items
+
+---
+
+### 61. Scroll-to-Top Buttons on All Major Views
+**What it does**: Every major view (Recipes, Shopping List, Price History detail, Trips) now has a floating scroll-to-top button that appears when you scroll down, making it easy to return to the top on long lists.
+
+**The Problem (Before)**:
+- Long shopping lists required tedious scrolling back to top
+- Price History details with many entries hard to navigate
+- Recipe lists became difficult to scan from bottom
+- No quick way to return to filters/controls at top
+
+**The Solution (After)**:
+- Scroll down on any major view
+- Blue circular button appears in bottom-right corner
+- Click button → instantly scroll to top
+- Button auto-hides when near top of page
+
+**Where it appears**:
+1. **Shopping List**: Navigate back to Planned Purchase summary and action buttons
+2. **Recipes View**: Return to search bar and filters
+3. **Price History Detail**: Jump back to statistics and chart
+4. **Trips View**: Access vendor filters and summary quickly
+
+**How it works**:
+- Button appears when scrolled >300px down
+- Smooth scroll animation to top
+- Fixed position (stays visible while scrolling)
+- Blue color matches app theme
+- Up arrow icon for clear meaning
+
+**Benefits**:
+- **Faster navigation**: One click vs many swipes
+- **Better UX on long lists**: Especially helpful with 20+ items
+- **Consistent behavior**: Same button style/position across all views
+- **Mobile-friendly**: Large 48px touch target
+- **Non-intrusive**: Only shows when needed (auto-hides near top)
+
+---
+
+### 62. Removed Items Restoration
+**What it does**: Items accidentally removed from your shopping list now appear in a dedicated "Removed Items" section where you can easily restore them with one click, preventing lost items and shopping mistakes.
+
+**The Problem (Before)**:
+- Accidentally clicked bag icon to remove item
+- Item disappeared from shopping list completely
+- No way to restore it without re-selecting recipe or re-adding via Quick Add
+- Could forget needed items at the market
+- Risk of buying incomplete ingredients
+
+**The Solution (After)**:
+- Click bag icon to remove item → moves to "Removed Items" section
+- Section appears below shopping list with count
+- Click any removed item → instantly restored to shopping list
+- Section auto-hides when empty (no clutter)
+
+**How it works**:
+
+1. **Removing items**:
+   - Click gray bag icon next to any ingredient
+   - Item removed from planned purchases
+   - Appears in "Removed Items (1)" section below list
+
+2. **Restoring items**:
+   - Click removed item in the section
+   - Item immediately added back to shopping list
+   - Bag icon turns blue again
+   - Can be checked off or removed again
+
+3. **Smart filtering**:
+   - Only shows items NOT in shopping list AND NOT purchased
+   - Purchased items never appear here (they're in Purchased section)
+   - Automatically updated when items restored
+
+**Visual design**:
+- 🗑️ Trash icon with item count: "Removed Items (3)"
+- Gray background to distinguish from active list
+- "Click to restore" hint for clarity
+- ↩️ Arrow icon on each item
+- Shows ingredient name and quantity
+- Hover effect for clear interactivity
+
+**Example workflow**:
+1. Shopping list shows: shallot paste, turmeric powder, palm sugar
+2. Accidentally click bag on turmeric powder (oops!)
+3. Turmeric disappears from list
+4. "Removed Items (1)" section appears below
+5. See "↩️ turmeric powder (15 g)"
+6. Click it → back in shopping list instantly
+7. No items removed → section hides automatically
+
+**Benefits**:
+- **Undo functionality**: Fix accidental removals instantly
+- **Safety net**: Never lose items from your list
+- **Visible feedback**: Clear section shows what's been removed
+- **One-click restore**: Faster than re-adding manually
+- **Smart filtering**: Only shows truly removed items (not purchased)
+- **Auto-cleanup**: Section disappears when empty
+- **Peace of mind**: Shop confidently knowing you can undo mistakes
+
+**Edge cases handled**:
+- Removed items stay removed when checking off other items
+- Checking off item doesn't move it to Removed Items (goes to Purchased)
+- Unchecking purchased item adds back to shopping list (not Removed Items)
+- Deselecting recipe removes items completely (not to Removed Items)
+- New recipe items auto-add to shopping list (don't trigger removals)
+
+**Technical details**:
+- Filters `aggregatedIngredients` for items NOT in `planToBuyItems` AND NOT in `purchasedItems`
+- Uses existing `togglePlanToBuy()` function for restoration
+- Conditional rendering: only shows when `removedItems.length > 0`
+- Tracks previous ingredient list to prevent auto-restoration of explicitly removed items
+- Works with both recipe items and Quick Add items
+
+---
+
 ## Summary
 
-This app combines 59 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
+This app combines 62 features into a simple, offline-capable shopping list tool designed specifically for restaurant batch cooking workflows. The key innovations are:
 
 1. **Offline-first**: Works without internet after initial setup
 2. **Location-based organization**: Groups shopping by purchase location for efficient multi-stop trips
@@ -1514,5 +1668,8 @@ This app combines 59 features into a simple, offline-capable shopping list tool 
 18. **Decimal recipe scaling**: Make 0.5x, 1.5x, or any fractional batch size for flexible portioning
 19. **Whole package costing**: Rounds up to actual packages you must buy for accurate budgeting
 20. **Unit price tracking**: Charts show cost per unit (not package price) for accurate trend analysis
+21. **Auto-cleanup Quick Add**: Checked items automatically removed from Quick Add panel
+22. **Easy navigation**: Scroll-to-top buttons on all major views for long lists
+23. **Mistake prevention**: Removed Items section lets you restore accidentally removed ingredients
 
 Perfect for Coto Makassar's daily market shopping needs!
