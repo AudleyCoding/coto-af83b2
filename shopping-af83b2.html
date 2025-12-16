@@ -751,6 +751,11 @@
               } else {
                 newSet.add(ingredientName);
                 
+                // Remove from Quick Add items when checked off
+                setQuickAddItems(prevQuickAdd => 
+                  prevQuickAdd.filter(item => item.name !== ingredientName)
+                );
+                
                 // Save price when checking off item (if price data is complete)
                 const priceData = ingredientPrices[ingredientName];
                 if (priceData?.price && priceData.price > 0 && priceData?.packageQuantity && priceData.packageQuantity > 0) {
@@ -2391,8 +2396,22 @@
                     </div>
                   </div>
                 </div>
-              );
-            }
+                
+                {/* Scroll to Top Button */}
+                {showScrollTop && (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title="Scroll to top"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            );
+          }
             
             // Price History List View
             let ingredientsWithHistory = Object.entries(priceHistoryData)
@@ -2529,6 +2548,19 @@
                     )}
                   </div>
                 </div>
+                
+                {/* Scroll to Top Button */}
+                {showScrollTop && (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title="Scroll to top"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             );
           }
@@ -2656,6 +2688,19 @@
                     )))}
                   </div>
                 </div>
+                
+                {/* Scroll to Top Button */}
+                {showScrollTop && (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title="Scroll to top"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             );
           }
@@ -3298,6 +3343,19 @@
                     )}
                   </div>
                 </div>
+                
+                {/* Scroll to Top Button */}
+                {showScrollTop && (
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    title="Scroll to top"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             );
           }
