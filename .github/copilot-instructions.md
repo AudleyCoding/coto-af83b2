@@ -89,6 +89,7 @@ Three view states controlled by boolean flags:
 - All state updates use functional form: `setState(prev => ...)`
 - Number parsing: `parseInt(batches) || 0` with `Math.max(0, ...)` for safety
 - Confirmations for destructive actions: `confirm('Are you sure...')`
+- **Ingredient names**: Always converted to lowercase for consistency (`.toLowerCase()`)
 
 ## Common Tasks
 
@@ -103,6 +104,7 @@ Three view states controlled by boolean flags:
 2. Add to `RecipeForm` state and form inputs
 3. Update `handleSubmit` to include in saved recipe object
 4. **Keep form inputs large enough for mobile typing**
+5. **Remember**: Ingredient names must be lowercase in `INITIAL_RECIPES`
 
 ### Adding New Icon Component
 ```javascript
@@ -150,7 +152,7 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
 - Indonesian recipes (Ayam Goreng, Bumbu Coto, Ayam Bakar)
 - Batch-based scaling for commercial kitchen operations
 - Mix of measured (weight/volume) and unmeasured ingredients
-- Ingredient names are case-sensitive for aggregation
+- **Ingredient names are automatically converted to lowercase** - enforced throughout the app for consistent aggregation
 - **Real-world use**: User takes phone to market, checks off items while shopping
 
 ## Design Constraints (DO NOT VIOLATE)
@@ -234,6 +236,36 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
    - **Display**: Shows last price/date below each ingredient
    - **Export/Import**: Price history included in JSON backups
    - Use case: Know how much cash to bring before shopping
+
+11. **Collapsible Price Inputs** ✅
+   - **Hidden by Default**: Price input fields collapsed for cleaner shopping view
+   - **$ Toggle Button**: Click to show/hide price entry fields
+   - **Mobile-Optimized**: Easier to read list while shopping without clutter
+   - **Quick Access**: Toggle on when prices change, off for scanning items
+   - Yellow highlight when price inputs are visible
+   
+12. **Shopping List Export/Share** ✅
+   - **Copy to Clipboard**: One-click export to clipboard
+   - **Text Format**: Clean, readable format with checkboxes
+   - **Grouped by Location**: Organizes items by vendor/location
+   - **Checkbox Status**: Shows ✅ for purchased, ☐ for remaining
+   - **Share Anywhere**: Paste into LINE, Notes, WhatsApp, messaging apps
+   - **Date Stamp**: Includes export date in output
+   - Use case: Share list with family or staff members
+
+13. **Complete Shopping Trip** ✅
+   - **Reset Button**: Clear all items after shopping
+   - **Deselect Recipes**: Removes all recipe selections
+   - **Clear Prices**: Resets session price inputs
+   - **Keep Quick Add**: Preserves Quick Add items for next trip
+   - **Confirmation Dialog**: Prevents accidental resets
+   - Use case: Start fresh for next shopping trip
+
+14. **Select All Recipes** ✅
+   - **Bulk Selection**: One-click to select all recipes
+   - **Default Batches**: Sets all recipes to 1 batch
+   - **Time Saver**: Useful for weekly meal prep shopping
+   - Button appears in Recipe Selection panel header
 
 ### Data Structure
 ```javascript

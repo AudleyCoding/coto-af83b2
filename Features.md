@@ -141,6 +141,10 @@ When you "Add to Home Screen":
 61. Scroll-to-Top Buttons on All Major Views
 62. Removed Items Restoration
 63. Edit Shopping Trips
+64. Collapsible Price Inputs ($)
+65. Shopping List Export/Share to Clipboard
+66. Complete Shopping Trip Reset
+67. Select All Recipes Button
 
 ---
 
@@ -1765,6 +1769,114 @@ This app combines 63 features into a simple, offline-capable shopping list tool 
 21. **Auto-cleanup Quick Add**: Checked items automatically removed from Quick Add panel
 22. **Easy navigation**: Scroll-to-top buttons on all major views for long lists
 23. **Mistake prevention**: Removed Items section lets you restore accidentally removed ingredients
+24. **Clean shopping view**: Price inputs hidden by default, toggle with $ button for cleaner list
+25. **Easy sharing**: Export shopping list to clipboard for sharing via LINE, Notes, or messaging apps
+26. **Trip reset**: Complete shopping trip button clears everything for next trip
+27. **Bulk selection**: Select all recipes at once for weekly meal prep
+
+---
+
+### 64. Collapsible Price Inputs ($)
+**What it does**: Hides price entry fields by default for a cleaner, more readable shopping list. Click the $ button to show/hide price inputs only when you need to update prices.
+
+**How to use**:
+- By default, shopping list shows only item names and quantities (clean view)
+- Click **$ button** in shopping list header to show price input fields
+- Button turns yellow when price inputs are visible
+- Enter prices only when they've changed
+- Click $ again to hide fields and return to clean shopping view
+
+**Why it's useful**:
+- Makes shopping list easier to scan while at the market
+- Reduces visual clutter and scrolling
+- Only show prices when you actually need to update them
+- Most shopping trips don't require price updates
+
+---
+
+### 65. Shopping List Export/Share to Clipboard
+**What it does**: Exports your shopping list as formatted text that can be pasted into LINE, Notes, WhatsApp, or any messaging app. Perfect for sharing with family or staff.
+
+**How to use**:
+1. Click **Export** button (📤 icon) in shopping list header
+2. List is automatically copied to clipboard
+3. Open LINE, Notes, or any app
+4. Paste (long press → Paste)
+5. Formatted list appears with checkboxes, quantities, and grouping
+
+**Format example**:
+```
+🛒 Shopping List
+📅 1/15/2026
+
+📍 Street Market - Veggies
+☐ shallot paste (800 g)
+☐ garlic paste (150 g)
+✅ ginger paste (400 g)
+
+🛒 Big King
+☐ coconut milk (500 ml)
+☐ oil (300 ml)
+```
+
+**Why it's useful**:
+- Share list with family members or staff
+- Send to someone else who's doing the shopping
+- Keep a text record of what you need
+- Works with any messaging or note-taking app
+
+---
+
+### 66. Complete Shopping Trip Reset
+**What it does**: Comprehensive reset button that clears all items and prepares for your next shopping trip. Deselects recipes, clears checkboxes, and resets price inputs while keeping your Quick Add items.
+
+**How to use**:
+1. After completing your shopping trip
+2. Click **Complete Trip** button (red, in header)
+3. Confirmation dialog appears
+4. Click OK to:
+   - Clear all checked items (purchased items)
+   - Deselect all recipes
+   - Clear session price inputs
+   - Reset shopping list
+   - Keep Quick Add items (in case you use them regularly)
+
+**What it preserves**:
+- All your recipes (not deleted)
+- Last known prices (history intact)
+- Price history data (charts still work)
+- Quick Add items (for next trip)
+- Vendors list
+- Shopping trip history
+
+**Why it's useful**:
+- Clean slate for next shopping trip
+- Prevents confusion from old selections
+- Faster than manually unchecking everything
+- Keeps your frequently-used Quick Add items
+
+---
+
+### 67. Select All Recipes Button
+**What it does**: Instantly selects all recipes at once, setting each to 1 batch. Perfect for weekly meal prep or bulk shopping trips.
+
+**How to use**:
+1. In Recipe Selection panel, look for **Select All** button (top right)
+2. Click the button
+3. All recipes are instantly selected at 1 batch each
+4. Adjust individual batch quantities as needed
+5. Shopping list updates with all ingredients from all recipes
+
+**Why it's useful**:
+- Save time when doing weekly meal prep
+- Select everything, then deselect what you don't need
+- Useful for inventory checks (see all ingredients you might need)
+- Faster than clicking each recipe individually
+
+**Combined with other features**:
+- Use with Export to share complete ingredient list
+- Use with Complete Trip to start fresh next week
+- Adjust batches up/down after selecting all
 24. **Trip editing**: Edit or correct shopping trip details after logging
 
 Perfect for Coto Makassar's daily market shopping needs!
