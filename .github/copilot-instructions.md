@@ -239,10 +239,11 @@ Edit `aggregatedIngredients` useMemo - centralized calculation for all shopping 
 
 11. **Collapsible Price Inputs** ✅
    - **Hidden by Default**: Price input fields collapsed for cleaner shopping view
-   - **$ Toggle Button**: Click to show/hide price entry fields
+   - **$ Toggle Button**: Individual $ button next to shopping bag icon for each ingredient
+   - **Per-Ingredient Control**: Expand/collapse price inputs only for specific items being updated
    - **Mobile-Optimized**: Easier to read list while shopping without clutter
    - **Quick Access**: Toggle on when prices change, off for scanning items
-   - Yellow highlight when price inputs are visible
+   - Yellow highlight when price inputs are visible for that ingredient
    
 12. **Shopping List Export/Share** ✅
    - **Copy to Clipboard**: One-click export to clipboard

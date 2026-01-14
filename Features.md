@@ -1777,20 +1777,22 @@ This app combines 63 features into a simple, offline-capable shopping list tool 
 ---
 
 ### 64. Collapsible Price Inputs ($)
-**What it does**: Hides price entry fields by default for a cleaner, more readable shopping list. Click the $ button to show/hide price inputs only when you need to update prices.
+**What it does**: Hides price entry fields by default for a cleaner, more readable shopping list. Click the $ button next to each ingredient to show/hide price inputs only for that specific item.
 
 **How to use**:
 - By default, shopping list shows only item names and quantities (clean view)
-- Click **$ button** in shopping list header to show price input fields
-- Button turns yellow when price inputs are visible
+- Click **$ button** next to the shopping bag icon on any ingredient
+- Button turns yellow when that ingredient's price inputs are visible
 - Enter prices only when they've changed
-- Click $ again to hide fields and return to clean shopping view
+- Click $ again to hide fields for that ingredient
+- Each ingredient can be expanded/collapsed independently
 
 **Why it's useful**:
 - Makes shopping list easier to scan while at the market
 - Reduces visual clutter and scrolling
-- Only show prices when you actually need to update them
+- Only expand price entry for items being updated (not all at once)
 - Most shopping trips don't require price updates
+- Faster to update individual items without affecting the rest of the list
 
 ---
 
