@@ -446,7 +446,7 @@
           const [showScrollTop, setShowScrollTop] = useState(false);
           const [showIngredientSources, setShowIngredientSources] = useState(false);
           const [selectedIngredientForSources, setSelectedIngredientForSources] = useState(null);
-          const [showPriceInputs, setShowPriceInputs] = useState(false);
+          const [expandedPriceInputs, setExpandedPriceInputs] = useState(new Set());
           
           // Shopping Trip History
           const [shoppingTrips, setShoppingTrips] = useState([]);
@@ -3936,17 +3936,6 @@
                         >
                           <HelpCircle className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => setShowPriceInputs(!showPriceInputs)}
-                          className={`flex items-center gap-1 px-2 py-2 rounded-lg font-medium ${
-                            showPriceInputs
-                              ? (darkMode ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-yellow-500 hover:bg-yellow-600 text-white')
-                              : (darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-400' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')
-                          }`}
-                          title={showPriceInputs ? "Hide price entry fields" : "Show price entry fields"}
-                        >
-                          <DollarSign className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                     
@@ -4099,7 +4088,33 @@
                                             </span>
                                           </div>
                                           
-                                          {/* Right: Plan to Buy toggle - smaller */}
+                                          {/* Right: $ toggle + Plan to Buy toggle */}
+                                          <button
+                                            onClick={() => {
+                                              setExpandedPriceInputs(prev => {
+                                                const newSet = new Set(prev);
+                                                if (newSet.has(ingredient.name)) {
+                                                  newSet.delete(ingredient.name);
+                                                } else {
+                                                  newSet.add(ingredient.name);
+                                                }
+                                                return newSet;
+                                              });
+                                            }}
+                                            className={`p-1.5 rounded transition-colors flex-shrink-0 ${
+                                              expandedPriceInputs.has(ingredient.name)
+                                                ? darkMode 
+                                                  ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
+                                                  : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                                : darkMode
+                                                  ? 'bg-gray-600 text-gray-400 hover:bg-gray-500'
+                                                  : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                                            }`}
+                                            style={{ minWidth: '32px', minHeight: '32px', padding: '6px' }}
+                                            title={expandedPriceInputs.has(ingredient.name) ? "Hide price entry" : "Show price entry"}
+                                          >
+                                            <DollarSign className="w-4 h-4" />
+                                          </button>
                                           <button
                                             onClick={() => togglePlanToBuy(ingredient.name)}
                                             className={`p-1.5 rounded transition-colors flex-shrink-0 ${
@@ -4118,8 +4133,8 @@
                                           </button>
                                         </div>
 
-                                        {/* Package-based price entry row - collapsible */}
-                                        {showPriceInputs && (
+                                        {/* Package-based price entry row - collapsible per ingredient */}
+                                        {expandedPriceInputs.has(ingredient.name) && (
                                         <div className="mt-1.5" style={{ lineHeight: '1.3' }}>
                                           {/* Recipe amount needed - subtle reference */}
                                           {ingredient.hasQuantity && (
