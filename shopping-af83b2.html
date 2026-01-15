@@ -4594,38 +4594,35 @@
                 ing._originalIndex = index;
                 return ing.name.toLowerCase().includes(query);
               });
-            } else {
-              // Add original indices when not filtering
-              filtered = ingredients.map((ing, index) => ({
-                ...ing,
-                _originalIndex: index
-              }));
-            }
-            
-            // Sort with smart prioritization:
-            // 1. If searching: starts-with matches first, then contains
-            // 2. Within each group: alphabetical
-            // 3. Empty names always last
-            return filtered.sort((a, b) => {
-              if (!a.name) return 1; // Empty names go to bottom
-              if (!b.name) return -1;
               
-              const aLower = a.name.toLowerCase();
-              const bLower = b.name.toLowerCase();
-              
-              // If we're searching, prioritize starts-with matches
-              if (ingredientSearchQuery.trim()) {
-                const query = ingredientSearchQuery.toLowerCase();
+              // Only sort when searching
+              // Sort with smart prioritization:
+              // 1. Starts-with matches first, then contains
+              // 2. Within each group: alphabetical
+              // 3. Empty names always last
+              return filtered.sort((a, b) => {
+                if (!a.name) return 1; // Empty names go to bottom
+                if (!b.name) return -1;
+                
+                const aLower = a.name.toLowerCase();
+                const bLower = b.name.toLowerCase();
+                
                 const aStarts = aLower.startsWith(query);
                 const bStarts = bLower.startsWith(query);
                 
                 if (aStarts && !bStarts) return -1;
                 if (!aStarts && bStarts) return 1;
-              }
-              
-              // Otherwise (or if both match same way), sort alphabetically
-              return aLower.localeCompare(bLower);
-            });
+                
+                // If both match same way, sort alphabetically
+                return aLower.localeCompare(bLower);
+              });
+            } else {
+              // No search - preserve original order (no sorting)
+              return ingredients.map((ing, index) => ({
+                ...ing,
+                _originalIndex: index
+              }));
+            }
           }, [ingredients, ingredientSearchQuery]);
 
           const addIngredient = () => {
