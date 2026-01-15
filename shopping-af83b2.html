@@ -1885,6 +1885,7 @@
               recipe={editingRecipe}
               recipes={recipes}
               darkMode={darkMode}
+              showScrollTop={showScrollTop}
               onSave={(recipe) => {
                 if (editingRecipe) {
                   setRecipes(prev => prev.map(r => r.id === recipe.id ? recipe : r));
@@ -4486,7 +4487,7 @@
           );
         }
 
-        function RecipeForm({ recipe, recipes, darkMode, onSave, onCancel }) {
+        function RecipeForm({ recipe, recipes, darkMode, showScrollTop, onSave, onCancel }) {
           const [name, setName] = useState(recipe?.name || '');
           const [yieldUnit, setYieldUnit] = useState(recipe?.yieldUnit || 'batch');
           const [notes, setNotes] = useState(recipe?.notes || '');
