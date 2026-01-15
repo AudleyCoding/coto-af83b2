@@ -208,18 +208,18 @@ When you "Add to Home Screen":
 ---
 
 ### 40. Alphabetically Sorted Ingredients in Edit Recipe
-**What it does**: When viewing or editing a recipe, ingredients are automatically sorted alphabetically by name for easier scanning and organization.
+**What it does**: Ingredients are sorted alphabetically by name when saved to make recipes organized and easier to read. While editing, ingredients stay in the order you add them.
 
 **How to use**:
-- Ingredients automatically sort when you:
-  - Save a new recipe
-  - Update an existing recipe
-  - Duplicate a recipe
+- **While editing**: New ingredients stay at the top (most recent first)
+- **When searching**: Results sort with best matches first
+- **On save**: All ingredients automatically sort alphabetically
 - Benefits:
-  - Find specific ingredients faster
+  - Find specific ingredients faster in saved recipes
   - Identify duplicates easily
   - More professional recipe organization
   - Consistent across all recipes
+  - New ingredients easy to spot while editing (at top)
 
 ---
 
